@@ -4,21 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { toggleLike } from "@/shared/actions/meme-actions";
 import { MemeCard } from "@/shared/components/meme-card";
+import type { Meme } from "@/types/meme";
 import { getMemes } from "./actions";
-
-interface Meme {
-  id: string;
-  title: string;
-  description: string | null;
-  imageUrl: string;
-  tags: string[] | null;
-  likesCount: number;
-  commentsCount: number;
-  createdAt: Date;
-  userId: string;
-  userName: string;
-  isLiked: boolean;
-}
 
 export function HomePage() {
   const [memes, setMemes] = useState<Meme[]>([]);

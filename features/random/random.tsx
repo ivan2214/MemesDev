@@ -5,22 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { MemeCard } from "@/shared/components/meme-card";
-
-interface Meme {
-  id: string;
-  title: string;
-  description?: string;
-  image_url: string;
-  tags?: string[];
-  likes_count: number;
-  comments_count: number;
-  created_at: string;
-  user: {
-    id: string;
-    name: string;
-  };
-  is_liked?: boolean;
-}
+import type { Meme } from "@/types/meme";
 
 export function RandomPage() {
   const [meme, setMeme] = useState<Meme | null>(null);
@@ -54,8 +39,8 @@ export function RandomPage() {
         if (meme) {
           setMeme({
             ...meme,
-            is_liked: data.liked,
-            likes_count: data.likes_count,
+            isLiked: data.liked,
+            likesCount: data.likes_count,
           });
         }
       }
@@ -88,7 +73,7 @@ export function RandomPage() {
         </div>
       ) : meme ? (
         <div className="mx-auto max-w-2xl">
-          <MemeCard meme={meme} onLike={handleLike} isLiked={meme.is_liked} />
+          <MemeCard meme={meme} onLike={handleLike} isLiked={meme.isLiked} />
         </div>
       ) : (
         <div className="flex min-h-[600px] flex-col items-center justify-center gap-4">

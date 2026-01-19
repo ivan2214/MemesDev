@@ -15,12 +15,10 @@ export async function uploadMeme(formData: FormData) {
   }
 
   const file = formData.get("image") as File;
-  const title = formData.get("title") as string;
-  const description = formData.get("description") as string;
   const tags = formData.get("tags") as string;
 
-  if (!file || !title) {
-    throw new Error("Image and title are required");
+  if (!file) {
+    throw new Error("Image is required");
   }
 
   // Upload to Vercel Blob
@@ -35,8 +33,6 @@ export async function uploadMeme(formData: FormData) {
     .insert(memesTable)
     .values({
       userId: session.user.id,
-      title,
-      description: description || null,
       imageUrl: blob.url,
       tags: tagsArray,
     })

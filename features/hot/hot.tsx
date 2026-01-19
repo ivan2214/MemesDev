@@ -4,22 +4,8 @@ import { Flame } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { MemeCard } from "@/shared/components/meme-card";
-
-interface Meme {
-  id: string;
-  title: string;
-  description?: string;
-  image_url: string;
-  tags?: string[];
-  likes_count: number;
-  comments_count: number;
-  created_at: string;
-  user: {
-    id: string;
-    name: string;
-  };
-  is_liked?: boolean;
-}
+import type { Meme } from "@/types/meme";
+import { getHotMemes, toggleLikeMeme } from "./actions";
 
 export function HotPage() {
   const [memes, setMemes] = useState<Meme[]>([]);
@@ -30,12 +16,11 @@ export function HotPage() {
 
   const loadMemes = useCallback(async (currentOffset: number) => {
     try {
-      const response = await fetch(
-        `/api/memes?offset=${currentOffset}&limit=12&sort=hot`,
-      );
-      if (!response.ok) throw new Error("Failed to fetch memes");
-
-      const data = await response.json();
+      const data = await getHotMemes({
+        offset: currentOffset,
+        limit: 12,
+        sort: "hot",
+      });
 
       if (data.memes.length < 12) {
         setHasMore(false);
@@ -43,7 +28,7 @@ export function HotPage() {
 
       setMemes((prev) => [...prev, ...data.memes]);
     } catch (error) {
-      console.error("[v0] Failed to load hot memes:", error);
+      console.error("[HotPage] Failed to load hot memes:", error);
     } finally {
       setLoading(false);
     }
@@ -79,24 +64,18 @@ export function HotPage() {
 
   const handleLike = async (memeId: string) => {
     try {
-      const response = await fetch("/api/memes/like", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memeId }),
-      });
+      // Optimistic update could be added here
+      const data = await toggleLikeMeme(memeId);
 
-      if (response.ok) {
-        const data = await response.json();
-        setMemes((prev) =>
-          prev.map((meme) =>
-            meme.id === memeId
-              ? { ...meme, is_liked: data.liked, likes_count: data.likes_count }
-              : meme,
-          ),
-        );
-      }
+      setMemes((prev) =>
+        prev.map((meme) =>
+          meme.id === memeId
+            ? { ...meme, is_liked: data.liked, likes_count: data.likes_count }
+            : meme,
+        ),
+      );
     } catch (error) {
-      console.error("[v0] Failed to like meme:", error);
+      console.error("[HotPage] Failed to like meme:", error);
     }
   };
 
@@ -124,7 +103,7 @@ export function HotPage() {
                 key={meme.id}
                 meme={meme}
                 onLike={handleLike}
-                isLiked={meme.is_liked}
+                isLiked={meme.isLiked}
               />
             ))}
           </div>

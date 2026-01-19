@@ -15,6 +15,20 @@
       "when": 1768863388389,
       "tag": "0001_reflective_shadowcat",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768864452391,
+      "tag": "0002_thankful_silver_samurai",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1768865481261,
+      "tag": "0003_neat_magik",
+      "breakpoints": true
     }
   ]
 }

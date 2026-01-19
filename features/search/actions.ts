@@ -5,8 +5,13 @@ import { headers } from "next/headers";
 import { db } from "@/db";
 import { likesTable, memesTable, userTable } from "@/db/schemas";
 import { auth } from "@/lib/auth";
+import type { Meme } from "@/types/meme";
 
-export async function searchMemes(query: string, offset = 0, limit = 12) {
+export async function searchMemes(
+  query: string,
+  offset = 0,
+  limit = 12,
+): Promise<{ memes: Meme[] }> {
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
 
@@ -15,14 +20,15 @@ export async function searchMemes(query: string, offset = 0, limit = 12) {
   const memes = await db
     .select({
       id: memesTable.id,
-      title: memesTable.title,
-      description: memesTable.description,
       imageUrl: memesTable.imageUrl,
       tags: memesTable.tags,
       likesCount: memesTable.likesCount,
       commentsCount: memesTable.commentsCount,
       createdAt: memesTable.createdAt,
-      userId: userTable.id,
+      user: {
+        id: userTable.id,
+        name: userTable.name,
+      },
       userName: userTable.name,
       isLiked: userId
         ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`
@@ -30,12 +36,7 @@ export async function searchMemes(query: string, offset = 0, limit = 12) {
     })
     .from(memesTable)
     .innerJoin(userTable, eq(memesTable.userId, userTable.id))
-    .where(
-      or(
-        ilike(memesTable.title, searchPattern),
-        ilike(memesTable.description, searchPattern),
-      ),
-    )
+    .where(or(ilike(memesTable.tags, searchPattern)))
     .orderBy(desc(memesTable.createdAt))
     .limit(limit)
     .offset(offset);

@@ -11,22 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { AuthDialog, useAuth } from "@/features/auth/auth";
-
-interface Meme {
-  id: string;
-  title: string;
-  description?: string;
-  image_url: string;
-  tags?: string[];
-  likes_count: number;
-  comments_count: number;
-  created_at: string;
-  user: {
-    id: string;
-    name: string;
-  };
-  is_liked?: boolean;
-}
+import type { Meme } from "@/types/meme";
 
 interface Comment {
   id: string;
@@ -92,8 +77,8 @@ export function MemeDetail({ memeId }: { memeId: string }) {
         const data = await response.json();
         setMeme({
           ...meme,
-          is_liked: data.liked,
-          likes_count: data.likes_count,
+          isLiked: data.liked,
+          likesCount: data.likesCount,
         });
       }
     } catch (error) {
@@ -117,7 +102,7 @@ export function MemeDetail({ memeId }: { memeId: string }) {
         const data = await response.json();
         setComments([data.comment, ...comments]);
         setCommentText("");
-        setMeme({ ...meme, comments_count: meme.comments_count + 1 });
+        setMeme({ ...meme, commentsCount: meme.commentsCount + 1 });
       }
     } catch (error) {
       console.error("[v0] Failed to post comment:", error);
@@ -130,8 +115,6 @@ export function MemeDetail({ memeId }: { memeId: string }) {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: meme?.title,
-          text: meme?.description || meme?.title,
           url: window.location.href,
         });
       } catch (err) {
@@ -177,21 +160,13 @@ export function MemeDetail({ memeId }: { memeId: string }) {
             <div className="relative bg-muted">
               {/** biome-ignore lint/performance/noImgElement: <temp> */}
               <img
-                src={meme.image_url || "/placeholder.svg"}
-                alt={meme.title}
+                src={meme.imageUrl || "/placeholder.svg"}
+                alt={meme.id}
                 className="w-full object-contain"
                 style={{ maxHeight: "80vh" }}
               />
             </div>
             <CardContent className="p-6">
-              <h1 className="mb-3 text-balance font-bold text-3xl">
-                {meme.title}
-              </h1>
-              {meme.description && (
-                <p className="mb-4 text-pretty text-muted-foreground">
-                  {meme.description}
-                </p>
-              )}
               {meme.tags && meme.tags.length > 0 && (
                 <div className="mb-6 flex flex-wrap gap-2">
                   {meme.tags.map((tag) => (
@@ -218,7 +193,7 @@ export function MemeDetail({ memeId }: { memeId: string }) {
                   <div>
                     <p className="font-medium">{meme.user.name}</p>
                     <p className="text-muted-foreground text-xs">
-                      {new Date(meme.created_at).toLocaleDateString()}
+                      {new Date(meme.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                 </Link>
@@ -227,25 +202,25 @@ export function MemeDetail({ memeId }: { memeId: string }) {
                     <Button
                       variant="ghost"
                       size="lg"
-                      className={`gap-2 ${meme.is_liked ? "text-red-500" : ""}`}
+                      className={`gap-2 ${meme.isLiked ? "text-red-500" : ""}`}
                       onClick={handleLike}
                     >
                       <Heart
-                        className={`h-5 w-5 ${meme.is_liked ? "fill-current" : ""}`}
+                        className={`h-5 w-5 ${meme.isLiked ? "fill-current" : ""}`}
                       />
-                      <span>{meme.likes_count}</span>
+                      <span>{meme.likesCount}</span>
                     </Button>
                   ) : (
                     <AuthDialog>
                       <Button variant="ghost" size="lg" className="gap-2">
                         <Heart className="h-5 w-5" />
-                        <span>{meme.likes_count}</span>
+                        <span>{meme.likesCount}</span>
                       </Button>
                     </AuthDialog>
                   )}
                   <Button variant="ghost" size="lg" className="gap-2">
                     <MessageCircle className="h-5 w-5" />
-                    <span>{meme.comments_count}</span>
+                    <span>{meme.commentsCount}</span>
                   </Button>
                   <Button variant="ghost" size="lg" onClick={handleShare}>
                     <Share2 className="h-5 w-5" />

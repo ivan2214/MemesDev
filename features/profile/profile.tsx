@@ -7,22 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MemeCard } from "@/shared/components/meme-card";
-
-interface Meme {
-  id: string;
-  title: string;
-  description?: string;
-  image_url: string;
-  tags?: string[];
-  likes_count: number;
-  comments_count: number;
-  created_at: string;
-  user: {
-    id: string;
-    name: string;
-  };
-  is_liked?: boolean;
-}
+import type { Meme } from "@/types/meme";
 
 interface UserProfile {
   id: string;
@@ -192,7 +177,7 @@ export function ProfilePage({ userId }: { userId: string }) {
                   key={meme.id}
                   meme={meme}
                   onLike={handleLike}
-                  isLiked={meme.is_liked}
+                  isLiked={meme.isLiked}
                 />
               ))}
             </div>
@@ -214,7 +199,7 @@ export function ProfilePage({ userId }: { userId: string }) {
                   key={meme.id}
                   meme={meme}
                   onLike={handleLike}
-                  isLiked={meme.is_liked}
+                  isLiked={meme.isLiked}
                 />
               ))}
             </div>

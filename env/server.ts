@@ -24,6 +24,10 @@ export const env = createEnv({
     GITHUB_CLIENT_SECRET: z.string(),
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
+
+    EMAIL_FROM: z.string(),
+    EMAIL_USER: z.string(),
+    EMAIL_PASS: z.string(),
   },
   experimental__runtimeEnv: process.env,
   emptyStringAsUndefined: true,

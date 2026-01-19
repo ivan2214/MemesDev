@@ -1,8 +1,11 @@
+import { passkeyClient } from "@better-auth/passkey/client";
+import { magicLinkClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { env } from "@/env/client";
+
 export const authClient = createAuthClient({
-  /** The base URL of the server (optional if you're using the same domain) */
   baseURL: env.NEXT_PUBLIC_APP_URL,
+  plugins: [magicLinkClient(), passkeyClient()],
 });
 
-export const { signIn, signUp, signOut, useSession } = authClient;
+export const { signIn, signOut, signUp, useSession } = authClient;

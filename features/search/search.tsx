@@ -8,22 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { MemeCard } from "@/shared/components/meme-card";
-
-interface Meme {
-  id: string;
-  title: string;
-  description?: string;
-  image_url: string;
-  tags?: string[];
-  likes_count: number;
-  comments_count: number;
-  created_at: string;
-  user: {
-    id: string;
-    name: string;
-  };
-  is_liked?: boolean;
-}
+import type { Meme } from "@/types/meme";
 
 export function SearchPage() {
   const searchParams = useSearchParams();
@@ -134,7 +119,7 @@ export function SearchPage() {
                   key={meme.id}
                   meme={meme}
                   onLike={handleLike}
-                  isLiked={meme.is_liked}
+                  isLiked={meme.isLiked}
                 />
               ))}
             </div>

@@ -1,8 +1,16 @@
 "use client";
 
+import { Key, Loader2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -13,11 +21,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { signIn, signUp, useSession } from "@/lib/auth/auth-client";
+import { signIn, useSession } from "@/lib/auth/auth-client";
+import { cn } from "@/lib/utils";
 
 export function AuthDialog({ children }: { children: React.ReactElement }) {
   const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -25,153 +35,169 @@ export function AuthDialog({ children }: { children: React.ReactElement }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-balance">
-            Welcome to DevMemes
+            Bienvenido a DevMemes
           </DialogTitle>
           <DialogDescription className="text-pretty">
-            Sign in to upload memes, like content, and join the community
+            Inicia sesión para subir memes, dar me gusta al contenido y unirte a
+            la comunidad
           </DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
-          <TabsContent value="signin">
-            <SignInForm onSuccess={() => setOpen(false)} />
-          </TabsContent>
-          <TabsContent value="signup">
-            <SignUpForm onSuccess={() => setOpen(false)} />
-          </TabsContent>
-        </Tabs>
+        <Card className="max-w-md border-none bg-background">
+          <CardHeader>
+            <CardTitle className="text-lg md:text-xl">Iniciar Sesión</CardTitle>
+            <CardDescription className="text-xs md:text-sm">
+              Introduce tu correo electrónico a continuación para acceder a tu
+              cuenta
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Correo electrónico</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@ejemplo.com"
+                  required
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                  }}
+                  value={email}
+                />
+                <Button
+                  disabled={loading}
+                  className="gap-2"
+                  onClick={async () => {
+                    await signIn.magicLink({
+                      email,
+                      fetchOptions: {
+                        onRequest: () => {
+                          setLoading(true);
+                        },
+                        onResponse: () => {
+                          setLoading(false);
+                        },
+                      },
+                    });
+                  }}
+                >
+                  {loading ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    "Iniciar sesión con Magic Link"
+                  )}
+                </Button>
+              </div>
+              <Button
+                variant="secondary"
+                disabled={loading}
+                className="gap-2"
+                onClick={async () => {
+                  await signIn.passkey({
+                    fetchOptions: {
+                      onRequest: () => {
+                        setLoading(true);
+                      },
+                      onResponse: () => {
+                        setLoading(false);
+                      },
+                    },
+                  });
+                }}
+              >
+                <Key size={16} />
+                Iniciar sesión con Passkey
+              </Button>
+              <div
+                className={cn(
+                  "flex w-full items-center gap-2",
+                  "flex-col justify-between",
+                )}
+              >
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={loading}
+                  onClick={async () => {
+                    await signIn.social({
+                      provider: "google",
+                      callbackURL: "/dashboard",
+                      fetchOptions: {
+                        onRequest: () => {
+                          setLoading(true);
+                        },
+                        onResponse: () => {
+                          setLoading(false);
+                        },
+                      },
+                    });
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 256 262"
+                  >
+                    <title>Google</title>
+                    <path
+                      fill="#4285F4"
+                      d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622l38.755 30.023l2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"
+                    ></path>
+                    <path
+                      fill="#34A853"
+                      d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055c-34.523 0-63.824-22.773-74.269-54.25l-1.531.13l-40.298 31.187l-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"
+                    ></path>
+                    <path
+                      fill="#FBBC05"
+                      d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82c0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602z"
+                    ></path>
+                    <path
+                      fill="#EB4335"
+                      d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"
+                    ></path>
+                  </svg>
+                  Iniciar sesión con Google
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={loading}
+                  onClick={async () => {
+                    await signIn.social({
+                      provider: "github",
+                      callbackURL: "/dashboard",
+                      fetchOptions: {
+                        onRequest: () => {
+                          setLoading(true);
+                        },
+                        onResponse: () => {
+                          setLoading(false);
+                        },
+                      },
+                    });
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                  >
+                    <title>GitHub</title>
+                    <path
+                      fill="currentColor"
+                      d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5c.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34c-.46-1.16-1.11-1.47-1.11-1.47c-.91-.62.07-.6.07-.6c1 .07 1.53 1.03 1.53 1.03c.87 1.52 2.34 1.07 2.91.83c.09-.65.35-1.09.63-1.34c-2.22-.25-4.55-1.11-4.55-4.92c0-1.11.38-2 1.03-2.71c-.1-.25-.45-1.29.1-2.64c0 0 .84-.27 2.75 1.02c.79-.22 1.65-.33 2.5-.33s1.71.11 2.5.33c1.91-1.29 2.75-1.02 2.75-1.02c.55 1.35.2 2.39.1 2.64c.65.71 1.03 1.6 1.03 2.71c0 3.82-2.34 4.66-4.57 4.91c.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2"
+                    ></path>
+                  </svg>
+                  Iniciar sesión con Github
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function SignInForm({ onSuccess }: { onSuccess: () => void }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const result = await signIn.email({ email, password });
-      if (result.error) {
-        setError(result.error.message || "Failed to sign in");
-      } else {
-        onSuccess();
-      }
-    } catch (err) {
-      console.error("Failed to sign in:", err);
-      setError("An unexpected error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-      <div className="space-y-2">
-        <Label htmlFor="signin-email">Email</Label>
-        <Input
-          id="signin-email"
-          type="email"
-          placeholder="dev@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="signin-password">Password</Label>
-        <Input
-          id="signin-password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
-      {error && <p className="text-destructive text-sm">{error}</p>}
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Signing in..." : "Sign In"}
-      </Button>
-    </form>
-  );
-}
-
-function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const result = await signUp.email({ email, password, name });
-      if (result.error) {
-        setError(result.error.message || "Failed to sign up");
-      } else {
-        onSuccess();
-      }
-    } catch (err) {
-      console.error("Failed to sign up:", err);
-      setError("An unexpected error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-      <div className="space-y-2">
-        <Label htmlFor="signup-name">Name</Label>
-        <Input
-          id="signup-name"
-          type="text"
-          placeholder="Your name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="signup-email">Email</Label>
-        <Input
-          id="signup-email"
-          type="email"
-          placeholder="dev@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="signup-password">Password</Label>
-        <Input
-          id="signup-password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={8}
-        />
-      </div>
-      {error && <p className="text-destructive text-sm">{error}</p>}
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Creating account..." : "Sign Up"}
-      </Button>
-    </form>
   );
 }
 

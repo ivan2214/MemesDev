@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { db } from "@/db";
 import { commentsTable, likesTable, memesTable, userTable } from "@/db/schemas";
 import { auth } from "@/lib/auth";
+import type { Meme } from "@/types/meme";
 
 export async function getUserProfile(userId: string) {
   const users = await db
@@ -48,22 +49,26 @@ export async function getUserProfile(userId: string) {
   return { user: users[0], stats };
 }
 
-export async function getUserMemes(userId: string, offset = 0, limit = 12) {
+export async function getUserMemes(
+  userId: string,
+  offset = 0,
+  limit = 12,
+): Promise<{ memes: Meme[] }> {
   const session = await auth.api.getSession({ headers: await headers() });
   const currentUserId = session?.user?.id;
 
   const memes = await db
     .select({
       id: memesTable.id,
-      title: memesTable.title,
-      description: memesTable.description,
       imageUrl: memesTable.imageUrl,
       tags: memesTable.tags,
       likesCount: memesTable.likesCount,
       commentsCount: memesTable.commentsCount,
       createdAt: memesTable.createdAt,
-      userId: userTable.id,
-      userName: userTable.name,
+      user: {
+        id: userTable.id,
+        name: userTable.name,
+      },
       isLiked: currentUserId
         ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${currentUserId})`
         : sql<boolean>`false`,
@@ -82,19 +87,19 @@ export async function getUserLikedMemes(
   userId: string,
   offset = 0,
   limit = 12,
-) {
+): Promise<{ memes: Meme[] }> {
   const memes = await db
     .select({
       id: memesTable.id,
-      title: memesTable.title,
-      description: memesTable.description,
       imageUrl: memesTable.imageUrl,
       tags: memesTable.tags,
       likesCount: memesTable.likesCount,
       commentsCount: memesTable.commentsCount,
       createdAt: memesTable.createdAt,
-      userId: userTable.id,
-      userName: userTable.name,
+      user: {
+        id: userTable.id,
+        name: userTable.name,
+      },
       isLiked: sql<boolean>`true`,
     })
     .from(memesTable)
