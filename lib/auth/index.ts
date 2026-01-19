@@ -9,3 +9,6 @@ export const auth = betterAuth({
   }),
   plugins: [nextCookies()], // make sure this is the last plugin in the array
 });
+
+export type Session = typeof auth.$Infer.Session;
+export type User = typeof auth.$Infer.Session.user;

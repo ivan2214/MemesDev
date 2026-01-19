@@ -1,9 +1,11 @@
-import { Uploader } from "@/components/uploader";
+import { HomePage } from "@/features/home/home";
+import { Header } from "@/shared/components/header";
 
 export default function Page() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center">
-      <Uploader />
-    </main>
+    <>
+      <Header />
+      <HomePage />
+    </>
   );
 }
