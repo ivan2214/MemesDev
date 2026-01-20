@@ -1,7 +1,7 @@
 "use client";
 
 import { Search as SearchIcon, X } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MemeCard } from "@/shared/components/meme-card";
@@ -31,7 +31,6 @@ export function SearchPage({
   initialSort?: SortType;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [query, setQuery] = useState(initialQuery);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
@@ -213,7 +212,7 @@ export function SearchPage({
                 size="sm"
                 variant={selectedTag === tag ? "default" : "secondary"}
               >
-                {tag}
+                {tag.charAt(0).toUpperCase() + tag.slice(1)}
               </Button>
             ))}
           </div>
