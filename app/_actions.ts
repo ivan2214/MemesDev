@@ -1,6 +1,6 @@
 "use server";
 
-import { desc, sql } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { likesTable, memesTable } from "@/db/schemas";
@@ -32,13 +32,14 @@ export async function getMemes(
           tag: true,
         },
       },
-    },
-    extras: {
-      isLiked: userId
-        ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`.as(
-            "isLocked",
-          )
-        : sql<boolean>`false`.as("isLiked"),
+      likes: userId
+        ? {
+            where: eq(likesTable.userId, userId),
+            columns: {
+              userId: true,
+            },
+          }
+        : undefined,
     },
   });
 
@@ -53,7 +54,7 @@ export async function getMemes(
     commentsCount: meme.commentsCount,
     createdAt: meme.createdAt,
     user: meme.user,
-    isLiked: meme.isLiked,
+    isLiked: meme.likes?.length > 0,
   }));
 
   return { memes };

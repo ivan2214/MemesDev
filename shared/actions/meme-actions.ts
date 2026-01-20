@@ -1,16 +1,11 @@
 "use server";
 import { deleteObject } from "@better-upload/server/helpers";
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import {
-  commentsTable,
-  likesTable,
-  memesTable,
-  user as userTable,
-} from "@/db/schemas";
+import { commentsTable, likesTable, memesTable } from "@/db/schemas";
 import { env } from "@/env/server";
 import { auth } from "@/lib/auth";
 import { s3 } from "@/lib/s3";
@@ -26,22 +21,27 @@ export async function toggleLike(memeId: string) {
   const userId = session.user.id;
 
   // Check if already liked
-  const existingLike = await db
-    .select()
-    .from(likesTable)
-    .where(and(eq(likesTable.memeId, memeId), eq(likesTable.userId, userId)))
-    .limit(1);
+  const existingLike = await db.query.likesTable.findFirst({
+    where: and(eq(likesTable.memeId, memeId), eq(likesTable.userId, userId)),
+  });
 
-  if (existingLike.length > 0) {
+  if (existingLike) {
     // Unlike
     await db
       .delete(likesTable)
       .where(and(eq(likesTable.memeId, memeId), eq(likesTable.userId, userId)));
 
-    await db
-      .update(memesTable)
-      .set({ likesCount: sql`${memesTable.likesCount} - 1` })
-      .where(eq(memesTable.id, memeId));
+    const meme = await db.query.memesTable.findFirst({
+      where: eq(memesTable.id, memeId),
+      columns: { likesCount: true },
+    });
+
+    if (meme) {
+      await db
+        .update(memesTable)
+        .set({ likesCount: Math.max(0, meme.likesCount - 1) })
+        .where(eq(memesTable.id, memeId));
+    }
 
     return { liked: false };
   } else {
@@ -51,10 +51,17 @@ export async function toggleLike(memeId: string) {
       userId,
     });
 
-    await db
-      .update(memesTable)
-      .set({ likesCount: sql`${memesTable.likesCount} + 1` })
-      .where(eq(memesTable.id, memeId));
+    const meme = await db.query.memesTable.findFirst({
+      where: eq(memesTable.id, memeId),
+      columns: { likesCount: true },
+    });
+
+    if (meme) {
+      await db
+        .update(memesTable)
+        .set({ likesCount: meme.likesCount + 1 })
+        .where(eq(memesTable.id, memeId));
+    }
 
     return { liked: true };
   }
@@ -63,22 +70,24 @@ export async function toggleLike(memeId: string) {
 export async function getComments(
   memeId: string,
 ): Promise<{ comments: Comment[] }> {
-  const comments = await db
-    .select({
-      id: commentsTable.id,
-      content: commentsTable.content,
-      createdAt: commentsTable.createdAt,
-
+  const comments = await db.query.commentsTable.findMany({
+    where: eq(commentsTable.memeId, memeId),
+    orderBy: desc(commentsTable.createdAt),
+    with: {
       user: {
-        id: userTable.id,
-        name: userTable.name,
-        image: userTable.image,
+        columns: {
+          id: true,
+          name: true,
+          image: true,
+        },
       },
-    })
-    .from(commentsTable)
-    .innerJoin(userTable, eq(commentsTable.userId, userTable.id))
-    .where(eq(commentsTable.memeId, memeId))
-    .orderBy(desc(commentsTable.createdAt));
+    },
+    columns: {
+      id: true,
+      content: true,
+      createdAt: true,
+    },
+  });
 
   return { comments };
 }
@@ -99,10 +108,17 @@ export async function addComment(memeId: string, content: string) {
     })
     .returning();
 
-  await db
-    .update(memesTable)
-    .set({ commentsCount: sql`${memesTable.commentsCount} + 1` })
-    .where(eq(memesTable.id, memeId));
+  const meme = await db.query.memesTable.findFirst({
+    where: eq(memesTable.id, memeId),
+    columns: { commentsCount: true },
+  });
+
+  if (meme) {
+    await db
+      .update(memesTable)
+      .set({ commentsCount: meme.commentsCount + 1 })
+      .where(eq(memesTable.id, memeId));
+  }
 
   revalidatePath(`/meme/${memeId}`);
 

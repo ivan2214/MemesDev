@@ -1,8 +1,18 @@
 import { relations } from "drizzle-orm";
-import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  json,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
+import { categoriesTable } from "./categories-table";
 import { commentsTable } from "./comments-table";
 import { likesTable } from "./likes-table";
 import { memesTable } from "./memes-table";
+import { userTagsTable } from "./tags-table";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -10,6 +20,10 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  imageKey: text("image_key").unique().notNull(),
+  bio: text("bio"),
+  socials: json("socials").$type<{ platform: string; url: string }[]>(),
+  categoryId: uuid("category_id").references(() => categoriesTable.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -76,12 +90,17 @@ export const verification = pgTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ many, one }) => ({
   sessions: many(session),
   accounts: many(account),
   memes: many(memesTable),
   likes: many(likesTable),
   comments: many(commentsTable),
+  tags: many(userTagsTable),
+  category: one(categoriesTable, {
+    fields: [user.categoryId],
+    references: [categoriesTable.id],
+  }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

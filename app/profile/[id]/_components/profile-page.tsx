@@ -9,6 +9,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/shared/components/ui/avatar";
+import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
 import { Spinner } from "@/shared/components/ui/spinner";
 import {
@@ -164,10 +165,52 @@ export function ProfilePage({
           )}
 
           <div className="flex-1 text-center sm:text-left">
-            <h1 className="mb-2 text-balance font-bold text-3xl">
-              {profile.name}
-            </h1>
-            <p className="mb-4 text-muted-foreground">{profile.email}</p>
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+              <h1 className="text-balance font-bold text-3xl">
+                {profile.name}
+              </h1>
+              {profile.category && (
+                <Badge variant="secondary" className="text-sm">
+                  {profile.category}
+                </Badge>
+              )}
+            </div>
+
+            <p className="mb-2 text-muted-foreground">{profile.email}</p>
+
+            {profile.bio && (
+              <p className="mb-4 max-w-xl text-center text-sm sm:text-left">
+                {profile.bio}
+              </p>
+            )}
+
+            {profile.tags && profile.tags.length > 0 && (
+              <div className="mb-4 flex flex-wrap justify-center gap-2 sm:justify-start">
+                {profile.tags.map((tag) => (
+                  <Badge key={tag} variant="outline">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {profile.socials && profile.socials.length > 0 && (
+              <div className="mb-4 flex flex-wrap justify-center gap-3 sm:justify-start">
+                {profile.socials.map((social) => (
+                  <a
+                    key={social.url}
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-primary text-sm hover:underline"
+                  >
+                    {/* Maybe try to match icon? For now just text/link */}
+                    {social.platform || "Link"}
+                  </a>
+                ))}
+              </div>
+            )}
+
             <div className="flex flex-wrap justify-center gap-6 sm:justify-start">
               <div className="flex items-center gap-2">
                 <ImageIcon className="h-5 w-5 text-muted-foreground" />

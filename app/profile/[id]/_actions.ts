@@ -1,6 +1,6 @@
 "use server";
 
-import { desc, eq, sql } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { likesTable, memesTable, user as userTable } from "@/db/schemas";
@@ -11,49 +11,51 @@ import type { UserProfile } from "@/types/profile";
 export async function getUserProfile(userId: string): Promise<{
   user?: UserProfile | null;
 }> {
-  const users = await db
-    .select({
-      id: userTable.id,
-      name: userTable.name,
-      email: userTable.email,
-      image: userTable.image,
-      createdAt: userTable.createdAt,
-    })
-    .from(userTable)
-    .where(eq(userTable.id, userId))
-    .limit(1);
+  const userRecord = await db.query.user.findFirst({
+    where: eq(userTable.id, userId),
+    columns: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      createdAt: true,
+      bio: true,
+      socials: true,
+    },
+    with: {
+      tags: {
+        with: {
+          tag: true,
+        },
+      },
+      category: true,
+    },
+  });
 
-  if (!users[0]) {
+  if (!userRecord) {
     return { user: null };
   }
 
   // Get stats
   const memesCount = await db
-    .select({ count: sql<number>`count(*)` })
+    .select({ count: count() })
     .from(memesTable)
     .where(eq(memesTable.userId, userId));
 
   const likesCount = await db
-    .select({ count: sql<number>`count(*)` })
+    .select({ count: count() })
     .from(likesTable)
     .where(eq(likesTable.userId, userId));
 
-  /*   const commentsCountResult = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(commentsTable)
-    .where(eq(commentsTable.userId, userId)); */
-
   const stats = {
-    memesCount: Number(memesCount[0]?.count || 0),
-    likesCount: Number(likesCount[0]?.count || 0),
-    /* commentsCount: Number(commentsCountResult[0]?.count || 0), */
+    memesCount: memesCount[0]?.count || 0,
+    likesCount: likesCount[0]?.count || 0,
   };
 
   const user: UserProfile = {
-    ...users[0],
+    ...userRecord,
     memesCount: stats.memesCount,
     totalLikes: stats.likesCount,
-    /* commentsCount: stats.commentsCount, */
   };
 
   return { user };
@@ -67,28 +69,48 @@ export async function getUserMemes(
   const session = await auth.api.getSession({ headers: await headers() });
   const currentUserId = session?.user?.id;
 
-  const memes = await db
-    .select({
-      id: memesTable.id,
-      imageUrl: memesTable.imageUrl,
-      tags: memesTable.tags,
-      likesCount: memesTable.likesCount,
-      commentsCount: memesTable.commentsCount,
-      createdAt: memesTable.createdAt,
+  const memesData = await db.query.memesTable.findMany({
+    where: eq(memesTable.userId, userId),
+    orderBy: desc(memesTable.createdAt),
+    limit,
+    offset,
+    with: {
       user: {
-        id: userTable.id,
-        name: userTable.name,
+        columns: {
+          id: true,
+          name: true,
+          image: true,
+        },
       },
-      isLiked: currentUserId
-        ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${currentUserId})`
-        : sql<boolean>`false`,
-    })
-    .from(memesTable)
-    .innerJoin(userTable, eq(memesTable.userId, userTable.id))
-    .where(eq(memesTable.userId, userId))
-    .orderBy(desc(memesTable.createdAt))
-    .limit(limit)
-    .offset(offset);
+      category: true,
+      tags: {
+        with: {
+          tag: true,
+        },
+      },
+      likes: currentUserId
+        ? {
+            where: eq(likesTable.userId, currentUserId),
+            columns: {
+              userId: true,
+            },
+          }
+        : undefined,
+    },
+  });
+
+  const memes: Meme[] = memesData.map((meme) => ({
+    id: meme.id,
+    imageUrl: meme.imageUrl,
+    title: meme.title,
+    category: meme.category,
+    tags: meme.tags.map((mt) => mt.tag),
+    likesCount: meme.likesCount,
+    commentsCount: meme.commentsCount,
+    createdAt: meme.createdAt,
+    user: meme.user,
+    isLiked: meme.likes?.length > 0,
+  }));
 
   return { memes };
 }
@@ -98,27 +120,44 @@ export async function getUserLikedMemes(
   offset = 0,
   limit = 12,
 ): Promise<{ memes: Meme[] }> {
-  const memes = await db
-    .select({
-      id: memesTable.id,
-      imageUrl: memesTable.imageUrl,
-      tags: memesTable.tags,
-      likesCount: memesTable.likesCount,
-      commentsCount: memesTable.commentsCount,
-      createdAt: memesTable.createdAt,
-      user: {
-        id: userTable.id,
-        name: userTable.name,
+  const likesData = await db.query.likesTable.findMany({
+    where: eq(likesTable.userId, userId),
+    orderBy: desc(likesTable.createdAt),
+    limit,
+    offset,
+    with: {
+      meme: {
+        with: {
+          user: {
+            columns: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+          category: true,
+          tags: {
+            with: {
+              tag: true,
+            },
+          },
+        },
       },
-      isLiked: sql<boolean>`true`,
-    })
-    .from(memesTable)
-    .innerJoin(userTable, eq(memesTable.userId, userTable.id))
-    .innerJoin(likesTable, eq(likesTable.memeId, memesTable.id))
-    .where(eq(likesTable.userId, userId))
-    .orderBy(desc(likesTable.createdAt))
-    .limit(limit)
-    .offset(offset);
+    },
+  });
+
+  const memes: Meme[] = likesData.map(({ meme }) => ({
+    id: meme.id,
+    imageUrl: meme.imageUrl,
+    title: meme.title,
+    category: meme.category,
+    tags: meme.tags.map((mt) => mt.tag),
+    likesCount: meme.likesCount,
+    commentsCount: meme.commentsCount,
+    createdAt: meme.createdAt,
+    user: meme.user,
+    isLiked: true,
+  }));
 
   return { memes };
 }

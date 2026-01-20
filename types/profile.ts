@@ -1,3 +1,5 @@
+import type { Category, Tag } from "./meme";
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -6,4 +8,8 @@ export interface UserProfile {
   memesCount: number;
   totalLikes: number;
   image?: string | null;
+  bio?: string | null;
+  socials?: { platform: string; url: string }[] | null;
+  tags?: Tag[] | null;
+  category?: Category | null;
 }

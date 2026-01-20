@@ -13,7 +13,7 @@ const router: Router = {
     memes: route({
       multipleFiles: false,
       fileTypes: ["image/*"],
-      onBeforeUpload: async ({ file }) => {
+      onBeforeUpload: async () => {
         const user = await auth.api.getSession({
           headers: await headers(),
         });
@@ -26,9 +26,33 @@ const router: Router = {
         }
         return {
           objectInfo: {
-            key: `memes/${user.user.id}/${file.name}`,
+            key: `memes/${user.user.id}/${Date.now()}-meme`,
             metadata: {
               author: user.user.id,
+            },
+          },
+        };
+      },
+    }),
+    avatar: route({
+      multipleFiles: false,
+      fileTypes: ["image/*"],
+      maxFileSize: 5 * 1024 * 1024, // 5MB
+      onBeforeUpload: async () => {
+        const user = await auth.api.getSession({
+          headers: await headers(),
+        });
+
+        if (!user) {
+          throw new RejectUpload(
+            "Debes iniciar sesión para subir una imagen de perfil",
+          );
+        }
+        return {
+          objectInfo: {
+            key: `avatars/${user.user.id}/${Date.now()}-avatar`,
+            metadata: {
+              userId: user.user.id,
             },
           },
         };

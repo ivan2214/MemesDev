@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq, exists, ilike, or, type SQL, sql } from "drizzle-orm";
+import { and, desc, eq, exists, ilike, or, type SQL } from "drizzle-orm";
 
 import { headers } from "next/headers";
 import { db } from "@/db";
@@ -49,7 +49,7 @@ export async function getMemes({
               .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
               .where(
                 and(
-                  sql`${memeTagsTable.memeId} = "memesTable"."id"`,
+                  eq(memeTagsTable.memeId, memesTable.id),
                   ilike(tagsTable.name, `%${query.trim()}%`),
                 ),
               ),
@@ -68,7 +68,7 @@ export async function getMemes({
               .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
               .where(
                 and(
-                  sql`${memeTagsTable.memeId} = "memesTable"."id"`,
+                  eq(memeTagsTable.memeId, memesTable.id),
                   eq(tagsTable.slug, tag),
                 ),
               ),
@@ -85,7 +85,7 @@ export async function getMemes({
             .from(categoriesTable)
             .where(
               and(
-                sql`${categoriesTable.id} = "memesTable"."category_id"`,
+                eq(categoriesTable.id, memesTable.categoryId),
                 eq(categoriesTable.slug, category),
               ),
             ),
@@ -129,13 +129,14 @@ export async function getMemes({
             tag: true,
           },
         },
-      },
-      extras: {
-        isLiked: userId
-          ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = "memesTable"."id" AND ${likesTable.userId} = ${userId})`.as(
-              "isLiked",
-            )
-          : sql<boolean>`false`.as("isLiked"),
+        likes: userId
+          ? {
+              where: eq(likesTable.userId, userId),
+              columns: {
+                userId: true,
+              },
+            }
+          : undefined,
       },
     });
 
@@ -149,7 +150,7 @@ export async function getMemes({
       commentsCount: meme.commentsCount,
       createdAt: meme.createdAt,
       user: meme.user,
-      isLiked: meme.isLiked,
+      isLiked: meme.likes?.length > 0,
     }));
 
     return { memes };

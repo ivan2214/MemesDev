@@ -13,6 +13,7 @@ import {
   session,
   tagsTable,
   user,
+  userTagsTable,
   verification,
 } from "./schemas";
 
@@ -131,6 +132,7 @@ async function seed() {
     db.delete(commentsTable),
     db.delete(likesTable),
     db.delete(memeTagsTable),
+    db.delete(userTagsTable),
     db.delete(memesTable),
     db.delete(tagsTable),
     db.delete(categoriesTable),
@@ -207,6 +209,19 @@ async function seed() {
       email: faker.internet.email({ firstName, lastName }).toLowerCase(),
       emailVerified: true,
       image: faker.image.avatar(),
+      imageKey: faker.string.uuid(),
+      bio: faker.lorem.sentence(),
+      socials: [
+        {
+          platform: "Twitter",
+          url: `https://twitter.com/${firstName}${lastName}`,
+        },
+        {
+          platform: "GitHub",
+          url: `https://github.com/${firstName}${lastName}`,
+        },
+      ],
+      categoryId: faker.helpers.arrayElement(categoryIds),
       createdAt: faker.date.past({ years: 1 }),
       updatedAt: new Date(),
     };
@@ -244,6 +259,27 @@ async function seed() {
         memeTags.push({
           id: faker.string.uuid(),
           memeId: meme.id,
+          tagId,
+        });
+      }
+    }
+  }
+
+  // Crear relaciones user-tags (1-3 tags por usuario)
+  const userTagsSet = new Set<string>();
+  const userTags: { id: string; userId: string; tagId: string }[] = [];
+
+  for (const user of users) {
+    const numTags = faker.number.int({ min: 1, max: 3 });
+    const selectedTagIds = faker.helpers.arrayElements(tagIds, numTags);
+
+    for (const tagId of selectedTagIds) {
+      const pairKey = `${user.id}-${tagId}`;
+      if (!userTagsSet.has(pairKey)) {
+        userTagsSet.add(pairKey);
+        userTags.push({
+          id: faker.string.uuid(),
+          userId: user.id,
           tagId,
         });
       }
@@ -315,7 +351,6 @@ async function seed() {
   await Promise.all([
     batchInsert(categoriesTable, categories, 100),
     batchInsert(tagsTable, allTags, 100),
-    batchInsert(user, users, 100),
   ]);
   performance.mark("insert-categories-tags-end");
   performance.measure(
@@ -327,8 +362,17 @@ async function seed() {
     "insert-categories-tags",
   )[0].duration;
   console.log(
-    `  ⏱️  Categories, Tags & Users inserted in ${(categoriesTagsDuration / 1000).toFixed(2)}s`,
+    `  ⏱️  Categories & Tags inserted in ${(categoriesTagsDuration / 1000).toFixed(2)}s`,
   );
+
+  // Luego insertar usuarios (dependen de categorias)
+  performance.mark("insert-users-start");
+  await batchInsert(user, users, 100);
+  performance.mark("insert-users-end");
+  performance.measure("insert-users", "insert-users-start", "insert-users-end");
+  const usersDuration =
+    performance.getEntriesByName("insert-users")[0].duration;
+  console.log(`  ⏱️  Users inserted in ${(usersDuration / 1000).toFixed(2)}s`);
 
   // Luego insertar memes (dependen de users y categories)
   performance.mark("insert-memes-start");
@@ -343,6 +387,7 @@ async function seed() {
   performance.mark("insert-relations-start");
   await Promise.all([
     batchInsert(memeTagsTable, memeTags, 100),
+    batchInsert(userTagsTable, userTags, 100),
     batchInsert(likesTable, likes, 100),
     batchInsert(commentsTable, comments, 100),
   ]);

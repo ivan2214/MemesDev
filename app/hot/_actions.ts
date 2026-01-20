@@ -1,6 +1,6 @@
 "use server";
 
-import { desc, gte, sql } from "drizzle-orm";
+import { desc, eq, gte } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { likesTable, memesTable } from "@/db/schemas";
@@ -58,12 +58,7 @@ export async function getHotMemes({
     // Construir order by clause
     const orderBy =
       sort === "hot"
-        ? [
-            desc(
-              sql`${memesTable.likesCount} + ${memesTable.commentsCount} * 2`,
-            ),
-            desc(memesTable.createdAt),
-          ]
+        ? [desc(memesTable.likesCount), desc(memesTable.createdAt)]
         : [desc(memesTable.createdAt)];
 
     const memesData = await db.query.memesTable.findMany({
@@ -85,13 +80,14 @@ export async function getHotMemes({
             tag: true,
           },
         },
-      },
-      extras: {
-        isLiked: userId
-          ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`.as(
-              "isLiked",
-            )
-          : sql<boolean>`false`.as("isLiked"),
+        likes: userId
+          ? {
+              where: eq(likesTable.userId, userId),
+              columns: {
+                userId: true,
+              },
+            }
+          : undefined,
       },
     });
 
@@ -105,7 +101,7 @@ export async function getHotMemes({
       commentsCount: meme.commentsCount,
       createdAt: meme.createdAt,
       user: meme.user,
-      isLiked: meme.isLiked,
+      isLiked: meme.likes?.length > 0,
     }));
 
     return { memes };

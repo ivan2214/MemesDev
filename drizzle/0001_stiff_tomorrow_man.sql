@@ -1,1 +1,0 @@
-ALTER TABLE "memes" ADD COLUMN "image_key" text NOT NULL;
