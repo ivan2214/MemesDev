@@ -3,6 +3,7 @@
 import { LogInIcon, LogOut, UploadIcon, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth/auth-client";
 import { AuthDialog, useAuth } from "@/shared/components/auth-dialog";
 import { Button } from "@/shared/components/ui/button";
@@ -17,10 +18,12 @@ import { SidebarTrigger } from "@/shared/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export function Header() {
+  const router = useRouter();
   const { user, isAuthenticated } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
+    router.refresh();
   };
 
   return (

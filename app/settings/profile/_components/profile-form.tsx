@@ -13,6 +13,8 @@ import {
   type ProfileSchema,
   profileSchema,
 } from "@/app/settings/profile/_validators";
+import { searchCategories } from "@/app/upload/actions";
+import { AsyncSelect } from "@/shared/components/async-select";
 import { Button } from "@/shared/components/ui/button";
 import {
   Field,
@@ -34,6 +36,7 @@ import {
 } from "@/shared/components/ui/shadcn-io/tags";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { UploadDropzone } from "@/shared/components/ui/upload-dropzone";
+import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 import type { UserSettings } from "../_types";
 
@@ -56,7 +59,7 @@ export function ProfileForm({ initialData, allTags }: ProfileFormProps) {
     defaultValues: {
       name: initialData?.name || "",
       bio: initialData?.bio || "",
-      category: initialData?.category?.name,
+      category: initialData?.category?.name || "",
       tags: initialData?.tags || [],
       socials: initialData?.socials || [],
       imageKey: initialData?.imageKey || "",
@@ -250,17 +253,43 @@ export function ProfileForm({ initialData, allTags }: ProfileFormProps) {
         </form.Field>
 
         <form.Field name="category">
-          {(field) => (
-            <Field>
-              <FieldLabel htmlFor={field.name}>Categoría del Perfil</FieldLabel>
-              <Input
-                id={field.name}
-                placeholder="Ej. Creador de Memes, Curador..."
-                value={field.state.value || ""}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-            </Field>
-          )}
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldLabel htmlFor={field.name}>Categoría</FieldLabel>
+                <AsyncSelect<Category>
+                  fetcher={searchCategories}
+                  renderOption={(category) => (
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <div className="font-medium">{category.name}</div>
+                      </div>
+                    </div>
+                  )}
+                  getOptionValue={(category) => category.slug}
+                  getDisplayValue={(category) => (
+                    <div className="flex items-center gap-2 text-left">
+                      <div className="flex flex-col leading-tight">
+                        <div className="font-medium">{category.name}</div>
+                      </div>
+                    </div>
+                  )}
+                  notFound={
+                    <div className="py-6 text-center text-sm">
+                      No se encontraron categorías
+                    </div>
+                  }
+                  label="Categoría"
+                  placeholder="Selecciona una categoría"
+                  value={field.state.value}
+                  onChange={field.handleChange}
+                  triggerClassName="w-full"
+                />
+              </Field>
+            );
+          }}
         </form.Field>
 
         {/* Tags */}
@@ -411,17 +440,8 @@ export function ProfileForm({ initialData, allTags }: ProfileFormProps) {
       <div className="flex cursor-pointer justify-end gap-4">
         <Button
           className="cursor-pointer"
-          type="button"
-          variant="outline"
-          onClick={() => form.reset()}
-          disabled={form.state.isSubmitting}
-        >
-          Restablecer
-        </Button>
-        <Button
-          className="cursor-pointer"
           type="submit"
-          disabled={form.state.isSubmitting}
+          disabled={form.state.isSubmitting || uploader.isPending}
         >
           {form.state.isSubmitting ? "Guardando..." : "Guardar Cambios"}
         </Button>

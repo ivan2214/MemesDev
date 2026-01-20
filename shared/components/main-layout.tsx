@@ -1,4 +1,5 @@
 import type React from "react";
+import { db } from "@/db";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { Header } from "./header";
@@ -9,10 +10,22 @@ interface MainLayoutProps {
   children: React.ReactNode;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+export async function getCategories() {
+  const categories = await db.query.categoriesTable.findMany();
+  return categories;
+}
+
+export async function getBrowseTags() {
+  const browseTags = await db.query.tagsTable.findMany();
+  return browseTags;
+}
+
+export async function MainLayout({ children }: MainLayoutProps) {
+  const categories = await getCategories();
+  const browseTags = await getBrowseTags();
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar categories={categories} browseTags={browseTags} />
       <SidebarInset>
         <Header />
         <div className="flex justify-center gap-8 px-4 py-6 pb-20 md:pb-6">

@@ -10,7 +10,7 @@ export const profileSchema = z.object({
     .max(500, "La biografía no puede exceder los 500 caracteres")
     .default(""), // Quitar .optional()
   imageKey: z.string().default(""), // Quitar .optional()
-  category: z.string().optional(), // Quitar .optional()
+  category: z.string().min(1, "Escriba una categoria").optional(),
   tags: z.array(z.custom<TagForForm>()).nullish(), // Quitar .optional()
   socials: z
     .array(

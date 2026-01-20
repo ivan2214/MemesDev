@@ -58,6 +58,7 @@ const formSchema = z.object({
   title: z.string().min(1, "Escriba un titulo").optional(),
   category: z.string().min(1, "Escriba una categoria").optional(),
 });
+
 export function UploadMemeForm() {
   const [newTag, setNewTag] = useState<TagForForm | null>(null);
 
