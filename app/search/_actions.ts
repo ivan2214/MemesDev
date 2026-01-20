@@ -21,7 +21,9 @@ import {
   tagsTable,
 } from "@/db/schemas";
 import { auth } from "@/lib/auth";
-import type { Meme, Tag } from "@/types/meme";
+
+import type { Meme } from "@/types/meme";
+import type { Tag } from "@/types/tag";
 
 export type SortType = "recent" | "likes" | "comments";
 
