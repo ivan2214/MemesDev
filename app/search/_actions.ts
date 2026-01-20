@@ -1,16 +1,7 @@
 "use server";
 
-import {
-  and,
-  desc,
-  eq,
-  exists,
-  ilike,
-  inArray,
-  or,
-  type SQL,
-  sql,
-} from "drizzle-orm";
+import { and, desc, eq, exists, ilike, or, type SQL, sql } from "drizzle-orm";
+
 import { headers } from "next/headers";
 import { db } from "@/db";
 import {
@@ -68,20 +59,22 @@ export async function getMemes({
     }
 
     if (tags.length > 0) {
-      filters.push(
-        exists(
-          db
-            .select()
-            .from(memeTagsTable)
-            .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
-            .where(
-              and(
-                sql`${memeTagsTable.memeId} = "memesTable"."id"`,
-                inArray(tagsTable.slug, tags),
+      for (const tag of tags) {
+        filters.push(
+          exists(
+            db
+              .select()
+              .from(memeTagsTable)
+              .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
+              .where(
+                and(
+                  sql`${memeTagsTable.memeId} = "memesTable"."id"`,
+                  eq(tagsTable.slug, tag),
+                ),
               ),
-            ),
-        ),
-      );
+          ),
+        );
+      }
     }
 
     if (category) {
