@@ -112,7 +112,7 @@ export function MemeDetail({ memeId, meme, comments }: MemeDetailProps) {
                   {meme.tags.map((tag) => (
                     <Link
                       key={tag.id}
-                      href={`/search?tag=${encodeURIComponent(tag.slug)}`}
+                      href={`/search?tags=${encodeURIComponent(tag.slug)}`}
                       className="rounded-full bg-secondary px-3 py-1 font-medium text-secondary-foreground text-sm transition-colors hover:bg-secondary/80"
                     >
                       #{tag.name}

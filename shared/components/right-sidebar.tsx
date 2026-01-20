@@ -9,7 +9,8 @@ import {
   getCategoryStyles,
   getIconByName,
 } from "@/shared/lib/tag-icons";
-import type { Category, Tag } from "@/types/meme";
+import type { Category } from "@/types/category";
+import type { Tag } from "@/types/tag";
 
 interface RightSidebarProps {
   categories?: Category[];
@@ -104,7 +105,7 @@ export function RightSidebar({ categories, popularTags }: RightSidebarProps) {
         </CardHeader>
         <CardContent className="flex flex-wrap gap-1.5 p-4">
           {displayTags.map((tag) => (
-            <Link key={tag.id} href={`/search?tag=${tag.slug}`}>
+            <Link key={tag.id} href={`/search?tags=${tag.slug}`}>
               <Badge
                 variant="secondary"
                 className="cursor-pointer bg-secondary/50 text-xs transition-colors hover:bg-primary/20 hover:text-primary"

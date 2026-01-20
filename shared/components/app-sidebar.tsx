@@ -36,7 +36,8 @@ import {
   getIconByName,
   getTagIcon,
 } from "@/shared/lib/tag-icons";
-import type { Category, Tag } from "@/types/meme";
+import type { Category } from "@/types/category";
+import type { Tag } from "@/types/tag";
 
 const navItems = [
   { href: "/", label: "Inicio", icon: Home },
@@ -142,7 +143,7 @@ export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
                       <SidebarMenuItem key={tag.id}>
                         <SidebarMenuButton className="py-0">
                           <Link
-                            href={`/search?tag=${tag.slug}`}
+                            href={`/search?tags=${tag.slug}`}
                             className="flex h-full w-full items-center gap-2"
                           >
                             <TagIcon className="h-4 w-4" />
