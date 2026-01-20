@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import type { SocialMediaPosting, WithContext } from "schema-dts";
 import { getComments } from "@/shared/actions/meme-actions";
 import { getMeme } from "./_actions";
 import { MemeDetail } from "./_components/meme-detail";
@@ -51,7 +52,7 @@ export default async function MemePage({
     notFound();
   }
 
-  const jsonLd = {
+  const jsonLd: WithContext<SocialMediaPosting> = {
     "@context": "https://schema.org",
     "@type": "SocialMediaPosting",
     headline: meme.title || "Untitled Meme",
@@ -64,12 +65,12 @@ export default async function MemePage({
     interactionStatistic: [
       {
         "@type": "InteractionCounter",
-        interactionType: "https://schema.org/LikeAction",
+        interactionType: { "@type": "LikeAction" },
         userInteractionCount: meme.likesCount,
       },
       {
         "@type": "InteractionCounter",
-        interactionType: "https://schema.org/CommentAction",
+        interactionType: { "@type": "CommentAction" },
         userInteractionCount: meme.commentsCount,
       },
     ],
@@ -79,7 +80,10 @@ export default async function MemePage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: <Used for JSON-LD>
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
       />
       <MemeDetail memeId={id} meme={meme} comments={comments} />
     </>
