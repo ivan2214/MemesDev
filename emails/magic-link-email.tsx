@@ -29,8 +29,7 @@ export function MagicLinkEmail({
 
 MagicLinkEmail.PreviewProps = {
   appName: "Memes Dev",
-  logoUrl:
-    "https://imgs.search.brave.com/z5-PYgqXAaQOoTCqgYu_e1jF5m_6xufn95YZndUGtAM/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tLm1l/ZGlhLWFtYXpvbi5j/b20vaW1hZ2VzL1Mv/YXBsdXMtbWVkaWEt/bGlicmFyeS1zZXJ2/aWNlLW1lZGlhLzFm/NWEwNGJkLWM4OTYt/NDY2ZC05NDYxLTAw/ZjU4MDllZWZhMS5f/X0NSMjUsMCwxMjAw/LDEyMDBfUFQwX1NY/MzAwX1YxX19fLmpw/Zw",
+  logoUrl: "https://memes-dev-prod.t3.storage.dev/logo.webp",
   expiresIn: "15 minutos",
   magicLinkUrl: `${env.APP_URL}/auth/magic?token=1234567890`,
 };
