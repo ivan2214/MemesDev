@@ -22,7 +22,7 @@ export async function updateProfile(data: ProfileSchema) {
 
   const validatedFields = profileSchema.parse(data);
 
-  const imageURLForS3 = env.S3_BUCKET_URL + validatedFields.imageKey;
+  const imageURLForS3 = `${env.S3_BUCKET_URL}/${validatedFields.imageKey}`;
 
   await db
     .update(user)
@@ -34,6 +34,8 @@ export async function updateProfile(data: ProfileSchema) {
     .where(eq(user.id, session.user.id));
 
   if (validatedFields.imageKey) {
+    console.log("imageKey", validatedFields.imageKey);
+    console.log("imageURLForS3", imageURLForS3);
     await db
       .update(user)
       .set({ imageKey: validatedFields.imageKey, image: imageURLForS3 })
