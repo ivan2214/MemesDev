@@ -1,6 +1,6 @@
 "use client";
 
-import { LogInIcon, LogOut, UploadIcon, User } from "lucide-react";
+import { GithubIcon, LogInIcon, LogOut, UploadIcon, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -44,6 +44,11 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link href="https://github.com/ivan2214/MemesDev">
+            <Button size="icon" variant="outline">
+              <GithubIcon className="h-4 w-4" />
+            </Button>
+          </Link>
           {isAuthenticated ? (
             <section className="flex items-center gap-2">
               {user ? (
