@@ -12,7 +12,6 @@ import {
 } from "@/db/schemas";
 import { env } from "@/env/server";
 import { auth } from "@/lib/auth";
-import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 
 type TagForForm = Omit<Tag, "createdAt" | "updatedAt">;
@@ -149,19 +148,4 @@ export async function uploadMeme({
   revalidatePath("/hot");
 
   return { success: true, memeId: meme.id };
-}
-
-export async function searchCategories(query?: string): Promise<Category[]> {
-  // If there's a search query, filter the categories
-  if (query) {
-    const lowercaseQuery = query.toLowerCase();
-    return db.query.categoriesTable.findMany({
-      where: ilike(categoriesTable.name, `%${lowercaseQuery}%`),
-    });
-  }
-
-  // Return first 10 users if no query
-  return db.query.categoriesTable.findMany({
-    limit: 10,
-  });
 }

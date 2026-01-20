@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { getAllTags } from "@/app/search/_actions";
-import { Header } from "@/shared/components/header";
 import { getUserSettings } from "./_actions";
 import { ProfileForm } from "./_components/profile-form";
 

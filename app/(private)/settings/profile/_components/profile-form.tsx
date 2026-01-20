@@ -8,12 +8,12 @@ import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
 import z from "zod";
-import { updateProfile } from "@/app/settings/profile/_actions";
+import { updateProfile } from "@/app/(private)/settings/profile/_actions";
 import {
   type ProfileSchema,
   profileSchema,
-} from "@/app/settings/profile/_validators";
-import { searchCategories } from "@/app/upload/actions";
+} from "@/app/(private)/settings/profile/_validators";
+import { searchCategories } from "@/shared/actions/category-actions";
 import { AsyncSelect } from "@/shared/components/async-select";
 import { Button } from "@/shared/components/ui/button";
 import {
