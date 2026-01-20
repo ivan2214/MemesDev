@@ -2,7 +2,7 @@ import {
   getUserLikedMemes,
   getUserMemes,
   getUserProfile,
-} from "@/features/profile/actions";
+} from "@/app/profile/[id]/actions";
 import { ProfilePage } from "@/features/profile/profile";
 import { Header } from "@/shared/components/header";
 
@@ -26,13 +26,10 @@ export default async function Page({ params }: { params: { id: string } }) {
   const { memes: likedMemes } = await getUserLikedMemes(id);
 
   return (
-    <>
-      <Header />
-      <ProfilePage
-        profile={profile}
-        userMemes={userMemes}
-        likedMemes={likedMemes}
-      />
-    </>
+    <ProfilePage
+      profile={profile}
+      userMemes={userMemes}
+      likedMemes={likedMemes}
+    />
   );
 }

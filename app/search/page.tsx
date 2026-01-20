@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { SearchPage } from "@/features/search/search";
-import { Header } from "@/shared/components/header";
+
 import Loading from "./loading";
 
 function SearchContent() {
@@ -9,11 +9,8 @@ function SearchContent() {
 
 export default function Page() {
   return (
-    <>
-      <Header />
-      <Suspense fallback={<Loading />}>
-        <SearchContent />
-      </Suspense>
-    </>
+    <Suspense fallback={<Loading />}>
+      <SearchContent />
+    </Suspense>
   );
 }

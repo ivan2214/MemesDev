@@ -5,4 +5,5 @@ export interface UserProfile {
   createdAt: Date;
   memesCount: number;
   totalLikes: number;
+  image?: string | null;
 }

@@ -12,6 +12,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+
+const links = [
+  { href: "/", label: "Inicio" },
+  { href: "/hot", label: "Memes mas populares" },
+  { href: "/search", label: "Buscar" },
+  { href: "/random", label: "Memes aleatorios" },
+];
 
 export function Header() {
   const { user, isAuthenticated } = useAuth();
@@ -34,30 +42,15 @@ export function Header() {
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
-          <Link
-            href="/"
-            className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
-          >
-            Home
-          </Link>
-          <Link
-            href="/hot"
-            className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
-          >
-            Hot
-          </Link>
-          <Link
-            href="/search"
-            className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
-          >
-            Search
-          </Link>
-          <Link
-            href="/random"
-            className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
-          >
-            Random
-          </Link>
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
 
         <div className="flex items-center gap-3">
@@ -66,25 +59,42 @@ export function Header() {
               <Link href="/upload">
                 <Button size="sm" className="gap-2">
                   <Upload className="h-4 w-4" />
-                  <span className="hidden sm:inline">Upload</span>
+                  <span className="hidden sm:inline">Subir un meme</span>
                 </Button>
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  className={"flex items-center gap-2 bg-transparent"}
+                  className={
+                    "flex cursor-pointer items-center gap-2 bg-transparent"
+                  }
                 >
-                  <User className="h-4 w-4" />
+                  {user?.image ? (
+                    <Avatar>
+                      <AvatarImage src={user.image} />
+                      <AvatarFallback>
+                        {user.name.split(" ")[0].slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <User className="h-4 w-4" />
+                  )}
                   <span className="hidden sm:inline">{user?.name}</span>
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
-                    <Link href={`/profile/${user?.id}`}>My Profile</Link>
+                  <DropdownMenuItem className="w-full cursor-pointer hover:bg-accent">
+                    <Link className="w-full" href={`/profile/${user?.id}`}>
+                      Mi perfil
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
+                  <DropdownMenuItem
+                    className="w-full cursor-pointer hover:bg-accent"
+                    onClick={handleSignOut}
+                    variant="destructive"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
+                    Salir
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

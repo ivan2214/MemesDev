@@ -1,9 +1,13 @@
 "use client";
 
-import { Calendar, Heart, ImageIcon } from "lucide-react";
+import { Calendar, Heart, ImageIcon, User } from "lucide-react";
 import { useState } from "react";
 import { MemeCard } from "@/shared/components/meme-card";
-import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/shared/components/ui/avatar";
 import { Card } from "@/shared/components/ui/card";
 import {
   Tabs,
@@ -41,11 +45,17 @@ export function ProfilePage({
     <div className="container mx-auto max-w-6xl px-4 py-8">
       <Card className="mb-8 p-8">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-          <Avatar className="h-24 w-24 border-4 border-primary/20">
-            <AvatarFallback className="font-bold text-4xl">
-              {profile.name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          {profile?.image ? (
+            <Avatar className="h-24 w-24 border-4 border-primary/20">
+              <AvatarImage src={profile.image} />
+              <AvatarFallback>
+                {profile.name.split(" ")[0].slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <User className="h-4 w-4" />
+          )}
+
           <div className="flex-1 text-center sm:text-left">
             <h1 className="mb-2 text-balance font-bold text-3xl">
               {profile.name}
@@ -67,7 +77,8 @@ export function ProfilePage({
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-muted-foreground" />
                 <span className="text-sm">
-                  Joined {new Date(profile.createdAt).toLocaleDateString()}
+                  Te registraste el
+                  {new Date(profile.createdAt).toLocaleDateString()}
                 </span>
               </div>
             </div>
@@ -77,8 +88,8 @@ export function ProfilePage({
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="mb-8 grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="uploads">Uploads</TabsTrigger>
-          <TabsTrigger value="liked">Liked</TabsTrigger>
+          <TabsTrigger value="uploads">Subidos</TabsTrigger>
+          <TabsTrigger value="liked">Me gustan</TabsTrigger>
         </TabsList>
 
         <TabsContent value="uploads">
@@ -97,7 +108,7 @@ export function ProfilePage({
             <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
               <ImageIcon className="h-16 w-16 text-muted-foreground/50" />
               <p className="text-lg text-muted-foreground">
-                No memes uploaded yet
+                No hay memes subidos todavía
               </p>
             </div>
           )}
@@ -119,7 +130,7 @@ export function ProfilePage({
             <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
               <Heart className="h-16 w-16 text-muted-foreground/50" />
               <p className="text-lg text-muted-foreground">
-                No liked memes yet
+                No has likeado todavía
               </p>
             </div>
           )}

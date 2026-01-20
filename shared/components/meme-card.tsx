@@ -2,17 +2,18 @@
 
 import { Heart, MessageCircle, Share2 } from "lucide-react";
 import Link from "next/link";
+import { toggleLikeMeme } from "@/app/hot/actions";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardFooter } from "@/shared/components/ui/card";
 import type { Meme } from "@/types/meme";
 
 interface MemeCardProps {
   meme: Meme;
-  onLike?: (memeId: string) => void;
+
   isLiked?: boolean;
 }
 
-export function MemeCard({ meme, onLike, isLiked }: MemeCardProps) {
+export function MemeCard({ meme, isLiked }: MemeCardProps) {
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -29,6 +30,14 @@ export function MemeCard({ meme, onLike, isLiked }: MemeCardProps) {
       navigator.clipboard.writeText(
         `${window.location.origin}/meme/${meme.id}`,
       );
+    }
+  };
+
+  const handleLike = async (memeId: string) => {
+    try {
+      await toggleLikeMeme(memeId);
+    } catch (error) {
+      console.error("[HotPage] Failed to like meme:", error);
     }
   };
 
@@ -51,7 +60,7 @@ export function MemeCard({ meme, onLike, isLiked }: MemeCardProps) {
             size="sm"
             variant="ghost"
             className={`gap-1.5 ${isLiked ? "text-red-500" : ""}`}
-            onClick={() => onLike?.(meme.id)}
+            onClick={() => handleLike?.(meme.id)}
           >
             <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
             <span>{meme.likesCount}</span>

@@ -59,29 +59,6 @@ export function SearchPage() {
     setSearchQuery(query);
   };
 
-  const handleLike = async (memeId: string) => {
-    try {
-      const response = await fetch("/api/memes/like", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memeId }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setMemes((prev) =>
-          prev.map((meme) =>
-            meme.id === memeId
-              ? { ...meme, is_liked: data.liked, likes_count: data.likes_count }
-              : meme,
-          ),
-        );
-      }
-    } catch (error) {
-      console.error("[v0] Failed to like meme:", error);
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -115,12 +92,7 @@ export function SearchPage() {
           {memes.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {memes.map((meme) => (
-                <MemeCard
-                  key={meme.id}
-                  meme={meme}
-                  onLike={handleLike}
-                  isLiked={meme.isLiked}
-                />
+                <MemeCard key={meme.id} meme={meme} isLiked={meme.isLiked} />
               ))}
             </div>
           ) : (
