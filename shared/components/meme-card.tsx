@@ -34,9 +34,10 @@ import { AuthDialog, useAuth } from "./auth-dialog";
 interface MemeCardProps {
   meme: Meme;
   isLiked?: boolean;
+  activeTags?: string[];
 }
 
-export function MemeCard({ meme, isLiked }: MemeCardProps) {
+export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
   const { user, isAuthenticated } = useAuth();
   const currentUserId = isAuthenticated ? user?.id : null;
   const [copied, setCopied] = useState(false);
@@ -175,7 +176,9 @@ export function MemeCard({ meme, isLiked }: MemeCardProps) {
             return (
               <Link key={tag.id} href={`/search?tag=${tag.slug}`}>
                 <Badge
-                  variant="secondary"
+                  variant={
+                    activeTags?.includes(tag.slug) ? "destructive" : "secondary"
+                  }
                   className="gap-1 bg-secondary/50 px-2 py-0.5 text-xs transition-colors hover:bg-primary/20 hover:text-primary"
                 >
                   <TagIcon className="h-3 w-3" />

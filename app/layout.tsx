@@ -10,10 +10,62 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "DevMemes - Programming Memes for Developers",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://devmemes.com",
+  ),
+  title: {
+    default: "DevMemes - Programming Memes for Developers",
+    template: "%s | DevMemes",
+  },
   description:
     "Discover and share the funniest programming memes. Upload, like, comment, and laugh with the developer community.",
-  generator: "v0.app",
+  keywords: [
+    "programming memes",
+    "developer humor",
+    "coding memes",
+    "software engineering",
+    "tech humor",
+    "web development",
+    "javascript memes",
+  ],
+  authors: [{ name: "DevMemes Team" }],
+  creator: "DevMemes",
+  publisher: "DevMemes",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName: "DevMemes",
+    title: "DevMemes - Programming Memes for Developers",
+    description:
+      "Discover and share the funniest programming memes. Upload, like, comment, and laugh with the developer community.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "DevMemes - Programming Memes",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DevMemes - Programming Memes for Developers",
+    description:
+      "Discover and share the funniest programming memes. Upload, like, comment, and laugh with the developer community.",
+    creator: "@devmemes",
+  },
   icons: {
     icon: [
       {

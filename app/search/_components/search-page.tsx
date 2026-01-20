@@ -132,19 +132,23 @@ export function SearchPage({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchQuery(query);
-    setSelectedTags([]);
+    // Remove clearing of selectedTags to support combined filters
+    // setSelectedTags([]);
     setOffset(0);
     setHasMore(true);
     updateUrl({
       newQuery: query,
       newSort: sort,
-      newTags: [],
+      newTags: selectedTags,
     });
     doSearch(query, 0, sort, selectedTags, true);
   };
 
   const handleTagClick = (tag: string) => {
-    const newTags = [...selectedTags, tag];
+    const newTags = selectedTags.includes(tag)
+      ? selectedTags.filter((t) => t !== tag)
+      : [...selectedTags, tag];
+
     setSelectedTags(newTags);
     setOffset(0);
     setHasMore(true);
@@ -267,7 +271,12 @@ export function SearchPage({
             <>
               <div className="flex flex-col gap-6">
                 {memes.map((meme) => (
-                  <MemeCard key={meme.id} meme={meme} isLiked={meme.isLiked} />
+                  <MemeCard
+                    activeTags={selectedTags}
+                    key={meme.id}
+                    meme={meme}
+                    isLiked={meme.isLiked}
+                  />
                 ))}
               </div>
 

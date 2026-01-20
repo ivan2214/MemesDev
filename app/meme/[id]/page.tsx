@@ -1,9 +1,47 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getComments } from "@/shared/actions/meme-actions";
 import { getMeme } from "./_actions";
 import { MemeDetail } from "./_components/meme-detail";
 
-export default async function MemePage({ params }: { params: { id: string } }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const meme = await getMeme(id);
+
+  if (!meme) {
+    return {
+      title: "Meme Not Found",
+      description: "The requested meme could not be found.",
+    };
+  }
+
+  return {
+    title: meme.title || "Untitled Meme",
+    description: `Check out this meme by ${meme.user.name}. ${meme.likesCount} likes, ${meme.commentsCount} comments.`,
+    openGraph: {
+      title: meme.title || "Untitled Meme",
+      description: `Check out this meme by ${meme.user.name}.`,
+      type: "article",
+      authors: [meme.user.name],
+      publishedTime: meme.createdAt.toISOString(),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: meme.title || "Untitled Meme",
+      description: `Check out this meme by ${meme.user.name}.`,
+    },
+  };
+}
+
+export default async function MemePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
 
   const meme = await getMeme(id);
@@ -13,5 +51,37 @@ export default async function MemePage({ params }: { params: { id: string } }) {
     notFound();
   }
 
-  return <MemeDetail memeId={id} meme={meme} comments={comments} />;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SocialMediaPosting",
+    headline: meme.title || "Untitled Meme",
+    image: [meme.imageUrl],
+    datePublished: meme.createdAt.toISOString(),
+    author: {
+      "@type": "Person",
+      name: meme.user.name,
+    },
+    interactionStatistic: [
+      {
+        "@type": "InteractionCounter",
+        interactionType: "https://schema.org/LikeAction",
+        userInteractionCount: meme.likesCount,
+      },
+      {
+        "@type": "InteractionCounter",
+        interactionType: "https://schema.org/CommentAction",
+        userInteractionCount: meme.commentsCount,
+      },
+    ],
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <MemeDetail memeId={id} meme={meme} comments={comments} />
+    </>
+  );
 }
