@@ -1,7 +1,7 @@
 import type { UploadHookControl } from "@better-upload/client";
 import { Loader2, Upload } from "lucide-react";
 import { useId } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 
 type UploadButtonProps = {
   control: UploadHookControl<false>;

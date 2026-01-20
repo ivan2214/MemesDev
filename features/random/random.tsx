@@ -2,9 +2,9 @@
 
 import { Shuffle } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { MemeCard } from "@/shared/components/meme-card";
+import { Button } from "@/shared/components/ui/button";
+import { Spinner } from "@/shared/components/ui/spinner";
 import type { Meme } from "@/types/meme";
 
 export function RandomPage() {

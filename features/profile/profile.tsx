@@ -2,10 +2,15 @@
 
 import { Calendar, Heart, ImageIcon } from "lucide-react";
 import { useState } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MemeCard } from "@/shared/components/meme-card";
+import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
+import { Card } from "@/shared/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/shared/components/ui/tabs";
 import type { Meme } from "@/types/meme";
 import type { UserProfile } from "@/types/profile";
 

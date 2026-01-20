@@ -1,11 +1,7 @@
 import { HotPage } from "@/features/hot/hot";
-import { Header } from "@/shared/components/header";
+import { getHotMemes } from "./actions";
 
-export default function Page() {
-  return (
-    <>
-      <Header />
-      <HotPage />
-    </>
-  );
+export default async function Page() {
+  const { memes } = await getHotMemes({ offset: 0, limit: 12 });
+  return <HotPage initialMemes={memes} />;
 }

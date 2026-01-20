@@ -1,17 +1,17 @@
 "use client";
 
-import { Code2, LogOut, Upload, User } from "lucide-react";
+import { Code2, LogInIcon, LogOut, Upload, User } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { signOut } from "@/lib/auth/auth-client";
+import { AuthDialog, useAuth } from "@/shared/components/auth-dialog";
+import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { AuthDialog, useAuth } from "@/features/auth/auth";
-import { signOut } from "@/lib/auth/auth-client";
+} from "@/shared/components/ui/dropdown-menu";
 
 export function Header() {
   const { user, isAuthenticated } = useAuth();
@@ -91,7 +91,10 @@ export function Header() {
             </>
           ) : (
             <AuthDialog>
-              <Button size="sm">Sign In</Button>
+              <Button size="sm">
+                <LogInIcon className="mr-2 h-4 w-4" />
+                Sign In
+              </Button>
             </AuthDialog>
           )}
         </div>

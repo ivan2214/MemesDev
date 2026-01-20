@@ -7,11 +7,15 @@ import type React from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { postComment, toggleLikeMeme } from "@/actions/meme";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { AuthDialog, useAuth } from "@/features/auth/auth";
+import { AuthDialog, useAuth } from "@/shared/components/auth-dialog";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/shared/components/ui/avatar";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { Textarea } from "@/shared/components/ui/textarea";
 import type { Comment } from "@/types/comment";
 import type { Meme } from "@/types/meme";
 

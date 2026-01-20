@@ -2,8 +2,8 @@
 
 import { Heart, MessageCircle, Share2 } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardFooter } from "@/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardFooter } from "@/shared/components/ui/card";
 import type { Meme } from "@/types/meme";
 
 interface MemeCardProps {

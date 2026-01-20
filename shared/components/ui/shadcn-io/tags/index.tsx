@@ -12,8 +12,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -21,13 +22,12 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from "@/shared/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+} from "@/shared/components/ui/popover";
 
 interface TagsContextType {
   value?: string;

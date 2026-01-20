@@ -1,11 +1,11 @@
+import { Header } from "@/shared/components/header";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Header } from "@/shared/components/header";
+} from "@/shared/components/ui/card";
 import { UploadMemeForm } from "./_components/upload-meme-form";
 
 export default function UploadPage() {

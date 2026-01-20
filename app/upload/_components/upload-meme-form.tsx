@@ -8,14 +8,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 import { uploadMeme } from "@/app/upload/actions";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field";
+} from "@/shared/components/ui/field";
 import {
   Tags,
   TagsContent,
@@ -26,8 +26,8 @@ import {
   TagsList,
   TagsTrigger,
   TagsValue,
-} from "@/components/ui/shadcn-io/tags";
-import { UploadDropzone } from "@/components/ui/upload-dropzone";
+} from "@/shared/components/ui/shadcn-io/tags";
+import { UploadDropzone } from "@/shared/components/ui/upload-dropzone";
 
 const defaultTags = [
   { id: "react", label: "React" },

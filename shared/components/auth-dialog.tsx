@@ -3,14 +3,16 @@
 import { Key, Loader2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { signIn, useSession } from "@/lib/auth/auth-client";
+import { cn } from "@/lib/utils";
+import { Button } from "@/shared/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/shared/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -18,11 +20,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { signIn, useSession } from "@/lib/auth/auth-client";
-import { cn } from "@/lib/utils";
+} from "@/shared/components/ui/dialog";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
 
 export function AuthDialog({ children }: { children: React.ReactElement }) {
   const [open, setOpen] = useState(false);

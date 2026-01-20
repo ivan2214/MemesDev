@@ -4,10 +4,10 @@ import { Search as SearchIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { MemeCard } from "@/shared/components/meme-card";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Spinner } from "@/shared/components/ui/spinner";
 import type { Meme } from "@/types/meme";
 
 export function SearchPage() {

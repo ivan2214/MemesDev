@@ -2,16 +2,16 @@
 
 import { Flame } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Spinner } from "@/components/ui/spinner";
 import { MemeCard } from "@/shared/components/meme-card";
+import { Spinner } from "@/shared/components/ui/spinner";
 import type { Meme } from "@/types/meme";
-import { getHotMemes, toggleLikeMeme } from "./actions";
+import { getHotMemes, toggleLikeMeme } from "../../app/hot/actions";
 
-export function HotPage() {
-  const [memes, setMemes] = useState<Meme[]>([]);
-  const [loading, setLoading] = useState(true);
+export function HotPage({ initialMemes }: { initialMemes: Meme[] }) {
+  const [memes, setMemes] = useState<Meme[]>(initialMemes);
+  const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [offset, setOffset] = useState(0);
+  const [offset, setOffset] = useState(initialMemes.length);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const loadMemes = useCallback(async (currentOffset: number) => {

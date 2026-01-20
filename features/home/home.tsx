@@ -1,24 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Spinner } from "@/components/ui/spinner";
 import { toggleLike } from "@/shared/actions/meme-actions";
 import { MemeCard } from "@/shared/components/meme-card";
+import { Spinner } from "@/shared/components/ui/spinner";
 import type { Meme } from "@/types/meme";
-import { getMemes } from "./actions";
+import { getMemes } from "../../app/(home)/actions";
 
-export function HomePage() {
-  const [memes, setMemes] = useState<Meme[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
-  const [offset, setOffset] = useState(0);
+const PAGE_SIZE = 12;
+
+export function HomePage({ initialMemes }: { initialMemes: Meme[] }) {
+  const [memes, setMemes] = useState<Meme[]>(initialMemes);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(initialMemes.length >= PAGE_SIZE);
+  const [offset, setOffset] = useState(initialMemes.length);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const loadMemes = useCallback(async (currentOffset: number) => {
+    setLoading(true);
     try {
-      const data = await getMemes(currentOffset, 12);
+      const data = await getMemes(currentOffset, PAGE_SIZE);
 
-      if (data.memes.length < 12) {
+      if (data.memes.length < PAGE_SIZE) {
         setHasMore(false);
       }
 
@@ -31,14 +34,10 @@ export function HomePage() {
   }, []);
 
   useEffect(() => {
-    loadMemes(0);
-  }, [loadMemes]);
-
-  useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
-          const newOffset = offset + 12;
+          const newOffset = offset + PAGE_SIZE;
           setOffset(newOffset);
           loadMemes(newOffset);
         }
@@ -90,7 +89,9 @@ export function HomePage() {
 
       {loading && memes.length === 0 ? (
         <div className="flex min-h-[400px] items-center justify-center">
-          <Spinner className="h-8 w-8" />
+          <p className="text-lg text-muted-foreground">
+            No se encontraron memes
+          </p>
         </div>
       ) : (
         <>
@@ -113,15 +114,17 @@ export function HomePage() {
 
           {!hasMore && memes.length > 0 && (
             <p className="mt-8 text-center text-muted-foreground">
-              You've reached the end!
+              ¡Has llegado al final!
             </p>
           )}
 
           {!loading && memes.length === 0 && (
             <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
-              <p className="text-lg text-muted-foreground">No memes yet</p>
+              <p className="text-lg text-muted-foreground">
+                ¡No hay memes todavía!
+              </p>
               <p className="text-muted-foreground text-sm">
-                Be the first to upload one!
+                ¡Sea el primero en subir uno!
               </p>
             </div>
           )}
