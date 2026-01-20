@@ -204,6 +204,7 @@ async function seed() {
     id: faker.string.uuid(),
     userId: faker.helpers.arrayElement(userIds),
     imageUrl: getRandomMemeUrl(),
+    imageKey: faker.string.uuid(),
     tags: getRandomTags(),
     likesCount: 0,
     commentsCount: 0,

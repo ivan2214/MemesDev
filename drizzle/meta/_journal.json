@@ -8,6 +8,13 @@
       "when": 1768874506256,
       "tag": "0000_true_whiplash",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1768880304979,
+      "tag": "0001_stiff_tomorrow_man",
+      "breakpoints": true
     }
   ]
 }

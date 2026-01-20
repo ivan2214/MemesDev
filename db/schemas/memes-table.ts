@@ -10,6 +10,7 @@ export const memesTable = pgTable("memes", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   imageUrl: text("image_url").notNull(),
+  imageKey: text("image_key").notNull(),
   tags: text("tags").array(),
   likesCount: integer("likes_count").notNull().default(0),
   commentsCount: integer("comments_count").notNull().default(0),

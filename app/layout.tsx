@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type React from "react";
 import "./globals.css";
-import { Header } from "@/shared/components/header";
 import { MainLayout } from "@/shared/components/main-layout";
 import { Toaster } from "@/shared/components/ui/sonner";
 
@@ -42,7 +41,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-        <Header />
         <MainLayout>{children}</MainLayout>
         <Analytics />
         <Toaster richColors />

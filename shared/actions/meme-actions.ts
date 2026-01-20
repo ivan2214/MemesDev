@@ -1,4 +1,5 @@
 "use server";
+import { deleteObject } from "@better-upload/server/helpers";
 
 import { and, desc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -10,7 +11,9 @@ import {
   memesTable,
   user as userTable,
 } from "@/db/schemas";
+import { env } from "@/env/server";
 import { auth } from "@/lib/auth";
+import { s3 } from "@/lib/s3";
 import type { Comment } from "@/types/comment";
 
 export async function toggleLike(memeId: string) {
@@ -104,4 +107,41 @@ export async function addComment(memeId: string, content: string) {
   revalidatePath(`/meme/${memeId}`);
 
   return { success: true, commentId: comment.id };
+}
+
+export async function deleteMeme(memeId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+
+  const meme = await db.query.memesTable.findFirst({
+    where: eq(memesTable.id, memeId),
+    columns: {
+      id: true,
+      userId: true,
+      imageUrl: true,
+      imageKey: true,
+    },
+  });
+
+  if (!meme) {
+    throw new Error("Meme not found");
+  }
+
+  if (meme.userId !== session.user.id) {
+    throw new Error("Unauthorized");
+  }
+
+  await deleteObject(s3, {
+    bucket: env.S3_BUCKET_NAME,
+    key: meme.imageKey,
+  });
+
+  await db.delete(memesTable).where(eq(memesTable.id, memeId));
+
+  revalidatePath(`/meme/${memeId}`);
+
+  return { success: true };
 }

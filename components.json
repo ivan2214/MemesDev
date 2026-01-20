@@ -18,7 +18,7 @@
     "utils": "@/lib/utils",
     "ui": "@/shared/components/ui",
     "lib": "@/lib",
-    "hooks": "@/hooks"
+    "hooks": "@/shared/hooks"
   },
   "registries": {
     "@better-upload": "https://better-upload.com/r/{name}.json"

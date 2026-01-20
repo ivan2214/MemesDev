@@ -1,16 +1,13 @@
 import { RejectUpload, type Router, route } from "@better-upload/server";
 import { toRouteHandler } from "@better-upload/server/adapters/next";
-import { tigris } from "@better-upload/server/clients";
+
 import { headers } from "next/headers";
 import { env } from "@/env/server";
 import { auth } from "@/lib/auth";
+import { s3 } from "@/lib/s3";
 
 const router: Router = {
-  client: tigris({
-    accessKeyId: env.S3_ACCESS_KEY_ID,
-    secretAccessKey: env.S3_SECRET_ACCESS_KEY,
-    endpoint: env.S3_ENDPOINT_URL,
-  }),
+  client: s3,
   bucketName: env.S3_BUCKET_NAME,
   routes: {
     memes: route({

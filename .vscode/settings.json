@@ -1,6 +1,4 @@
 {
   "editor.defaultFormatter": "biomejs.biome",
-  "exportall.config.folderListener": [
-    "/db/schemas"
-  ]
+  "exportall.config.folderListener": ["/db/schemas"]
 }
