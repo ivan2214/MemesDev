@@ -4,18 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { navItems } from "../_constants";
-import { useAuth } from "./auth-dialog";
 
 export function MobileNav() {
-  const { isAuthenticated } = useAuth();
   const pathname = usePathname();
-
-  const items = navItems(isAuthenticated);
 
   return (
     <nav className="fixed right-0 bottom-0 left-0 z-50 border-border/40 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 lg:hidden">
       <div className="flex h-16 items-center justify-around px-2 pb-safe">
-        {items.map((item) => {
+        {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
             (item.href !== "/" && pathname.startsWith(item.href));

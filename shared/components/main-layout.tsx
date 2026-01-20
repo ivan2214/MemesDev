@@ -1,11 +1,16 @@
+import { UploadIcon } from "lucide-react";
 import type React from "react";
+import { getCurrentUser } from "@/data/user";
 import { db } from "@/db";
 import { cn } from "@/lib/utils";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
+import { AuthDialog } from "./auth-dialog";
 import { Header } from "./header";
 import { MobileNav } from "./mobile-nav";
 import { RightSidebar } from "./right-sidebar";
+import { Button } from "./ui/button";
+import { UploadDialog } from "./upload-dialog";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -28,6 +33,7 @@ export async function MainLayout({
 }: MainLayoutProps) {
   const categories = await getCategories();
   const browseTags = await getBrowseTags();
+  const user = await getCurrentUser();
   return (
     <SidebarProvider>
       <AppSidebar categories={categories} browseTags={browseTags} />
@@ -40,7 +46,26 @@ export async function MainLayout({
           )}
         >
           {/* Main Content Column */}
-          <main className="w-full max-w-2xl">{children}</main>
+          <main className="flex w-full max-w-2xl flex-col">
+            <div className="ml-auto w-fit">
+              {user ? (
+                <UploadDialog>
+                  <Button size="sm">
+                    <UploadIcon className="mr-2 h-4 w-4" />
+                    Subir meme
+                  </Button>
+                </UploadDialog>
+              ) : (
+                <AuthDialog>
+                  <Button size="sm">
+                    <UploadIcon className="mr-2 h-4 w-4" />
+                    Subir meme
+                  </Button>
+                </AuthDialog>
+              )}
+            </div>
+            {children}
+          </main>
 
           {/* Right Sidebar - Solo visible en PC */}
           {showRightSidebar && <RightSidebar />}

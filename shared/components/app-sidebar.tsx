@@ -31,7 +31,6 @@ import {
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 import { navItems } from "../_constants";
-import { useAuth } from "./auth-dialog";
 
 interface AppSidebarProps {
   categories?: Category[];
@@ -40,9 +39,6 @@ interface AppSidebarProps {
 
 export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
   const pathname = usePathname();
-  const { isAuthenticated } = useAuth();
-
-  const items = navItems(isAuthenticated);
 
   // Usar defaults si no se proporcionan datos de DB
   const displayCategories =
@@ -89,7 +85,7 @@ export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {items.map((item) => {
+                  {navItems.map((item) => {
                     const isActive = pathname === item.href;
 
                     return (

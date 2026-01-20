@@ -16,6 +16,7 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { UploadDialog } from "./upload-dialog";
 
 export function Header() {
   const router = useRouter();
@@ -45,12 +46,21 @@ export function Header() {
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <section className="flex items-center gap-2">
-              <Link href="/upload">
-                <Button size="sm">
-                  <UploadIcon className="mr-2 h-4 w-4" />
-                  Subir meme
-                </Button>
-              </Link>
+              {user ? (
+                <UploadDialog>
+                  <Button size="sm">
+                    <UploadIcon className="mr-2 h-4 w-4" />
+                    Subir meme
+                  </Button>
+                </UploadDialog>
+              ) : (
+                <AuthDialog>
+                  <Button size="sm">
+                    <UploadIcon className="mr-2 h-4 w-4" />
+                    Subir meme
+                  </Button>
+                </AuthDialog>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger
                   className={

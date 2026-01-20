@@ -1,4 +1,4 @@
-import { Flame, Home, Search, Shuffle, Upload } from "lucide-react";
+import { Flame, Home, Search, Shuffle } from "lucide-react";
 
 export type ErrorType = "auth" | "default";
 
@@ -23,17 +23,9 @@ export const ERROR_MESSAGES: Record<
   },
 } as const;
 
-export const navItems = (isAuthenticated: boolean) => {
-  const items = [
-    { href: "/", label: "Inicio", icon: Home },
-    { href: "/hot", label: "Hot", icon: Flame },
-    { href: "/search", label: "Buscar", icon: Search },
-    { href: "/random", label: "Random", icon: Shuffle },
-  ];
-
-  if (isAuthenticated) {
-    items.push({ href: "/upload", label: "Subir", icon: Upload });
-  }
-
-  return items;
-};
+export const navItems = [
+  { href: "/", label: "Inicio", icon: Home },
+  { href: "/hot", label: "Hot", icon: Flame },
+  { href: "/search", label: "Buscar", icon: Search },
+  { href: "/random", label: "Random", icon: Shuffle },
+];
