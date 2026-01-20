@@ -7,7 +7,7 @@ import { likesTable, memesTable, user as userTable } from "@/db/schemas";
 import { auth } from "@/lib/auth";
 import type { Meme } from "@/types/meme";
 
-export async function getRandomMeme(): Promise<{ meme: Meme | null }> {
+export async function getRandomMemes(limit = 8): Promise<{ memes: Meme[] }> {
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
 
@@ -30,7 +30,7 @@ export async function getRandomMeme(): Promise<{ meme: Meme | null }> {
     .from(memesTable)
     .innerJoin(userTable, eq(memesTable.userId, userTable.id))
     .orderBy(sql`RANDOM()`)
-    .limit(1);
+    .limit(limit);
 
-  return { meme: memes[0] || null };
+  return { memes };
 }

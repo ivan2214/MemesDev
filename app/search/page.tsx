@@ -1,10 +1,11 @@
 import { Suspense } from "react";
-import { SearchPage } from "@/features/search/search";
-
+import { getAllTags } from "./_actions";
+import { SearchPage } from "./_components/search-page";
 import Loading from "./loading";
 
-function SearchContent() {
-  return <SearchPage />;
+async function SearchContent() {
+  const { tags } = await getAllTags();
+  return <SearchPage initialTags={tags} />;
 }
 
 export default function Page() {

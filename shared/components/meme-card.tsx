@@ -2,7 +2,7 @@
 
 import { Heart, MessageCircle, Share2 } from "lucide-react";
 import Link from "next/link";
-import { toggleLikeMeme } from "@/app/hot/actions";
+import { toggleLike } from "@/shared/actions/meme-actions";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardFooter } from "@/shared/components/ui/card";
 import type { Meme } from "@/types/meme";
@@ -35,7 +35,7 @@ export function MemeCard({ meme, isLiked }: MemeCardProps) {
 
   const handleLike = async (memeId: string) => {
     try {
-      await toggleLikeMeme(memeId);
+      await toggleLike(memeId);
     } catch (error) {
       console.error("[HotPage] Failed to like meme:", error);
     }

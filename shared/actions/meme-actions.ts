@@ -11,7 +11,7 @@ import {
   user as userTable,
 } from "@/db/schemas";
 import { auth } from "@/lib/auth";
-import type { Meme } from "@/types/meme";
+import type { Comment } from "@/types/comment";
 
 export async function toggleLike(memeId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -57,46 +57,20 @@ export async function toggleLike(memeId: string) {
   }
 }
 
-export async function getMemeDetails(
+export async function getComments(
   memeId: string,
-): Promise<{ meme: Meme | null }> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const userId = session?.user?.id;
-
-  const memes = await db
-    .select({
-      id: memesTable.id,
-      imageUrl: memesTable.imageUrl,
-      tags: memesTable.tags,
-      likesCount: memesTable.likesCount,
-      commentsCount: memesTable.commentsCount,
-      createdAt: memesTable.createdAt,
-      user: {
-        id: userTable.id,
-        name: userTable.name,
-        image: userTable.image,
-      },
-      isLiked: userId
-        ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`
-        : sql<boolean>`false`,
-    })
-    .from(memesTable)
-    .innerJoin(userTable, eq(memesTable.userId, userTable.id))
-    .where(eq(memesTable.id, memeId))
-    .limit(1);
-
-  return { meme: memes[0] || null };
-}
-
-export async function getComments(memeId: string) {
+): Promise<{ comments: Comment[] }> {
   const comments = await db
     .select({
       id: commentsTable.id,
       content: commentsTable.content,
       createdAt: commentsTable.createdAt,
-      userId: userTable.id,
-      userName: userTable.name,
-      userImage: userTable.image,
+
+      user: {
+        id: userTable.id,
+        name: userTable.name,
+        image: userTable.image,
+      },
     })
     .from(commentsTable)
     .innerJoin(userTable, eq(commentsTable.userId, userTable.id))

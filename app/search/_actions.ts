@@ -1,6 +1,6 @@
 "use server";
 
-import { desc, eq, ilike, or, sql } from "drizzle-orm";
+import { desc, eq, or, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { likesTable, memesTable, user as userTable } from "@/db/schemas";
@@ -29,17 +29,35 @@ export async function searchMemes(
         id: userTable.id,
         name: userTable.name,
       },
-      userName: userTable.name,
       isLiked: userId
         ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`
         : sql<boolean>`false`,
     })
     .from(memesTable)
     .innerJoin(userTable, eq(memesTable.userId, userTable.id))
-    .where(or(ilike(memesTable.tags, searchPattern)))
+    .where(
+      or(
+        sql`EXISTS (SELECT 1 FROM unnest(${memesTable.tags}) AS tag WHERE tag ILIKE ${searchPattern})`,
+      ),
+    )
     .orderBy(desc(memesTable.createdAt))
     .limit(limit)
     .offset(offset);
 
   return { memes };
+}
+
+export async function getAllTags(): Promise<{ tags: string[] }> {
+  const result = await db
+    .selectDistinct({
+      tag: sql<string>`unnest(${memesTable.tags})`,
+    })
+    .from(memesTable)
+    .where(sql`${memesTable.tags} IS NOT NULL`);
+
+  const tags = result
+    .map((r) => r.tag)
+    .filter((tag): tag is string => tag !== null && tag !== "");
+
+  return { tags: [...new Set(tags)].sort() };
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { likesTable, memesTable, user as userTable } from "@/db/schemas";
@@ -67,72 +67,5 @@ export async function getHotMemes({
   } catch (error) {
     console.error("[getHotMemes] Error:", error);
     return { memes: [] }; // Fallback
-  }
-}
-
-export async function toggleLikeMeme(memeId: string) {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user) {
-      throw new Error("Unauthorized");
-    }
-
-    const userId = session.user.id;
-
-    // Check if already liked
-    const [existingLike] = await db
-      .select()
-      .from(likesTable)
-      .where(and(eq(likesTable.memeId, memeId), eq(likesTable.userId, userId)));
-
-    let liked = false;
-    let newLikesCount = 0;
-
-    await db.transaction(async (tx) => {
-      if (existingLike) {
-        // Unlike
-        await tx
-          .delete(likesTable)
-          .where(
-            and(eq(likesTable.memeId, memeId), eq(likesTable.userId, userId)),
-          );
-
-        const [updatedMeme] = await tx
-          .update(memesTable)
-          .set({
-            likesCount: sql`${memesTable.likesCount} - 1`,
-          })
-          .where(eq(memesTable.id, memeId))
-          .returning({ likesCount: memesTable.likesCount });
-
-        newLikesCount = updatedMeme.likesCount;
-        liked = false;
-      } else {
-        // Like
-        await tx.insert(likesTable).values({
-          memeId,
-          userId,
-        });
-
-        const [updatedMeme] = await tx
-          .update(memesTable)
-          .set({
-            likesCount: sql`${memesTable.likesCount} + 1`,
-          })
-          .where(eq(memesTable.id, memeId))
-          .returning({ likesCount: memesTable.likesCount });
-
-        newLikesCount = updatedMeme.likesCount;
-        liked = true;
-      }
-    });
-
-    return { liked, likes_count: newLikesCount };
-  } catch (error) {
-    console.error("[toggleLikeMeme] Error:", error);
-    throw error;
   }
 }
