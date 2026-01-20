@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "DevMemes",
-    short_name: "DevMemes",
+    name: "MemesDev",
+    short_name: "MemesDev",
     description: "Los mejores memes de programación para desarrolladores",
     start_url: "/",
     display: "standalone",

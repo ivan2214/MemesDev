@@ -15,15 +15,15 @@ export async function generateMetadata({
 
   if (!user) {
     return {
-      title: "Usuario no encontrado | DevMemes",
-      description: "El usuario que buscas no existe en DevMemes.",
+      title: "Usuario no encontrado | MemesDev",
+      description: "El usuario que buscas no existe en MemesDev.",
     };
   }
 
-  const title = `${user.name} (@${user.name}) | Perfil de DevMemes`;
+  const title = `${user.name} (@${user.name}) | Perfil de MemesDev`;
   const description =
     user.bio ||
-    `Mira el perfil de ${user.name} en DevMemes. Explora sus memes publicados y contribuciones a la comunidad.`;
+    `Mira el perfil de ${user.name} en MemesDev. Explora sus memes publicados y contribuciones a la comunidad.`;
 
   return {
     title,

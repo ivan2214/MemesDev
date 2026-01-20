@@ -16,7 +16,7 @@ export async function generateMetadata({
 
   if (!meme) {
     return {
-      title: "Meme no encontrado | DevMemes",
+      title: "Meme no encontrado | MemesDev",
       description: "El meme que buscas no existe o ha sido eliminado.",
     };
   }
@@ -29,10 +29,10 @@ export async function generateMetadata({
       : `Mira este meme de programación subido por ${meme.user.name}. ${meme.likesCount} me gusta y ${meme.commentsCount} comentarios.`;
 
   return {
-    title: `${title} | DevMemes`,
+    title: `${title} | MemesDev`,
     description: description.substring(0, limit),
     openGraph: {
-      title: `${title} | DevMemes`,
+      title: `${title} | MemesDev`,
       description: description.substring(0, limit),
       type: "article",
       url: `${env.APP_URL}/meme/${meme.id}`,
@@ -49,10 +49,10 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `${title} | DevMemes`,
+      title: `${title} | MemesDev`,
       description: description.substring(0, limit),
       images: [meme.imageUrl],
-      creator: "@DevMemes", // Asumiendo un handle genérico o del usuario si existiera
+      creator: "@MemesDev", // Asumiendo un handle genérico o del usuario si existiera
     },
     alternates: {
       canonical: `${env.APP_URL}/meme/${meme.id}`,
@@ -99,7 +99,7 @@ export default async function MemePage({
     ],
     publisher: {
       "@type": "Organization",
-      name: "DevMemes",
+      name: "MemesDev",
       url: env.APP_URL,
     },
     identifier: meme.id,

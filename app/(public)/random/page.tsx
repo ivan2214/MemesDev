@@ -7,11 +7,11 @@ import { getRandomMemes } from "./_actions";
 import { RandomPage } from "./_components/random-page";
 
 export const metadata: Metadata = {
-  title: "Memes Aleatorios | DevMemes",
+  title: "Memes Aleatorios | MemesDev",
   description:
     "Disfruta de una selección aleatoria de los mejores memes de programación. ¡Sorpréndete con cada recarga!",
   openGraph: {
-    title: "Memes Aleatorios | DevMemes",
+    title: "Memes Aleatorios | MemesDev",
     description:
       "Disfruta de una selección aleatoria de los mejores memes de programación.",
     url: `${env.APP_URL}/random`,

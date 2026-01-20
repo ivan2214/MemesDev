@@ -9,8 +9,8 @@ import { Toaster } from "@/shared/components/ui/sonner";
 export const metadata: Metadata = {
   metadataBase: new URL(env.APP_URL),
   title: {
-    default: "DevMemes - Memes de programación para desarrolladores",
-    template: "%s | DevMemes",
+    default: "MemesDev - Memes de programación para desarrolladores",
+    template: "%s | MemesDev",
   },
   description:
     "Descubre y comparte los memes de programación más divertidos. Sube, dale a 'me gusta', comenta y ríete con la comunidad de desarrolladores.",
@@ -46,8 +46,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: env.APP_URL,
-    siteName: "DevMemes",
-    title: "DevMemes - Memes de programación para desarrolladores",
+    siteName: "MemesDev",
+    title: "MemesDev - Memes de programación para desarrolladores",
     description:
       "Descubre y comparte los memes de programación más divertidos. Sube, dale a 'me gusta', comenta y ríete con la comunidad de desarrolladores.",
     images: [
@@ -55,13 +55,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "DevMemes - Memes de programación para desarrolladores",
+        alt: "MemesDev - Memes de programación para desarrolladores",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "DevMemes - Memes de programación para desarrolladores",
+    title: "MemesDev - Memes de programación para desarrolladores",
     description:
       "Descubre y comparte los memes de programación más divertidos. Sube, dale a 'me gusta', comenta y ríete con la comunidad de desarrolladores.",
     creator: "@bongiovanniDev",

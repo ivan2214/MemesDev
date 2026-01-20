@@ -38,7 +38,7 @@ export function Header() {
           >
             <Image src="/logo.png" alt="Logo" width={24} height={24} />
             <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
-              DevMemes
+              MemesDev
             </span>
           </Link>
         </div>

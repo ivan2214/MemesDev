@@ -6,11 +6,11 @@ import { getHotMemes } from "./_actions";
 import { HotPage } from "./_components/hot-page";
 
 export const metadata: Metadata = {
-  title: "Memes Populares | DevMemes",
+  title: "Memes Populares | MemesDev",
   description:
     "Los memes de programación más populares y virales. Descubre el mejor humor tech del momento.",
   openGraph: {
-    title: "Memes Populares | DevMemes",
+    title: "Memes Populares | MemesDev",
     description:
       "Los memes de programación más populares y virales. Descubre el mejor humor tech del momento.",
     url: `${env.APP_URL}/hot`,

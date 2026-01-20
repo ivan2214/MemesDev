@@ -58,7 +58,7 @@ export function AuthDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-balance">
-            Bienvenido a DevMemes
+            Bienvenido a MemesDev
           </DialogTitle>
           <DialogDescription className="text-pretty">
             Inicia sesión para subir memes, dar me gusta al contenido y unirte a

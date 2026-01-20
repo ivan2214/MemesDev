@@ -6,7 +6,7 @@ import type { ErrorType } from "@/shared/_constants";
 import ErrorContent from "./_components/error-content";
 
 export const metadata: Metadata = {
-  title: "Error | DevMemes",
+  title: "Error | MemesDev",
   description: "Ha ocurrido un error.",
 };
 

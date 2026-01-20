@@ -59,9 +59,9 @@ export function HomePage({ initialMemes }: { initialMemes: Meme[] }) {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="mb-2 text-balance font-bold text-4xl">Latest Memes</h1>
+        <h1 className="mb-2 text-balance font-bold text-4xl">Últimos Memes</h1>
         <p className="text-pretty text-muted-foreground">
-          Fresh programming humor from the community
+          Memes de programación frescos de la comunidad
         </p>
       </div>
 

@@ -151,7 +151,7 @@ export default async function Image({
                 {meme.user.name}
               </span>
               <span style={{ fontSize: 18, color: "#a1a1aa" }}>
-                DevMemes Author
+                MemesDev Author
               </span>
             </div>
           </div>

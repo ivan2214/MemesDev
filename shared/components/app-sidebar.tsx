@@ -64,7 +64,7 @@ export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
         >
           <Image src="/logo-rb.png" alt="Logo" width={60} height={60} />
           <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
-            DevMemes
+            MemesDev
           </span>
         </Link>
       </SidebarHeader>

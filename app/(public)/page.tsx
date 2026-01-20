@@ -5,7 +5,7 @@ import { HomePage } from "../_components/home-page";
 import { getMemes } from "./_actions";
 
 export const metadata: Metadata = {
-  title: "DevMemes - La mejor página de memes para programadores",
+  title: "MemesDev - La mejor página de memes para programadores",
   description:
     "Memes de React, JavaScript, Node.js, Python y más. Comparte tus memes favoritos y descubre los de otros programadores.",
   alternates: {
@@ -23,7 +23,7 @@ export default async function Page() {
   const jsonLd: WithContext<WebSite> = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "DevMemes",
+    name: "MemesDev",
     url: env.APP_URL,
     potentialAction: {
       "@type": "SearchAction",

@@ -28,13 +28,13 @@ export async function generateMetadata({
     "Encuentra los mejores memes de programación, busca por etiquetas, categorías o palabras clave.";
 
   if (query) {
-    title = `Resultados para "${query}" | DevMemes`;
-    description = `Resultados de búsqueda para "${query}" en DevMemes. Encuentra los memes más divertidos sobre ${query}.`;
+    title = `Resultados para "${query}" | MemesDev`;
+    description = `Resultados de búsqueda para "${query}" en MemesDev. Encuentra los memes más divertidos sobre ${query}.`;
   } else if (tags) {
-    title = `Memes de ${tags} | DevMemes`;
+    title = `Memes de ${tags} | MemesDev`;
     description = `Explora nuestra colección de memes sobre ${tags}.`;
   } else if (category) {
-    title = `Memes de ${category} | DevMemes`;
+    title = `Memes de ${category} | MemesDev`;
     description = `Los mejores memes de la categoría ${category}.`;
   }
 
