@@ -1,76 +1,43 @@
 import { faker } from "@faker-js/faker";
 import type { Table } from "drizzle-orm";
 import "dotenv/config";
+import { DEFAULT_CATEGORIES, DEFAULT_TAGS } from "@/shared/lib/tag-icons";
 import { db } from "./index";
 import {
   account,
+  categoriesTable,
   commentsTable,
   likesTable,
   memesTable,
+  memeTagsTable,
   session,
+  tagsTable,
   user,
   verification,
 } from "./schemas";
 
-const PROGRAMMING_TAGS = [
-  "javascript",
-  "typescript",
-  "react",
-  "nextjs",
-  "nodejs",
-  "python",
-  "java",
-  "cpp",
-  "rust",
-  "go",
-  "html",
-  "css",
-  "tailwind",
-  "git",
-  "github",
-  "vscode",
-  "linux",
-  "docker",
-  "kubernetes",
-  "aws",
-  "database",
-  "sql",
-  "mongodb",
-  "redis",
-  "api",
-  "rest",
-  "graphql",
-  "testing",
-  "debugging",
-  "stackoverflow",
-  "hackerrank",
-  "leetcode",
-  "algorithms",
-  "datastructures",
-  "oop",
-  "functional",
-  "frontend",
-  "backend",
-  "fullstack",
-  "devops",
-  "agile",
-  "scrum",
-  "code-review",
-  "pair-programming",
-  "refactoring",
-  "clean-code",
-  "documentation",
-  "bugs",
-  "production",
-  "deployment",
-  "hotfix",
-  "merge-conflict",
-  "semicolon",
-  "undefined",
-  "null",
-  "async",
-  "callbacks",
-  "promises",
+// Títulos de memes de programación
+const MEME_TITLES = [
+  "When the code works on the first try",
+  "Me explaining my code to the rubber duck",
+  "Senior dev reviewing my PR",
+  "When you find the bug after 3 hours",
+  "The classic 'it works on my machine'",
+  "When the intern pushes to main",
+  "Debugging at 3am be like",
+  "When Stack Overflow is down",
+  "Me pretending to understand the legacy code",
+  "When the tests pass but you don't know why",
+  "Frontend vs Backend developers",
+  "When you forget a semicolon",
+  "JavaScript developers be like",
+  "When the client changes requirements",
+  "Me after fixing one bug and creating three more",
+  "The documentation vs reality",
+  "When you finally understand recursion",
+  "Copy-pasting from Stack Overflow",
+  "When git says 'merge conflict'",
+  "Monday morning standups",
 ];
 
 const MEME_IMAGE_URLS = [
@@ -129,14 +96,12 @@ const COMMENT_TEMPLATES = [
   "console.log('here')",
 ];
 
-function getRandomTags(min = 2, max = 5): string[] {
-  const count = faker.number.int({ min, max });
-  const shuffled = [...PROGRAMMING_TAGS].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
-
 function getRandomMemeUrl(): string {
   return faker.helpers.arrayElement(MEME_IMAGE_URLS);
+}
+
+function getRandomTitle(): string {
+  return faker.helpers.arrayElement(MEME_TITLES);
 }
 
 function getRandomComment(): string {
@@ -165,7 +130,10 @@ async function seed() {
   await Promise.all([
     db.delete(commentsTable),
     db.delete(likesTable),
+    db.delete(memeTagsTable),
     db.delete(memesTable),
+    db.delete(tagsTable),
+    db.delete(categoriesTable),
     db.delete(verification),
     db.delete(account),
     db.delete(session),
@@ -181,6 +149,53 @@ async function seed() {
   // Pre-generar todos los datos en memoria
   performance.mark("generate-start");
   console.log("📝 Generating data in memory...");
+
+  // Crear categorías con IDs fijos
+  const categories = DEFAULT_CATEGORIES.map((cat) => ({
+    id: faker.string.uuid(),
+    name: cat.name,
+    slug: cat.slug,
+    icon: cat.icon,
+    color: cat.color,
+    createdAt: new Date(),
+  }));
+
+  const categoryIds = categories.map((c) => c.id);
+
+  // Crear tags con IDs fijos
+  const tags = DEFAULT_TAGS.map((tag) => ({
+    id: faker.string.uuid(),
+    name: tag.name,
+    slug: tag.slug,
+    createdAt: new Date(),
+  }));
+
+  // Agregar más tags
+  const additionalTags = [
+    { name: "Vue", slug: "vue" },
+    { name: "Angular", slug: "angular" },
+    { name: "Next.js", slug: "nextjs" },
+    { name: "Tailwind", slug: "tailwind" },
+    { name: "Linux", slug: "linux" },
+    { name: "VS Code", slug: "vscode" },
+    { name: "MongoDB", slug: "mongodb" },
+    { name: "Redis", slug: "redis" },
+    { name: "GraphQL", slug: "graphql" },
+    { name: "Testing", slug: "testing" },
+    { name: "Stack Overflow", slug: "stackoverflow" },
+    { name: "Algorithms", slug: "algorithms" },
+    { name: "Clean Code", slug: "clean-code" },
+    { name: "Bugs", slug: "bugs" },
+    { name: "Deployment", slug: "deployment" },
+  ].map((tag) => ({
+    id: faker.string.uuid(),
+    name: tag.name,
+    slug: tag.slug,
+    createdAt: new Date(),
+  }));
+
+  const allTags = [...tags, ...additionalTags];
+  const tagIds = allTags.map((t) => t.id);
 
   // Crear usuarios en memoria
   const users = Array.from({ length: 15 }, () => {
@@ -199,19 +214,41 @@ async function seed() {
 
   const userIds = users.map((u) => u.id);
 
-  // Crear memes en memoria
+  // Crear memes en memoria (ahora con categoryId y title)
   const memes = Array.from({ length: 60 }, () => ({
     id: faker.string.uuid(),
     userId: faker.helpers.arrayElement(userIds),
     imageUrl: getRandomMemeUrl(),
     imageKey: faker.string.uuid(),
-    tags: getRandomTags(),
+    title: faker.datatype.boolean(0.8) ? getRandomTitle() : null, // 80% tienen título
+    categoryId: faker.helpers.arrayElement(categoryIds),
     likesCount: 0,
     commentsCount: 0,
     createdAt: faker.date.past({ years: 1 }),
   }));
 
   const memeIds = memes.map((m) => m.id);
+
+  // Crear relaciones meme-tags (2-5 tags por meme)
+  const memeTagsSet = new Set<string>();
+  const memeTags: { id: string; memeId: string; tagId: string }[] = [];
+
+  for (const meme of memes) {
+    const numTags = faker.number.int({ min: 2, max: 5 });
+    const selectedTagIds = faker.helpers.arrayElements(tagIds, numTags);
+
+    for (const tagId of selectedTagIds) {
+      const pairKey = `${meme.id}-${tagId}`;
+      if (!memeTagsSet.has(pairKey)) {
+        memeTagsSet.add(pairKey);
+        memeTags.push({
+          id: faker.string.uuid(),
+          memeId: meme.id,
+          tagId,
+        });
+      }
+    }
+  }
 
   // Crear likes en memoria
   const likePairs = new Set<string>();
@@ -273,39 +310,52 @@ async function seed() {
 
   performance.mark("insert-start");
 
-  performance.mark("insert-users-memes-start");
+  // Primero insertar categorías y tags (independientes)
+  performance.mark("insert-categories-tags-start");
   await Promise.all([
+    batchInsert(categoriesTable, categories, 100),
+    batchInsert(tagsTable, allTags, 100),
     batchInsert(user, users, 100),
-    batchInsert(memesTable, memes, 100),
   ]);
-  performance.mark("insert-users-memes-end");
+  performance.mark("insert-categories-tags-end");
   performance.measure(
-    "insert-users-memes",
-    "insert-users-memes-start",
-    "insert-users-memes-end",
+    "insert-categories-tags",
+    "insert-categories-tags-start",
+    "insert-categories-tags-end",
   );
-  const usersMemesDuration =
-    performance.getEntriesByName("insert-users-memes")[0].duration;
+  const categoriesTagsDuration = performance.getEntriesByName(
+    "insert-categories-tags",
+  )[0].duration;
   console.log(
-    `  ⏱️  Users & Memes inserted in ${(usersMemesDuration / 1000).toFixed(2)}s`,
+    `  ⏱️  Categories, Tags & Users inserted in ${(categoriesTagsDuration / 1000).toFixed(2)}s`,
   );
 
-  performance.mark("insert-likes-comments-start");
+  // Luego insertar memes (dependen de users y categories)
+  performance.mark("insert-memes-start");
+  await batchInsert(memesTable, memes, 100);
+  performance.mark("insert-memes-end");
+  performance.measure("insert-memes", "insert-memes-start", "insert-memes-end");
+  const memesDuration =
+    performance.getEntriesByName("insert-memes")[0].duration;
+  console.log(`  ⏱️  Memes inserted in ${(memesDuration / 1000).toFixed(2)}s`);
+
+  // Finalmente insertar relaciones y contenido
+  performance.mark("insert-relations-start");
   await Promise.all([
+    batchInsert(memeTagsTable, memeTags, 100),
     batchInsert(likesTable, likes, 100),
     batchInsert(commentsTable, comments, 100),
   ]);
-  performance.mark("insert-likes-comments-end");
+  performance.mark("insert-relations-end");
   performance.measure(
-    "insert-likes-comments",
-    "insert-likes-comments-start",
-    "insert-likes-comments-end",
+    "insert-relations",
+    "insert-relations-start",
+    "insert-relations-end",
   );
-  const likesCommentsDuration = performance.getEntriesByName(
-    "insert-likes-comments",
-  )[0].duration;
+  const relationsDuration =
+    performance.getEntriesByName("insert-relations")[0].duration;
   console.log(
-    `  ⏱️  Likes & Comments inserted in ${(likesCommentsDuration / 1000).toFixed(2)}s`,
+    `  ⏱️  MemeTags, Likes & Comments inserted in ${(relationsDuration / 1000).toFixed(2)}s`,
   );
 
   performance.mark("insert-end");
@@ -327,16 +377,20 @@ async function seed() {
 ⏱️  Clear existing data:  ${(clearDuration / 1000).toFixed(2)}s
 ⏱️  Generate in memory:   ${(generateDuration / 1000).toFixed(2)}s
 ⏱️  Insert to database:   ${(insertDuration / 1000).toFixed(2)}s
-   ├─ Users & Memes:     ${(usersMemesDuration / 1000).toFixed(2)}s
-   └─ Likes & Comments:  ${(likesCommentsDuration / 1000).toFixed(2)}s
+   ├─ Categories/Tags/Users: ${(categoriesTagsDuration / 1000).toFixed(2)}s
+   ├─ Memes:              ${(memesDuration / 1000).toFixed(2)}s
+   └─ Relations:          ${(relationsDuration / 1000).toFixed(2)}s
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🚀 Total time:            ${(totalDuration / 1000).toFixed(2)}s
 
 📦 Data Created:
-   • Users:     ${users.length}
-   • Memes:     ${memes.length}
-   • Likes:     ${likes.length}
-   • Comments:  ${comments.length}
+   • Categories: ${categories.length}
+   • Tags:       ${allTags.length}
+   • Users:      ${users.length}
+   • Memes:      ${memes.length}
+   • MemeTags:   ${memeTags.length}
+   • Likes:      ${likes.length}
+   • Comments:   ${comments.length}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   `);
 

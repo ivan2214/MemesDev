@@ -94,7 +94,7 @@ export function MemeDetail({ memeId, meme, comments }: MemeDetailProps) {
         Back
       </Button>
 
-      <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+      <div className="grid gap-8">
         <div>
           <Card className="overflow-hidden p-0">
             <div className="relative bg-muted">
@@ -109,13 +109,13 @@ export function MemeDetail({ memeId, meme, comments }: MemeDetailProps) {
             <CardContent className="p-6">
               {meme.tags && meme.tags.length > 0 && (
                 <div className="mb-6 flex flex-wrap gap-2">
-                  {meme.tags.map((tag: string) => (
+                  {meme.tags.map((tag) => (
                     <Link
-                      key={tag}
-                      href={`/search?tag=${encodeURIComponent(tag)}`}
+                      key={tag.id}
+                      href={`/search?tag=${encodeURIComponent(tag.slug)}`}
                       className="rounded-full bg-secondary px-3 py-1 font-medium text-secondary-foreground text-sm transition-colors hover:bg-secondary/80"
                     >
-                      #{tag}
+                      #{tag.name}
                     </Link>
                   ))}
                 </div>
@@ -164,13 +164,21 @@ export function MemeDetail({ memeId, meme, comments }: MemeDetailProps) {
                     </Button>
                   ) : (
                     <AuthDialog>
-                      <Button variant="ghost" size="lg" className="gap-2">
+                      <Button
+                        variant="ghost"
+                        size="lg"
+                        className="cursor-pointer gap-2"
+                      >
                         <Heart className="h-5 w-5" />
                         <span>{meme.likesCount}</span>
                       </Button>
                     </AuthDialog>
                   )}
-                  <Button variant="ghost" size="lg" className="gap-2">
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    className="gap-2 disabled:cursor-pointer"
+                  >
                     <MessageCircle className="h-5 w-5" />
                     <span>{meme.commentsCount}</span>
                   </Button>
@@ -184,7 +192,7 @@ export function MemeDetail({ memeId, meme, comments }: MemeDetailProps) {
         </div>
 
         <div id="comments">
-          <h2 className="mb-4 font-bold text-2xl">Comments</h2>
+          <h2 className="mb-4 font-bold text-2xl">Comentarios</h2>
 
           {isAuthenticated ? (
             <form onSubmit={handleSubmitComment} className="mb-6">
@@ -206,7 +214,7 @@ export function MemeDetail({ memeId, meme, comments }: MemeDetailProps) {
             <AuthDialog>
               <Card className="mb-6 cursor-pointer p-4 transition-colors hover:bg-muted/50">
                 <p className="text-muted-foreground text-sm">
-                  Sign in to leave a comment
+                  Inicia sesión para dejar un comentario
                 </p>
               </Card>
             </AuthDialog>

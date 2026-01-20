@@ -1,9 +1,9 @@
 "use server";
 
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { likesTable, memesTable, user as userTable } from "@/db/schemas";
+import { likesTable, memesTable } from "@/db/schemas";
 import { auth } from "@/lib/auth";
 import type { Meme } from "@/types/meme";
 
@@ -14,27 +14,47 @@ export async function getMemes(
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
 
-  const memes = await db
-    .select({
-      id: memesTable.id,
-      imageUrl: memesTable.imageUrl,
-      tags: memesTable.tags,
-      likesCount: memesTable.likesCount,
-      commentsCount: memesTable.commentsCount,
-      createdAt: memesTable.createdAt,
+  const memesData = await db.query.memesTable.findMany({
+    orderBy: [desc(memesTable.createdAt)],
+    limit,
+    offset,
+    with: {
       user: {
-        id: userTable.id,
-        name: userTable.name,
+        columns: {
+          id: true,
+          name: true,
+          image: true,
+        },
       },
+      category: true,
+      tags: {
+        with: {
+          tag: true,
+        },
+      },
+    },
+    extras: {
       isLiked: userId
-        ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`
-        : sql<boolean>`false`,
-    })
-    .from(memesTable)
-    .innerJoin(userTable, eq(memesTable.userId, userTable.id))
-    .orderBy(desc(memesTable.createdAt))
-    .limit(limit)
-    .offset(offset);
+        ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`.as(
+            "isLocked",
+          )
+        : sql<boolean>`false`.as("isLiked"),
+    },
+  });
+
+  // Transformar resultado para coincidir con el tipo Meme
+  const memes: Meme[] = memesData.map((meme) => ({
+    id: meme.id,
+    imageUrl: meme.imageUrl,
+    title: meme.title,
+    category: meme.category,
+    tags: meme.tags.map((mt) => mt.tag),
+    likesCount: meme.likesCount,
+    commentsCount: meme.commentsCount,
+    createdAt: meme.createdAt,
+    user: meme.user,
+    isLiked: meme.isLiked,
+  }));
 
   return { memes };
 }

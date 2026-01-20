@@ -1,9 +1,15 @@
 "use server";
 
-import { desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq, exists, ilike, or, type SQL, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { likesTable, memesTable, user as userTable } from "@/db/schemas";
+import {
+  categoriesTable,
+  likesTable,
+  memesTable,
+  memeTagsTable,
+  tagsTable,
+} from "@/db/schemas";
 import { auth } from "@/lib/auth";
 import type { Meme } from "@/types/meme";
 
@@ -11,89 +17,155 @@ export type SortType = "recent" | "likes" | "comments";
 
 export async function getMemes({
   query = "",
+  tag = "",
+  category = "",
   offset = 0,
   limit = 12,
   sort = "recent",
 }: {
   query?: string;
+  tag?: string;
+  category?: string;
   offset?: number;
   limit?: number;
   sort?: SortType;
 }): Promise<{ memes: Meme[] }> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const userId = session?.user?.id;
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    const userId = session?.user?.id;
 
-  const baseQuery = db
-    .select({
-      id: memesTable.id,
-      imageUrl: memesTable.imageUrl,
-      tags: memesTable.tags,
-      likesCount: memesTable.likesCount,
-      commentsCount: memesTable.commentsCount,
-      createdAt: memesTable.createdAt,
-      user: {
-        id: userTable.id,
-        name: userTable.name,
+    // Construir filtros
+    const filters = [];
+
+    if (query.trim()) {
+      filters.push(
+        or(
+          ilike(memesTable.title, `%${query.trim()}%`),
+          exists(
+            db
+              .select()
+              .from(memeTagsTable)
+              .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
+              .where(
+                and(
+                  eq(memeTagsTable.memeId, memesTable.id),
+                  ilike(tagsTable.name, `%${query.trim()}%`),
+                ),
+              ),
+          ),
+        ),
+      );
+    }
+
+    if (tag) {
+      filters.push(
+        exists(
+          db
+            .select()
+            .from(memeTagsTable)
+            .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
+            .where(
+              and(
+                eq(memeTagsTable.memeId, memesTable.id),
+                eq(tagsTable.slug, tag),
+              ),
+            ),
+        ),
+      );
+    }
+
+    if (category) {
+      filters.push(
+        exists(
+          db
+            .select()
+            .from(categoriesTable)
+            .where(
+              and(
+                eq(categoriesTable.id, memesTable.categoryId),
+                eq(categoriesTable.slug, category),
+              ),
+            ),
+        ),
+      );
+    }
+
+    // Ordenamiento
+    let orderBy: SQL[];
+    switch (sort) {
+      case "likes":
+        orderBy = [desc(memesTable.likesCount), desc(memesTable.createdAt)];
+        break;
+      case "comments":
+        orderBy = [desc(memesTable.commentsCount), desc(memesTable.createdAt)];
+        break;
+      case "recent":
+        orderBy = [desc(memesTable.createdAt)];
+        break;
+      default:
+        orderBy = [desc(memesTable.createdAt)];
+        break;
+    }
+
+    const memesData = await db.query.memesTable.findMany({
+      where: and(...filters),
+      orderBy: orderBy,
+      limit,
+      offset,
+      with: {
+        user: {
+          columns: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+        category: true,
+        tags: {
+          with: {
+            tag: true,
+          },
+        },
       },
-      isLiked: userId
-        ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`
-        : sql<boolean>`false`,
-    })
-    .from(memesTable)
-    .innerJoin(userTable, eq(memesTable.userId, userTable.id))
-    .limit(limit)
-    .offset(offset);
+      extras: {
+        isLiked: userId
+          ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`.as(
+              "isLiked",
+            )
+          : sql<boolean>`false`.as("isLiked"),
+      },
+    });
 
-  // Add search filter if query exists
-  if (query.trim()) {
-    const searchPattern = `%${query}%`;
-    baseQuery.where(
-      or(
-        sql`EXISTS (SELECT 1 FROM unnest(${memesTable.tags}) AS tag WHERE tag ILIKE ${searchPattern})`,
-      ),
-    );
+    const memes: Meme[] = memesData.map((meme) => ({
+      id: meme.id,
+      imageUrl: meme.imageUrl,
+      title: meme.title,
+      category: meme.category,
+      tags: meme.tags.map((mt) => mt.tag),
+      likesCount: meme.likesCount,
+      commentsCount: meme.commentsCount,
+      createdAt: meme.createdAt,
+      user: meme.user,
+      isLiked: meme.isLiked,
+    }));
+
+    return { memes };
+  } catch (error) {
+    console.error("[searchMemes] Error:", error);
+    return { memes: [] };
   }
-
-  // Apply sorting
-  switch (sort) {
-    case "likes":
-      baseQuery.orderBy(
-        desc(memesTable.likesCount),
-        desc(memesTable.createdAt),
-      );
-      break;
-    case "comments":
-      baseQuery.orderBy(
-        desc(memesTable.commentsCount),
-        desc(memesTable.createdAt),
-      );
-      break;
-    case "recent":
-    default:
-      baseQuery.orderBy(desc(memesTable.createdAt));
-      break;
-  }
-
-  const memes = await baseQuery;
-  return { memes };
 }
 
 export async function getAllTags(): Promise<{ tags: string[] }> {
-  const result = await db
-    .selectDistinct({
-      tag: sql<string>`unnest(${memesTable.tags})`,
-    })
-    .from(memesTable)
-    .where(sql`${memesTable.tags} IS NOT NULL`);
+  const result = await db.query.tagsTable.findMany({
+    orderBy: [desc(tagsTable.name)],
+    limit: 50,
+  });
 
-  const tags = result
-    .map((r) => r.tag)
-    .filter((tag): tag is string => tag !== null && tag !== "");
-
-  return { tags: [...new Set(tags)].sort() };
+  return { tags: result.map((t) => t.name) };
 }
 
-// Keep for backward compatibility
+// Actualizar también la compatibilidad
 export async function searchMemes(
   query: string,
   offset = 0,

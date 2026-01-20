@@ -15,6 +15,13 @@
       "when": 1768880304979,
       "tag": "0001_stiff_tomorrow_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768882214013,
+      "tag": "0002_overrated_supreme_intelligence",
+      "breakpoints": true
     }
   ]
 }

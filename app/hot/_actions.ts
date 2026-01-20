@@ -1,9 +1,9 @@
 "use server";
 
-import { desc, eq, gte, sql } from "drizzle-orm";
+import { desc, gte, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { likesTable, memesTable, user as userTable } from "@/db/schemas";
+import { likesTable, memesTable } from "@/db/schemas";
 import { auth } from "@/lib/auth";
 import type { Meme } from "@/types/meme";
 
@@ -50,53 +50,65 @@ export async function getHotMemes({
 
     const timeFilter = getTimeFilter(timeRange);
 
-    const query = db
-      .select({
-        meme: memesTable,
+    // Construir where clause
+    const whereClause = timeFilter
+      ? gte(memesTable.createdAt, timeFilter)
+      : undefined;
+
+    // Construir order by clause
+    const orderBy =
+      sort === "hot"
+        ? [
+            desc(
+              sql`${memesTable.likesCount} + ${memesTable.commentsCount} * 2`,
+            ),
+            desc(memesTable.createdAt),
+          ]
+        : [desc(memesTable.createdAt)];
+
+    const memesData = await db.query.memesTable.findMany({
+      where: whereClause,
+      orderBy: orderBy,
+      limit,
+      offset,
+      with: {
         user: {
-          id: userTable.id,
-          name: userTable.name,
+          columns: {
+            id: true,
+            name: true,
+            image: true,
+          },
         },
-        liked: userId
-          ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`
-          : sql<boolean>`false`,
-      })
-      .from(memesTable)
-      .innerJoin(userTable, eq(memesTable.userId, userTable.id))
-      .offset(offset)
-      .limit(limit);
-
-    // Add time filter if not "all"
-    if (timeFilter) {
-      query.where(gte(memesTable.createdAt, timeFilter));
-    }
-
-    if (sort === "hot") {
-      query.orderBy(
-        desc(sql`${memesTable.likesCount} + ${memesTable.commentsCount} * 2`),
-        desc(memesTable.createdAt),
-      );
-    } else {
-      query.orderBy(desc(memesTable.createdAt));
-    }
-
-    const memes = await query;
-
-    return {
-      memes: memes.map(({ meme, user, liked }) => ({
-        id: meme.id,
-        imageUrl: meme.imageUrl,
-        tags: meme.tags || undefined,
-        likesCount: meme.likesCount,
-        commentsCount: meme.commentsCount,
-        createdAt: meme.createdAt,
-        user: {
-          id: user.id,
-          name: user.name,
+        category: true,
+        tags: {
+          with: {
+            tag: true,
+          },
         },
-        isLiked: liked,
-      })),
-    };
+      },
+      extras: {
+        isLiked: userId
+          ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`.as(
+              "isLiked",
+            )
+          : sql<boolean>`false`.as("isLiked"),
+      },
+    });
+
+    const memes: Meme[] = memesData.map((meme) => ({
+      id: meme.id,
+      imageUrl: meme.imageUrl,
+      title: meme.title,
+      category: meme.category,
+      tags: meme.tags.map((mt) => mt.tag),
+      likesCount: meme.likesCount,
+      commentsCount: meme.commentsCount,
+      createdAt: meme.createdAt,
+      user: meme.user,
+      isLiked: meme.isLiked,
+    }));
+
+    return { memes };
   } catch (error) {
     console.error("[getHotMemes] Error:", error);
     return { memes: [] }; // Fallback
