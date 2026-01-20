@@ -7,7 +7,8 @@ import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
-import { uploadMeme } from "@/app/upload/actions";
+import { searchCategories, uploadMeme } from "@/app/upload/actions";
+import { AsyncSelect } from "@/shared/components/async-select";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -29,6 +30,7 @@ import {
   TagsValue,
 } from "@/shared/components/ui/shadcn-io/tags";
 import { UploadDropzone } from "@/shared/components/ui/upload-dropzone";
+import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 
 type TagForForm = Omit<Tag, "createdAt" | "updatedAt">;
@@ -67,7 +69,16 @@ export function UploadMemeForm() {
       category: "",
     },
     validators: {
-      onSubmit: (value) => formSchema.parse(value),
+      onSubmit: ({ value }) => {
+        const result = formSchema.safeParse(value);
+        if (!result.success) {
+          return {
+            form: result.error.message,
+            fields: result.error.issues,
+          };
+        }
+        return undefined;
+      },
     },
     onSubmit: async ({ value }) => {
       if (!value.file) {
@@ -87,10 +98,22 @@ export function UploadMemeForm() {
         title: value.title,
       });
     },
+    onSubmitInvalid(props) {
+      console.log("props:", props);
+      const meta = props.meta;
+      console.log("meta:", meta);
+      const errors = props.formApi.state.errors;
+      console.log("errors:", errors);
+
+      toast.error("Error al actualizar el perfil");
+    },
   });
 
   const uploader = useUploadFile({
     route: "memes",
+    onError(error) {
+      toast.error(error.message);
+    },
   });
 
   const handleRemove = (id: string) => {
@@ -155,9 +178,9 @@ export function UploadMemeForm() {
                       <Image
                         src={URL.createObjectURL(field.state.value)}
                         alt={field.state.value.name}
-                        width={100}
-                        height={100}
-                        className="aspect-square h-full max-h-[300px] w-full max-w-[300px] rounded-md border"
+                        width={300}
+                        height={300}
+                        className="aspect-square h-full max-h-[400px] w-full max-w-[400px] rounded border"
                       />
                       <Button
                         variant="destructive"
@@ -233,14 +256,33 @@ export function UploadMemeForm() {
             return (
               <Field data-invalid={isInvalid}>
                 <FieldLabel htmlFor={field.name}>Categoría</FieldLabel>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  onBlur={field.handleBlur}
-                  aria-invalid={isInvalid}
-                  placeholder="Ej. Creador de Memes, Curador..."
-                  value={field.state.value || ""}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                <AsyncSelect<Category>
+                  fetcher={searchCategories}
+                  renderOption={(category) => (
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <div className="font-medium">{category.name}</div>
+                      </div>
+                    </div>
+                  )}
+                  getOptionValue={(category) => category.id}
+                  getDisplayValue={(category) => (
+                    <div className="flex items-center gap-2 text-left">
+                      <div className="flex flex-col leading-tight">
+                        <div className="font-medium">{category.name}</div>
+                      </div>
+                    </div>
+                  )}
+                  notFound={
+                    <div className="py-6 text-center text-sm">
+                      No se encontraron categorías
+                    </div>
+                  }
+                  label="Categoría"
+                  placeholder="Selecciona una categoría"
+                  value={field.state.value}
+                  onChange={field.handleChange}
+                  triggerClassName="w-full"
                 />
               </Field>
             );
@@ -256,14 +298,11 @@ export function UploadMemeForm() {
             );
 
             return (
-              <Field
-                className="flex flex-col items-center justify-center"
-                data-invalid={isInvalid}
-              >
+              <Field data-invalid={isInvalid}>
                 <FieldLabel className="text-center" htmlFor={field.name}>
                   Tags
                 </FieldLabel>
-                <Tags className="max-w-[300px]">
+                <Tags>
                   <TagsTrigger placeholder="Selecciona una etiqueta">
                     {tags.map((tag) => (
                       <TagsValue
@@ -335,6 +374,7 @@ export function UploadMemeForm() {
               form.reset();
               uploader.reset();
             }}
+            className="cursor-pointer"
           >
             Cancelar
           </Button>
@@ -342,6 +382,7 @@ export function UploadMemeForm() {
             type="submit"
             form="uploader-form"
             disabled={uploader.isPending}
+            className="cursor-pointer"
           >
             Subir
           </Button>

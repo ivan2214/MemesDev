@@ -1,12 +1,18 @@
 "use server";
 
-import { eq, ilike, inArray } from "drizzle-orm";
+import { and, eq, ilike, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { categoriesTable, memesTable, user, userTagsTable } from "@/db/schemas";
+import {
+  categoriesTable,
+  memesTable,
+  memeTagsTable,
+  tagsTable,
+} from "@/db/schemas";
 import { env } from "@/env/server";
 import { auth } from "@/lib/auth";
+import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 
 type TagForForm = Omit<Tag, "createdAt" | "updatedAt">;
@@ -47,28 +53,52 @@ export async function uploadMeme({
     .returning();
 
   if (tags && tags.length > 0) {
-    // desconectar tags que se sacaron y conectar nuevos
-    const oldTags = await db.query.userTagsTable.findMany({
-      where: eq(userTagsTable.userId, session.user.id),
+    // 1. Ensure all tags exist in DB and get their UUIDs
+    const validTags = await Promise.all(
+      tags.map(async (t) => {
+        const [tag] = await db
+          .insert(tagsTable)
+          .values({ name: t.name, slug: t.slug })
+          .onConflictDoUpdate({
+            target: tagsTable.slug,
+            set: { name: t.name },
+          })
+          .returning();
+        return tag;
+      }),
+    );
+
+    // 2. Fetch existing relations for this meme (should be empty for new meme, but good for robustness)
+    const currentMemeTags = await db.query.memeTagsTable.findMany({
+      where: eq(memeTagsTable.memeId, meme.id),
     });
-    const tagsToDisconnect = oldTags.filter(
-      (tag) => !tags?.some((t) => t.id === tag.tagId),
+
+    // 3. Calculate diff
+    const tagIdsToKeep = new Set(validTags.map((t) => t.id));
+    const currentTagIds = new Set(currentMemeTags.map((t) => t.tagId));
+
+    const tagsToDisconnect = currentMemeTags.filter(
+      (t) => !tagIdsToKeep.has(t.tagId),
     );
-    const tagsToConnect = tags.filter(
-      (tag) => !oldTags.some((t) => t.tagId === tag.id),
-    );
-    // deconectar tags que se sacaron
-    await db.delete(userTagsTable).where(
-      inArray(
-        userTagsTable.tagId,
-        tagsToDisconnect.map((tag) => tag.tagId),
-      ),
-    );
+    const tagsToConnect = validTags.filter((t) => !currentTagIds.has(t.id));
+
+    // 4. Execute updates
+    if (tagsToDisconnect.length > 0) {
+      await db.delete(memeTagsTable).where(
+        and(
+          eq(memeTagsTable.memeId, meme.id),
+          inArray(
+            memeTagsTable.tagId,
+            tagsToDisconnect.map((tag) => tag.tagId),
+          ),
+        ),
+      );
+    }
+
     if (tagsToConnect.length > 0) {
-      // conectar tags que se agregaron
-      await db.insert(userTagsTable).values(
+      await db.insert(memeTagsTable).values(
         tagsToConnect.map((tag) => ({
-          userId: session.user.id,
+          memeId: meme.id,
           tagId: tag.id,
         })),
       );
@@ -82,22 +112,22 @@ export async function uploadMeme({
     // desconectar categoría que se sacó
     if (oldCategory) {
       await db
-        .update(user)
+        .update(memesTable)
         .set({
           categoryId: null,
         })
-        .where(eq(user.id, session.user.id));
+        .where(eq(memesTable.id, meme.id));
     }
     const newCategory = await db.query.categoriesTable.findFirst({
       where: ilike(categoriesTable.name, category),
     });
     if (newCategory) {
       await db
-        .update(user)
+        .update(memesTable)
         .set({
           categoryId: newCategory.id,
         })
-        .where(eq(user.id, session.user.id));
+        .where(eq(memesTable.id, meme.id));
     } else {
       const [newCategory] = await db
         .insert(categoriesTable)
@@ -107,11 +137,11 @@ export async function uploadMeme({
         })
         .returning();
       await db
-        .update(user)
+        .update(memesTable)
         .set({
           categoryId: newCategory.id,
         })
-        .where(eq(user.id, session.user.id));
+        .where(eq(memesTable.id, meme.id));
     }
   }
 
@@ -119,4 +149,19 @@ export async function uploadMeme({
   revalidatePath("/hot");
 
   return { success: true, memeId: meme.id };
+}
+
+export async function searchCategories(query?: string): Promise<Category[]> {
+  // If there's a search query, filter the categories
+  if (query) {
+    const lowercaseQuery = query.toLowerCase();
+    return db.query.categoriesTable.findMany({
+      where: ilike(categoriesTable.name, `%${lowercaseQuery}%`),
+    });
+  }
+
+  // Return first 10 users if no query
+  return db.query.categoriesTable.findMany({
+    limit: 10,
+  });
 }

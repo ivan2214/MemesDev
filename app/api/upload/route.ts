@@ -17,9 +17,6 @@ const router: Router = {
         const user = await auth.api.getSession({
           headers: await headers(),
         });
-        console.log("userdata:", {
-          user,
-        });
 
         if (!user) {
           throw new RejectUpload("Not logged in!");

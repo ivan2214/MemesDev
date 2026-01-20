@@ -1,6 +1,6 @@
 "use client";
 
-import { LogInIcon, LogOut, User } from "lucide-react";
+import { LogInIcon, LogOut, UploadIcon, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { signOut } from "@/lib/auth/auth-client";
@@ -41,48 +41,56 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className={
-                  "flex cursor-pointer items-center gap-2 bg-transparent"
-                }
-              >
-                {user?.image ? (
-                  <Avatar>
-                    <AvatarImage src={user.image} />
-                    <AvatarFallback>
-                      {user.name.split(" ")[0].slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <User className="h-4 w-4" />
-                )}
-                <span className="hidden sm:inline">{user?.name}</span>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem className="w-full cursor-pointer hover:bg-accent">
-                  <Link className="w-full" href={`/profile/${user?.id}`}>
-                    Mi perfil
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="w-full cursor-pointer hover:bg-accent">
-                  <Link className="w-full" href={`/settings/profile`}>
-                    Configuración del perfil
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="w-full cursor-pointer hover:bg-accent"
-                  onClick={handleSignOut}
-                  variant="destructive"
+            <section className="flex items-center gap-2">
+              <Link href="/upload">
+                <Button size="sm">
+                  <UploadIcon className="mr-2 h-4 w-4" />
+                  Subir meme
+                </Button>
+              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className={
+                    "flex cursor-pointer items-center gap-2 bg-transparent"
+                  }
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Salir
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {user?.image ? (
+                    <Avatar>
+                      <AvatarImage src={user.image} />
+                      <AvatarFallback>
+                        {user.name.split(" ")[0].slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <User className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">{user?.name}</span>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="w-full cursor-pointer hover:bg-accent">
+                    <Link className="w-full" href={`/profile/${user?.id}`}>
+                      Mi perfil
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="w-full cursor-pointer hover:bg-accent">
+                    <Link className="w-full" href={`/settings/profile`}>
+                      Configuración del perfil
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="w-full cursor-pointer hover:bg-accent"
+                    onClick={handleSignOut}
+                    variant="destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Salir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </section>
           ) : (
             <AuthDialog>
               <Button size="sm">
