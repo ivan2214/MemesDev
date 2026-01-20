@@ -1,6 +1,6 @@
 "use client";
 
-import { Key, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { signIn, useSession } from "@/lib/auth/auth-client";
@@ -44,8 +44,8 @@ export function AuthDialog({ children }: { children: React.ReactElement }) {
         </DialogHeader>
         <Card className="max-w-md border-none bg-background">
           <CardHeader>
-            <CardTitle className="text-lg md:text-xl">Iniciar Sesión</CardTitle>
-            <CardDescription className="text-xs md:text-sm">
+            <CardTitle>Iniciar Sesión</CardTitle>
+            <CardDescription>
               Introduce tu correo electrónico a continuación para acceder a tu
               cuenta
             </CardDescription>

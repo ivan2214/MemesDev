@@ -40,49 +40,47 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
-            <>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  className={
-                    "flex cursor-pointer items-center gap-2 bg-transparent"
-                  }
-                >
-                  {user?.image ? (
-                    <Avatar>
-                      <AvatarImage src={user.image} />
-                      <AvatarFallback>
-                        {user.name.split(" ")[0].slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <User className="h-4 w-4" />
-                  )}
-                  <span className="hidden sm:inline">{user?.name}</span>
-                </DropdownMenuTrigger>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className={
+                  "flex cursor-pointer items-center gap-2 bg-transparent"
+                }
+              >
+                {user?.image ? (
+                  <Avatar>
+                    <AvatarImage src={user.image} />
+                    <AvatarFallback>
+                      {user.name.split(" ")[0].slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <User className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">{user?.name}</span>
+              </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem className="w-full cursor-pointer hover:bg-accent">
-                    <Link className="w-full" href={`/profile/${user?.id}`}>
-                      Mi perfil
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="w-full cursor-pointer hover:bg-accent"
-                    onClick={handleSignOut}
-                    variant="destructive"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Salir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="w-full cursor-pointer hover:bg-accent">
+                  <Link className="w-full" href={`/profile/${user?.id}`}>
+                    Mi perfil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="w-full cursor-pointer hover:bg-accent"
+                  onClick={handleSignOut}
+                  variant="destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Salir
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <AuthDialog>
               <Button size="sm">
                 <LogInIcon className="mr-2 h-4 w-4" />
-                Sign In
+                Iniciar sesión
               </Button>
             </AuthDialog>
           )}
