@@ -24,14 +24,12 @@ export default async function Page() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "DevMemes",
-    url: process.env.NEXT_PUBLIC_APP_URL || "https://devmemes.com",
+    url: env.APP_URL,
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${
-          process.env.NEXT_PUBLIC_APP_URL || "https://devmemes.com"
-        }/search?q={search_term_string}`,
+        urlTemplate: `${env.APP_URL}/search?q={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     } as SearchAction & { "query-input": string },

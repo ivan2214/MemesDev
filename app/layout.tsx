@@ -79,6 +79,9 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-icon.png",
   },
+  verification: {
+    google: "WQnMOB9c2UaSmdLlqYeyZ9DXKUgqnxjMcidTtyAjWxM",
+  },
 };
 
 export default function RootLayout({
