@@ -265,7 +265,7 @@ export function UploadMemeForm() {
                       </div>
                     </div>
                   )}
-                  getOptionValue={(category) => category.id}
+                  getOptionValue={(category) => category.slug}
                   getDisplayValue={(category) => (
                     <div className="flex items-center gap-2 text-left">
                       <div className="flex flex-col leading-tight">
