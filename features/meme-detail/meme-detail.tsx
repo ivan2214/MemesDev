@@ -124,7 +124,7 @@ export function MemeDetail({
 
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
         <div>
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden p-0">
             <div className="relative bg-muted">
               {/** biome-ignore lint/performance/noImgElement: <temp> */}
               <img

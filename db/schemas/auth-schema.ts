@@ -1,12 +1,5 @@
 import { relations } from "drizzle-orm";
-import {
-  boolean,
-  index,
-  integer,
-  pgTable,
-  text,
-  timestamp,
-} from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { commentsTable } from "./comments-table";
 import { likesTable } from "./likes-table";
 import { memesTable } from "./memes-table";
@@ -83,33 +76,9 @@ export const verification = pgTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
-export const passkey = pgTable(
-  "passkey",
-  {
-    id: text("id").primaryKey(),
-    name: text("name"),
-    publicKey: text("public_key").notNull(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    credentialID: text("credential_id").notNull(),
-    counter: integer("counter").notNull(),
-    deviceType: text("device_type").notNull(),
-    backedUp: boolean("backed_up").notNull(),
-    transports: text("transports"),
-    createdAt: timestamp("created_at"),
-    aaguid: text("aaguid"),
-  },
-  (table) => [
-    index("passkey_userId_idx").on(table.userId),
-    index("passkey_credentialID_idx").on(table.credentialID),
-  ],
-);
-
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
-  passkeys: many(passkey),
   memes: many(memesTable),
   likes: many(likesTable),
   comments: many(commentsTable),
@@ -125,13 +94,6 @@ export const sessionRelations = relations(session, ({ one }) => ({
 export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
-    references: [user.id],
-  }),
-}));
-
-export const passkeyRelations = relations(passkey, ({ one }) => ({
-  user: one(user, {
-    fields: [passkey.userId],
     references: [user.id],
   }),
 }));

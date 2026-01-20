@@ -1,4 +1,3 @@
-import { passkey } from "@better-auth/passkey";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth/minimal";
 import { nextCookies } from "better-auth/next-js";
@@ -26,7 +25,7 @@ export const auth = betterAuth({
 
       expiresIn: 15 * 60 * 1000, // 15 minutos en milisegundos
     }),
-    passkey(),
+
     nextCookies(),
   ],
 });

@@ -89,26 +89,7 @@ export function AuthDialog({ children }: { children: React.ReactElement }) {
                   )}
                 </Button>
               </div>
-              <Button
-                variant="secondary"
-                disabled={loading}
-                className="gap-2"
-                onClick={async () => {
-                  await signIn.passkey({
-                    fetchOptions: {
-                      onRequest: () => {
-                        setLoading(true);
-                      },
-                      onResponse: () => {
-                        setLoading(false);
-                      },
-                    },
-                  });
-                }}
-              >
-                <Key size={16} />
-                Iniciar sesión con Passkey
-              </Button>
+
               <div
                 className={cn(
                   "flex w-full items-center gap-2",
