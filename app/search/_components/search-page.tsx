@@ -8,7 +8,7 @@ import { MemeCard } from "@/shared/components/meme-card";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Spinner } from "@/shared/components/ui/spinner";
-import type { Meme } from "@/types/meme";
+import type { Meme, Tag } from "@/types/meme";
 import { getMemes, type SortType } from "../_actions";
 
 const PAGE_SIZE = 12;
@@ -21,14 +21,16 @@ const SORT_OPTIONS: { value: SortType; label: string }[] = [
 
 export function SearchPage({
   initialMemes,
-  initialTags,
+  tags,
   initialQuery = "",
   initialSort = "recent",
+  initialTags = [],
 }: {
   initialMemes: Meme[];
-  initialTags: string[];
+  tags: Tag[];
   initialQuery?: string;
   initialSort?: SortType;
+  initialTags?: string[];
 }) {
   const router = useRouter();
 
@@ -38,18 +40,26 @@ export function SearchPage({
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(initialMemes.length >= PAGE_SIZE);
   const [offset, setOffset] = useState(initialMemes.length);
-  const [selectedTag, setSelectedTag] = useState<string | null>(
-    initialQuery || null,
-  );
-  const [tags] = useState<string[]>(initialTags);
+  const [selectedTags, setSelectedTags] = useState<string[]>(initialTags);
+
   const [sort, setSort] = useState<SortType>(initialSort);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const updateUrl = useCallback(
-    (newQuery: string, newSort: SortType) => {
+    ({
+      newQuery,
+      newSort,
+      newTags,
+    }: {
+      newQuery: string;
+      newSort: SortType;
+      newTags: string[];
+    }) => {
       const params = new URLSearchParams();
       if (newQuery) params.set("q", newQuery);
       if (newSort !== "recent") params.set("sort", newSort);
+      if (newTags.length > 0)
+        params.set("tags", encodeURIComponent(newTags.join(",")));
       const queryString = params.toString();
       router.push(`/search${queryString ? `?${queryString}` : ""}`, {
         scroll: false,
@@ -120,21 +130,28 @@ export function SearchPage({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchQuery(query);
-    setSelectedTag(null);
+    setSelectedTags([]);
     setOffset(0);
     setHasMore(true);
-    updateUrl(query, sort);
+    updateUrl({
+      newQuery: query,
+      newSort: sort,
+      newTags: [],
+    });
     doSearch(query, 0, sort, true);
   };
 
   const handleTagClick = (tag: string) => {
-    setQuery(tag);
-    setSearchQuery(tag);
-    setSelectedTag(tag);
+    const newTags = [...selectedTags, tag];
+    setSelectedTags(newTags);
     setOffset(0);
     setHasMore(true);
-    updateUrl(tag, sort);
-    doSearch(tag, 0, sort, true);
+    updateUrl({
+      newQuery: searchQuery,
+      newSort: sort,
+      newTags,
+    });
+    doSearch(searchQuery, 0, sort, true);
   };
 
   const handleSortChange = (newSort: SortType) => {
@@ -142,17 +159,25 @@ export function SearchPage({
     setSort(newSort);
     setOffset(0);
     setHasMore(true);
-    updateUrl(searchQuery, newSort);
+    updateUrl({
+      newQuery: searchQuery,
+      newSort,
+      newTags: selectedTags,
+    });
     doSearch(searchQuery, 0, newSort, true);
   };
 
   const clearSearch = () => {
     setQuery("");
     setSearchQuery("");
-    setSelectedTag(null);
+    setSelectedTags([]);
     setOffset(0);
     setHasMore(true);
-    updateUrl("", sort);
+    updateUrl({
+      newQuery: "",
+      newSort: sort,
+      newTags: [],
+    });
     doSearch("", 0, sort, true);
   };
 
@@ -207,12 +232,16 @@ export function SearchPage({
           <div className="flex flex-wrap gap-2">
             {tags.slice(0, 15).map((tag) => (
               <Button
-                key={tag}
-                onClick={() => handleTagClick(tag)}
+                key={tag.id}
+                onClick={() => handleTagClick(tag.slug)}
                 size="sm"
-                variant={selectedTag === tag ? "default" : "secondary"}
+                variant={
+                  selectedTags.includes(tag.slug.toLowerCase())
+                    ? "default"
+                    : "secondary"
+                }
               >
-                {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                {tag.name.charAt(0).toUpperCase() + tag.name.slice(1)}
               </Button>
             ))}
           </div>

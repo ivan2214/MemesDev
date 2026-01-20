@@ -6,21 +6,24 @@ import Loading from "./loading";
 async function SearchContent({
   query,
   sort,
+  tagsSearch,
 }: {
   query: string;
   sort: SortType;
+  tagsSearch?: string[];
 }) {
   const [{ tags }, { memes }] = await Promise.all([
     getAllTags(),
-    getMemes({ query, offset: 0, limit: 12, sort }),
+    getMemes({ query, offset: 0, limit: 12, sort, tags: tagsSearch }),
   ]);
 
   return (
     <SearchPage
       initialMemes={memes}
-      initialTags={tags}
+      tags={tags}
       initialQuery={query}
       initialSort={sort}
+      initialTags={tagsSearch}
     />
   );
 }
@@ -28,15 +31,19 @@ async function SearchContent({
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; sort?: string }>;
+  searchParams: Promise<{ q?: string; sort?: string; tags?: string }>;
 }) {
   const params = await searchParams;
   const query = params.q || "";
   const sort = (params.sort as SortType) || "recent";
+  const tagsSearch = params.tags
+    ? decodeURIComponent(params.tags).split(",")
+    : undefined;
+  console.log(tagsSearch);
 
   return (
     <Suspense fallback={<Loading />}>
-      <SearchContent query={query} sort={sort} />
+      <SearchContent query={query} sort={sort} tagsSearch={tagsSearch} />
     </Suspense>
   );
 }

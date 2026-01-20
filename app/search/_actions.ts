@@ -1,6 +1,16 @@
 "use server";
 
-import { and, desc, eq, exists, ilike, or, type SQL, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  exists,
+  ilike,
+  inArray,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import {
@@ -11,20 +21,20 @@ import {
   tagsTable,
 } from "@/db/schemas";
 import { auth } from "@/lib/auth";
-import type { Meme } from "@/types/meme";
+import type { Meme, Tag } from "@/types/meme";
 
 export type SortType = "recent" | "likes" | "comments";
 
 export async function getMemes({
   query = "",
-  tag = "",
+  tags = [],
   category = "",
   offset = 0,
   limit = 12,
   sort = "recent",
 }: {
   query?: string;
-  tag?: string;
+  tags?: string[];
   category?: string;
   offset?: number;
   limit?: number;
@@ -57,7 +67,7 @@ export async function getMemes({
       );
     }
 
-    if (tag) {
+    if (tags.length > 0) {
       filters.push(
         exists(
           db
@@ -67,7 +77,7 @@ export async function getMemes({
             .where(
               and(
                 eq(memeTagsTable.memeId, memesTable.id),
-                eq(tagsTable.slug, tag),
+                inArray(tagsTable.slug, tags),
               ),
             ),
         ),
@@ -156,13 +166,13 @@ export async function getMemes({
   }
 }
 
-export async function getAllTags(): Promise<{ tags: string[] }> {
-  const result = await db.query.tagsTable.findMany({
+export async function getAllTags(): Promise<{ tags: Tag[] }> {
+  const tags = await db.query.tagsTable.findMany({
     orderBy: [desc(tagsTable.name)],
     limit: 50,
   });
 
-  return { tags: result.map((t) => t.name) };
+  return { tags };
 }
 
 // Actualizar también la compatibilidad
