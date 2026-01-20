@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  ChevronDown,
-  Flame,
-  Home,
-  Route,
-  Search,
-  Shuffle,
-  Upload,
-} from "lucide-react";
+import { ChevronDown, Flame, Route, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -38,14 +30,8 @@ import {
 } from "@/shared/lib/tag-icons";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
-
-const navItems = [
-  { href: "/", label: "Inicio", icon: Home },
-  { href: "/hot", label: "Hot", icon: Flame },
-  { href: "/search", label: "Buscar", icon: Search },
-  { href: "/random", label: "Random", icon: Shuffle },
-  { href: "/upload", label: "Subir", icon: Upload },
-];
+import { navItems } from "../_constants";
+import { useAuth } from "./auth-dialog";
 
 interface AppSidebarProps {
   categories?: Category[];
@@ -54,6 +40,9 @@ interface AppSidebarProps {
 
 export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
+
+  const items = navItems(isAuthenticated);
 
   // Usar defaults si no se proporcionan datos de DB
   const displayCategories =
@@ -100,8 +89,9 @@ export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {navItems.map((item) => {
+                  {items.map((item) => {
                     const isActive = pathname === item.href;
+
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton isActive={isActive} className="py-0">
