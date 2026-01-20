@@ -1,7 +1,13 @@
 import { z } from "zod";
+import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 
 type TagForForm = Omit<Tag, "createdAt" | "updatedAt">;
+
+type CategoryForm = Omit<
+  Category,
+  "createdAt" | "updatedAt" | "icon" | "color"
+>;
 
 export const profileSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -10,8 +16,8 @@ export const profileSchema = z.object({
     .max(500, "La biografía no puede exceder los 500 caracteres")
     .default(""), // Quitar .optional()
   imageKey: z.string().default(""), // Quitar .optional()
-  category: z.string().min(1, "Escriba una categoria").optional(),
-  tags: z.array(z.custom<TagForForm>()).nullish(), // Quitar .optional()
+  tags: z.array(z.custom<TagForForm>()).optional(),
+  category: z.custom<CategoryForm>().optional(),
   socials: z
     .array(
       z.object({

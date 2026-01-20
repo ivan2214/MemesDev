@@ -15,10 +15,18 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";
+import type { Category } from "@/types/category";
+import type { Tag } from "@/types/tag";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { UploadDialog } from "./upload-dialog";
 
-export function Header() {
+export function Header({
+  categoriesDB,
+  tagsDB,
+}: {
+  categoriesDB: Category[];
+  tagsDB: Tag[];
+}) {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
 
@@ -52,7 +60,7 @@ export function Header() {
           {isAuthenticated ? (
             <section className="flex items-center gap-2">
               {user ? (
-                <UploadDialog>
+                <UploadDialog categoriesDB={categoriesDB} tagsDB={tagsDB}>
                   <Button size="sm">
                     <UploadIcon className="mr-2 h-4 w-4" />
                     Subir meme

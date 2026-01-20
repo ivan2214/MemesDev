@@ -74,7 +74,7 @@ export async function updateProfile(data: ProfileSchema) {
 
   if (validatedFields.category) {
     const oldCategory = await db.query.categoriesTable.findFirst({
-      where: eq(categoriesTable.slug, validatedFields.category),
+      where: eq(categoriesTable.slug, validatedFields.category.slug),
     });
     // desconectar categoría que se sacó
     if (oldCategory) {
@@ -86,7 +86,7 @@ export async function updateProfile(data: ProfileSchema) {
         .where(eq(userTable.id, session.user.id));
     }
     const newCategory = await db.query.categoriesTable.findFirst({
-      where: ilike(categoriesTable.name, validatedFields.category),
+      where: ilike(categoriesTable.name, validatedFields.category.name),
     });
     if (newCategory) {
       await db
@@ -99,8 +99,8 @@ export async function updateProfile(data: ProfileSchema) {
       const [newCategory] = await db
         .insert(categoriesTable)
         .values({
-          slug: validatedFields.category.toLowerCase().replace(" ", "-"),
-          name: validatedFields.category,
+          slug: validatedFields.category.slug,
+          name: validatedFields.category.name,
         })
         .returning();
       await db

@@ -13,8 +13,7 @@ import {
   type ProfileSchema,
   profileSchema,
 } from "@/app/(private)/settings/profile/_validators";
-import { searchCategories } from "@/shared/actions/category-actions";
-import { AsyncSelect } from "@/shared/components/async-select";
+import { uploadOptimizedImage } from "@/shared/actions/upload-actions";
 import { Button } from "@/shared/components/ui/button";
 import {
   Field,
@@ -41,10 +40,15 @@ import type { Tag } from "@/types/tag";
 import type { UserSettings } from "../_types";
 
 type TagForForm = Omit<Tag, "createdAt" | "updatedAt">;
+type CategoryForm = Omit<
+  Category,
+  "createdAt" | "updatedAt" | "icon" | "color"
+>;
 
 interface ProfileFormProps {
   initialData: UserSettings | null;
-  allTags: Tag[];
+  tagsDB: TagForForm[];
+  categoriesDB: CategoryForm[];
 }
 
 const profileFormSchema = profileSchema.extend({
@@ -52,15 +56,21 @@ const profileFormSchema = profileSchema.extend({
   imagePreview: z.string().optional(),
 });
 
-export function ProfileForm({ initialData, allTags }: ProfileFormProps) {
+export function ProfileForm({
+  initialData,
+  tagsDB,
+  categoriesDB,
+}: ProfileFormProps) {
   const [newTag, setNewTag] = useState<TagForForm | null>(null);
+  const [newCategory, setNewCategory] = useState<CategoryForm | null>(null);
+  const [openCategorySelect, setOpenCategorySelect] = useState(false);
 
   const form = useForm({
     defaultValues: {
       name: initialData?.name || "",
       bio: initialData?.bio || "",
-      category: initialData?.category?.name || "",
-      tags: initialData?.tags || [],
+      tags: null as TagForForm[] | null,
+      category: null as CategoryForm | null,
       socials: initialData?.socials || [],
       imageKey: initialData?.imageKey || "",
       imageFile: undefined as never as File,
@@ -80,16 +90,26 @@ export function ProfileForm({ initialData, allTags }: ProfileFormProps) {
       },
     },
     onSubmit: async ({ value }) => {
-      const data: ProfileSchema = {
+      const data = {
         ...value,
       };
       if (value.imageFile) {
-        const { file } = await uploader.upload(value.imageFile);
-        data.imageKey = file.objectInfo?.key;
+        const formData = new FormData();
+        formData.append("file", value.imageFile);
+        formData.append("type", "avatar");
+
+        try {
+          const { key } = await uploadOptimizedImage(formData);
+          data.imageKey = key;
+        } catch (error) {
+          console.error(error);
+          toast.error("Error al subir la imagen optimized");
+          return;
+        }
       }
 
       try {
-        await updateProfile(data);
+        await updateProfile(data as ProfileSchema);
         toast.success("Perfil actualizado correctamente");
       } catch (error) {
         console.error(error);
@@ -115,38 +135,84 @@ export function ProfileForm({ initialData, allTags }: ProfileFormProps) {
   });
 
   const handleRemoveTag = (id: string) => {
-    const selected = form.state.values.tags || [];
+    const selected = form.state.values.tags;
+    if (!selected) {
+      return;
+    }
     form.setFieldValue(
       "tags",
       selected.filter((t) => t.id !== id),
     );
   };
 
-  const handleCreateTag = () => {
-    if (!newTag) return;
+  const handleSelectTag = (id: string, value: string) => {
+    const selected = form.state.values.tags;
+
+    if (selected?.some((t) => t.id === id)) {
+      handleRemoveTag(id);
+      return;
+    }
 
     form.setFieldValue("tags", [
-      ...(form.state.values.tags || []),
-      { ...newTag, createdAt: new Date() },
+      ...(selected || []),
+      { id: id, name: value, slug: value.toLowerCase().replace(" ", "-") },
     ]);
     setNewTag(null);
   };
 
-  const handleSelect = (tagSelected: TagForForm) => {
-    const { id } = tagSelected;
-    const selected = form.state.values.tags || [];
-    if (selected.some((t) => t.id === tagSelected.id)) {
-      handleRemoveTag(tagSelected.id);
+  const handleCreateTag = () => {
+    const selected = form.state.values.tags;
+    if (!selected) {
+      return;
+    }
+    if (!newTag) {
+      return;
+    }
+    form.setFieldValue("tags", [...selected, newTag]);
+
+    setNewTag(null);
+  };
+
+  const handleRemoveCategory = (id: string) => {
+    const selected = form.state.values.category;
+    if (!selected) {
+      return;
+    }
+    if (selected.id !== id) {
       return;
     }
 
-    const tag = allTags.find((t) => t.id === id);
-    if (!tag) return;
+    form.setFieldValue("category", null);
+  };
 
-    const newTags = [...selected, tag];
-    form.setFieldValue("tags", newTags);
+  const handleSelectCategory = (category: CategoryForm) => {
+    const selected = form.state.values.category;
 
-    setNewTag(null);
+    if (selected?.id === category.id) {
+      handleRemoveCategory(category.id);
+      return;
+    }
+
+    form.setFieldValue("category", {
+      id: category.id,
+      name: category.name,
+      slug: category.name.toLowerCase().replace(" ", "-"),
+    });
+    setNewCategory(null);
+    setOpenCategorySelect(false);
+  };
+
+  const handleCreateCategory = () => {
+    if (!newCategory) {
+      return;
+    }
+    form.setFieldValue("category", {
+      id: newCategory.id,
+      name: newCategory.name,
+      slug: newCategory.name.toLowerCase().replace(" ", "-"),
+    });
+
+    setNewCategory(null);
   };
 
   return (
@@ -256,43 +322,78 @@ export function ProfileForm({ initialData, allTags }: ProfileFormProps) {
           {(field) => {
             const isInvalid =
               field.state.meta.isTouched && !field.state.meta.isValid;
+            const category = field.state.value;
+
             return (
               <Field data-invalid={isInvalid}>
-                <FieldLabel htmlFor={field.name}>Categoría</FieldLabel>
-                <AsyncSelect<Category>
-                  fetcher={searchCategories}
-                  renderOption={(category) => (
-                    <div className="flex items-center gap-2">
-                      <div className="flex flex-col">
-                        <div className="font-medium">{category.name}</div>
-                      </div>
-                    </div>
-                  )}
-                  getOptionValue={(category) => category.slug}
-                  getDisplayValue={(category) => (
-                    <div className="flex items-center gap-2 text-left">
-                      <div className="flex flex-col leading-tight">
-                        <div className="font-medium">{category.name}</div>
-                      </div>
-                    </div>
-                  )}
-                  notFound={
-                    <div className="py-6 text-center text-sm">
-                      No se encontraron categorías
-                    </div>
-                  }
-                  label="Categoría"
-                  placeholder="Selecciona una categoría"
-                  value={field.state.value}
-                  onChange={field.handleChange}
-                  triggerClassName="w-full"
-                />
+                <FieldLabel className="text-center" htmlFor={field.name}>
+                  Categoria
+                </FieldLabel>
+                <Tags
+                  open={openCategorySelect}
+                  onOpenChange={setOpenCategorySelect}
+                >
+                  <TagsTrigger placeholder="Selecciona una categoria">
+                    {category?.name && (
+                      <TagsValue
+                        onRemove={() => handleRemoveCategory(category.id)}
+                      >
+                        {category.name}
+                      </TagsValue>
+                    )}
+                  </TagsTrigger>
+                  <TagsContent>
+                    <TagsInput
+                      value={newCategory?.name || ""}
+                      onValueChange={(value) => {
+                        setNewCategory({
+                          id: value,
+                          name: value,
+                          slug: value.toLowerCase().replace(" ", "-"),
+                        });
+                      }}
+                      placeholder="Buscar..."
+                    />
+                    <TagsList>
+                      <TagsEmpty>
+                        <button
+                          className="mx-auto flex cursor-pointer items-center gap-2"
+                          onClick={handleCreateCategory}
+                          type="button"
+                        >
+                          <PlusIcon
+                            className="text-muted-foreground"
+                            size={14}
+                          />
+                          Crear categoria: {newCategory?.name || ""}
+                        </button>
+                      </TagsEmpty>
+                      <TagsGroup>
+                        {categoriesDB.map((cat) => (
+                          <TagsItem
+                            key={cat.id}
+                            onSelect={() => handleSelectCategory(cat)}
+                            value={cat.slug}
+                          >
+                            {cat.name}
+                            {category?.id === cat.id && (
+                              <CheckIcon
+                                className="text-muted-foreground"
+                                size={14}
+                              />
+                            )}
+                          </TagsItem>
+                        ))}
+                      </TagsGroup>
+                    </TagsList>
+                  </TagsContent>
+                </Tags>
+                {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
             );
           }}
         </form.Field>
 
-        {/* Tags */}
         <form.Field name="tags">
           {(field) => {
             const isInvalid =
@@ -340,21 +441,15 @@ export function ProfileForm({ initialData, allTags }: ProfileFormProps) {
                             className="text-muted-foreground"
                             size={14}
                           />
-                          Create new tag: {newTag?.name || ""}
+                          Crear tag: {newTag?.name || ""}
                         </button>
                       </TagsEmpty>
                       <TagsGroup>
-                        {allTags.map((tag) => (
+                        {tagsDB.map((tag) => (
                           <TagsItem
                             key={tag.id}
-                            onSelect={() =>
-                              handleSelect({
-                                id: tag.id,
-                                name: tag.name,
-                                slug: tag.slug,
-                              })
-                            }
-                            value={tag.slug}
+                            onSelect={() => handleSelectTag(tag.id, tag.name)}
+                            value={tag.id}
                           >
                             {tag.name}
                             {tags?.some((t) => t.id === tag.id) && (

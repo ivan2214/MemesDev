@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ProfilePage as SchemaProfilePage, WithContext } from "schema-dts";
 import { env } from "@/env/server";
-import { Header } from "@/shared/components/header";
+
 import { getUserMemes, getUserProfile } from "./_actions";
 import { ProfilePage } from "./_components/profile-page";
 
@@ -58,12 +58,9 @@ export default async function Page({
 
   if (!profile) {
     return (
-      <>
-        <Header />
-        <div className="flex min-h-screen items-center justify-center">
-          <p className="text-lg text-muted-foreground">Usuario no encontrado</p>
-        </div>
-      </>
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-lg text-muted-foreground">Usuario no encontrado</p>
+      </div>
     );
   }
 

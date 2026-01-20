@@ -1,10 +1,12 @@
 import { getAllTags } from "@/app/(public)/search/_actions";
+import { getAllCategories } from "@/shared/actions/category-actions";
 import { getUserSettings } from "./_actions";
 import { ProfileForm } from "./_components/profile-form";
 
 export default async function SettingsProfilePage() {
   const user = await getUserSettings();
   const { tags } = await getAllTags();
+  const categories = await getAllCategories();
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-10">
@@ -14,7 +16,7 @@ export default async function SettingsProfilePage() {
           Actualiza tu información personal, avatar y redes sociales.
         </p>
       </div>
-      <ProfileForm initialData={user} allTags={tags} />
+      <ProfileForm initialData={user} tagsDB={tags} categoriesDB={categories} />
     </div>
   );
 }

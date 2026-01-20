@@ -10,13 +10,13 @@ export const getCurrentUser = cache(async () => {
     headers: await headers(),
   });
 
-  return session;
+  return session?.user;
 });
 
 export const requireUser = cache(async () => {
-  const session = await getCurrentUser();
-  if (!session?.user) {
+  const user = await getCurrentUser();
+  if (!user) {
     redirect(`/error?error=${ErrorTypeMessages.auth}`);
   }
-  return session.user;
+  return user;
 });

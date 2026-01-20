@@ -16,6 +16,7 @@ export function HomePage({ initialMemes }: { initialMemes: Meme[] }) {
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const loadMemes = useCallback(async (currentOffset: number) => {
+    console.log("Loading memes...");
     setLoading(true);
     try {
       const data = await getMemes(currentOffset, PAGE_SIZE);

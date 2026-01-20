@@ -7,9 +7,10 @@ import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
-import { searchCategories } from "@/shared/actions/category-actions";
+
 import { uploadMeme } from "@/shared/actions/meme-actions";
-import { AsyncSelect } from "@/shared/components/async-select";
+import { uploadOptimizedImage } from "@/shared/actions/upload-actions";
+
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -35,40 +36,37 @@ import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 
 type TagForForm = Omit<Tag, "createdAt" | "updatedAt">;
-
-const defaultTags = [
-  { id: "react", name: "React" },
-  { id: "typescript", name: "TypeScript" },
-  { id: "javascript", name: "JavaScript" },
-  { id: "nextjs", name: "Next.js" },
-  { id: "vuejs", name: "Vue.js" },
-  { id: "angular", name: "Angular" },
-  { id: "svelte", name: "Svelte" },
-  { id: "nodejs", name: "Node.js" },
-  { id: "python", name: "Python" },
-  { id: "ruby", name: "Ruby" },
-  { id: "java", name: "Java" },
-  { id: "csharp", name: "C#" },
-  { id: "php", name: "PHP" },
-  { id: "go", name: "Go" },
-];
+type CategoryForm = Omit<
+  Category,
+  "createdAt" | "updatedAt" | "icon" | "color"
+>;
 
 const formSchema = z.object({
-  tags: z.array(z.custom<TagForForm>()).min(1, "Escriba al menos una etiqueta"),
   file: z.file().min(1, "Seleccione un archivo"),
   title: z.string().min(1, "Escriba un titulo").optional(),
-  category: z.string().min(1, "Escriba una categoria").optional(),
+  tags: z.array(z.custom<TagForForm>()).optional(),
+  category: z.custom<CategoryForm>().optional(),
 });
 
-export function UploadMemeForm() {
+export function UploadMemeForm({
+  tagsDB,
+  categoriesDB,
+  onClose,
+}: {
+  tagsDB: TagForForm[];
+  categoriesDB: CategoryForm[];
+  onClose: () => void;
+}) {
   const [newTag, setNewTag] = useState<TagForForm | null>(null);
+  const [newCategory, setNewCategory] = useState<CategoryForm | null>(null);
+  const [openCategorySelect, setOpenCategorySelect] = useState(false);
 
   const form = useForm({
     defaultValues: {
-      tags: [] as TagForForm[],
+      tags: null as TagForForm[] | null,
       file: [] as never as File,
       title: "",
-      category: "",
+      category: null as CategoryForm | null,
     },
     validators: {
       onSubmit: ({ value }) => {
@@ -86,19 +84,36 @@ export function UploadMemeForm() {
       if (!value.file) {
         return toast.error("No se selecciono un archivo");
       }
-      const { file } = await uploader.upload(value.file);
+      const formData = new FormData();
+      formData.append("file", value.file);
+      formData.append("type", "meme");
+
+      let imageKey: string;
+      try {
+        const { key } = await uploadOptimizedImage(formData);
+        imageKey = key;
+      } catch (error) {
+        if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("Error al subir el meme");
+        }
+        return;
+      }
 
       console.log({
         tags: value.tags,
-        objectKeys: file.objectInfo.key,
+        objectKeys: imageKey,
       });
 
       await uploadMeme({
         tags: value.tags,
-        imageKey: file.objectInfo.key,
+        imageKey: imageKey,
         category: value.category,
         title: value.title,
       });
+      form.reset();
+      onClose();
     },
     onSubmitInvalid(props) {
       console.log("props:", props);
@@ -118,39 +133,83 @@ export function UploadMemeForm() {
     },
   });
 
-  const handleRemove = (id: string) => {
+  const handleRemoveTag = (id: string) => {
     const selected = form.state.values.tags;
-    if (!selected.some((t) => t.id === id)) {
+    if (!selected) {
       return;
     }
-
     form.setFieldValue(
       "tags",
       selected.filter((t) => t.id !== id),
     );
   };
 
-  const handleSelect = (id: string, value: string) => {
+  const handleSelectTag = (id: string, value: string) => {
     const selected = form.state.values.tags;
-    if (selected.some((t) => t.id === id)) {
-      handleRemove(id);
+
+    if (selected?.some((t) => t.id === id)) {
+      handleRemoveTag(id);
       return;
     }
 
     form.setFieldValue("tags", [
-      ...selected,
+      ...(selected || []),
       { id: id, name: value, slug: value.toLowerCase().replace(" ", "-") },
     ]);
     setNewTag(null);
   };
 
   const handleCreateTag = () => {
+    const selected = form.state.values.tags;
+
     if (!newTag) {
       return;
     }
-    form.setFieldValue("tags", [...form.state.values.tags, newTag]);
+    form.setFieldValue("tags", [...(selected || []), newTag]);
 
     setNewTag(null);
+  };
+
+  const handleRemoveCategory = (id: string) => {
+    const selected = form.state.values.category;
+    if (!selected) {
+      return;
+    }
+    if (selected.id !== id) {
+      return;
+    }
+
+    form.setFieldValue("category", null);
+  };
+
+  const handleSelectCategory = (category: CategoryForm) => {
+    const selected = form.state.values.category;
+
+    if (selected?.id === category.id) {
+      handleRemoveCategory(category.id);
+      return;
+    }
+
+    form.setFieldValue("category", {
+      id: category.id,
+      name: category.name,
+      slug: category.name.toLowerCase().replace(" ", "-"),
+    });
+    setNewCategory(null);
+    setOpenCategorySelect(false);
+  };
+
+  const handleCreateCategory = () => {
+    if (!newCategory) {
+      return;
+    }
+    form.setFieldValue("category", {
+      id: newCategory.id,
+      name: newCategory.name,
+      slug: newCategory.name.toLowerCase().replace(" ", "-"),
+    });
+
+    setNewCategory(null);
   };
 
   return (
@@ -160,7 +219,7 @@ export function UploadMemeForm() {
         e.preventDefault();
         form.handleSubmit();
       }}
-      className="flex flex-col items-center justify-center gap-5"
+      className="flex w-full flex-col items-center justify-center gap-5"
     >
       <FieldGroup className="flex flex-col items-center justify-center text-center">
         <form.Field name="file">
@@ -173,21 +232,24 @@ export function UploadMemeForm() {
             const fileName = `${name?.slice(0, 10)}.${extension}`;
             return (
               <Field data-invalid={isInvalid}>
-                <FieldLabel htmlFor={field.name}>Meme</FieldLabel>
+                <FieldLabel className="p-0" htmlFor={field.name}>
+                  Meme
+                </FieldLabel>
                 {field.state.value.name ? (
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="relative flex items-center gap-2">
+                  <div className="">
+                    <div className="relative mx-auto flex w-96 items-center gap-2">
                       <Image
                         src={URL.createObjectURL(field.state.value)}
                         alt={field.state.value.name}
-                        width={300}
-                        height={300}
-                        className="aspect-square h-full max-h-[400px] w-full max-w-[400px] rounded border"
+                        width={384}
+                        height={216}
+                        className="aspect-auto h-full w-full rounded border object-cover"
                       />
                       <Button
                         variant="destructive"
                         type="button"
-                        className="absolute -top-5 -right-5 h-6 w-6"
+                        className="absolute -top-5 -right-5 rounded-full"
+                        size="icon-xs"
                         onClick={() => {
                           field.handleChange(undefined as never as File);
                         }}
@@ -195,7 +257,7 @@ export function UploadMemeForm() {
                         <X className="h-3 w-3" />
                       </Button>
                     </div>
-                    <Badge variant="secondary" className="mt-2">
+                    <Badge variant="secondary" className="mt-4">
                       {fileName}
                     </Badge>
                   </div>
@@ -255,37 +317,73 @@ export function UploadMemeForm() {
           {(field) => {
             const isInvalid =
               field.state.meta.isTouched && !field.state.meta.isValid;
+            const category = field.state.value;
+
             return (
               <Field data-invalid={isInvalid}>
-                <FieldLabel htmlFor={field.name}>Categoría</FieldLabel>
-                <AsyncSelect<Category>
-                  fetcher={searchCategories}
-                  renderOption={(category) => (
-                    <div className="flex items-center gap-2">
-                      <div className="flex flex-col">
-                        <div className="font-medium">{category.name}</div>
-                      </div>
-                    </div>
-                  )}
-                  getOptionValue={(category) => category.slug}
-                  getDisplayValue={(category) => (
-                    <div className="flex items-center gap-2 text-left">
-                      <div className="flex flex-col leading-tight">
-                        <div className="font-medium">{category.name}</div>
-                      </div>
-                    </div>
-                  )}
-                  notFound={
-                    <div className="py-6 text-center text-sm">
-                      No se encontraron categorías
-                    </div>
-                  }
-                  label="Categoría"
-                  placeholder="Selecciona una categoría"
-                  value={field.state.value}
-                  onChange={field.handleChange}
-                  triggerClassName="w-full"
-                />
+                <FieldLabel className="text-center" htmlFor={field.name}>
+                  Categoria
+                </FieldLabel>
+                <Tags
+                  open={openCategorySelect}
+                  onOpenChange={setOpenCategorySelect}
+                >
+                  <TagsTrigger placeholder="Selecciona una categoria">
+                    {category?.name && (
+                      <TagsValue
+                        onRemove={() => handleRemoveCategory(category.id)}
+                      >
+                        {category.name}
+                      </TagsValue>
+                    )}
+                  </TagsTrigger>
+                  <TagsContent>
+                    <TagsInput
+                      value={newCategory?.name || ""}
+                      onValueChange={(value) => {
+                        setNewCategory({
+                          id: value,
+                          name: value,
+                          slug: value.toLowerCase().replace(" ", "-"),
+                        });
+                      }}
+                      placeholder="Buscar..."
+                    />
+                    <TagsList>
+                      <TagsEmpty>
+                        <button
+                          className="mx-auto flex cursor-pointer items-center gap-2"
+                          onClick={handleCreateCategory}
+                          type="button"
+                        >
+                          <PlusIcon
+                            className="text-muted-foreground"
+                            size={14}
+                          />
+                          Crear categoria: {newCategory?.name || ""}
+                        </button>
+                      </TagsEmpty>
+                      <TagsGroup>
+                        {categoriesDB.map((cat) => (
+                          <TagsItem
+                            key={cat.id}
+                            onSelect={() => handleSelectCategory(cat)}
+                            value={cat.slug}
+                          >
+                            {cat.name}
+                            {category?.id === cat.id && (
+                              <CheckIcon
+                                className="text-muted-foreground"
+                                size={14}
+                              />
+                            )}
+                          </TagsItem>
+                        ))}
+                      </TagsGroup>
+                    </TagsList>
+                  </TagsContent>
+                </Tags>
+                {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
             );
           }}
@@ -295,7 +393,7 @@ export function UploadMemeForm() {
           {(field) => {
             const isInvalid =
               field.state.meta.isTouched && !field.state.meta.isValid;
-            const tags = field.state.value.filter(
+            const tags = field.state.value?.filter(
               (t) => t.id !== "" && t.name !== "",
             );
 
@@ -306,10 +404,10 @@ export function UploadMemeForm() {
                 </FieldLabel>
                 <Tags>
                   <TagsTrigger placeholder="Selecciona una etiqueta">
-                    {tags.map((tag) => (
+                    {tags?.map((tag) => (
                       <TagsValue
                         key={tag.id}
-                        onRemove={() => handleRemove(tag.id)}
+                        onRemove={() => handleRemoveTag(tag.id)}
                       >
                         {tag.name}
                       </TagsValue>
@@ -338,18 +436,18 @@ export function UploadMemeForm() {
                             className="text-muted-foreground"
                             size={14}
                           />
-                          Create new tag: {newTag?.name || ""}
+                          Crear tag: {newTag?.name || ""}
                         </button>
                       </TagsEmpty>
                       <TagsGroup>
-                        {defaultTags.map((tag) => (
+                        {tagsDB.map((tag) => (
                           <TagsItem
                             key={tag.id}
-                            onSelect={() => handleSelect(tag.id, tag.name)}
+                            onSelect={() => handleSelectTag(tag.id, tag.name)}
                             value={tag.id}
                           >
                             {tag.name}
-                            {tags.some((t) => t.id === tag.id) && (
+                            {tags?.some((t) => t.id === tag.id) && (
                               <CheckIcon
                                 className="text-muted-foreground"
                                 size={14}
@@ -383,7 +481,7 @@ export function UploadMemeForm() {
           <Button
             type="submit"
             form="uploader-form"
-            disabled={uploader.isPending}
+            disabled={form.state.isSubmitting}
             className="cursor-pointer"
           >
             Subir

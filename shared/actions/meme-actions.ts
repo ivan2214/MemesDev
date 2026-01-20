@@ -1,7 +1,7 @@
 "use server";
 import { deleteObject } from "@better-upload/server/helpers";
 
-import { and, desc, eq, ilike, inArray } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { db } from "@/db";
@@ -169,9 +169,15 @@ export async function deleteMeme(memeId: string) {
   return { success: true };
 }
 
+import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 
 type TagForForm = Omit<Tag, "createdAt" | "updatedAt">;
+
+type CategoryForm = Omit<
+  Category,
+  "createdAt" | "updatedAt" | "icon" | "color"
+>;
 
 export async function uploadMeme({
   tags,
@@ -179,10 +185,10 @@ export async function uploadMeme({
   category,
   title,
 }: {
-  tags: TagForForm[];
+  tags: TagForForm[] | null;
   imageKey: string;
   title?: string;
-  category?: string;
+  category: CategoryForm | null;
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -212,14 +218,29 @@ export async function uploadMeme({
     // 1. Ensure all tags exist in DB and get their UUIDs
     const validTags = await Promise.all(
       tags.map(async (t) => {
+        const existingTag = await db.query.tagsTable.findFirst({
+          where: or(eq(tagsTable.slug, t.slug), eq(tagsTable.name, t.name)),
+        });
+
+        if (existingTag) {
+          return existingTag;
+        }
+
         const [tag] = await db
           .insert(tagsTable)
           .values({ name: t.name, slug: t.slug })
-          .onConflictDoUpdate({
-            target: tagsTable.slug,
-            set: { name: t.name },
-          })
+          .onConflictDoNothing()
           .returning();
+
+        // If insert returned nothing (race condition conflict), try fetching again
+        if (!tag) {
+          const retryTag = await db.query.tagsTable.findFirst({
+            where: or(eq(tagsTable.slug, t.slug), eq(tagsTable.name, t.name)),
+          });
+          if (retryTag) return retryTag;
+          throw new Error("Failed to process tag");
+        }
+
         return tag;
       }),
     );
@@ -263,7 +284,7 @@ export async function uploadMeme({
 
   if (category) {
     const oldCategory = await db.query.categoriesTable.findFirst({
-      where: eq(categoriesTable.slug, category),
+      where: eq(categoriesTable.slug, category.slug),
     });
     // desconectar categoría que se sacó
     if (oldCategory) {
@@ -275,7 +296,7 @@ export async function uploadMeme({
         .where(eq(memesTable.id, meme.id));
     }
     const newCategory = await db.query.categoriesTable.findFirst({
-      where: ilike(categoriesTable.name, category),
+      where: ilike(categoriesTable.name, category.name),
     });
     if (newCategory) {
       await db
@@ -288,8 +309,8 @@ export async function uploadMeme({
       const [newCategory] = await db
         .insert(categoriesTable)
         .values({
-          slug: category.toLowerCase().replace(" ", "-"),
-          name: category,
+          slug: category.slug,
+          name: category.name,
         })
         .returning();
       await db
