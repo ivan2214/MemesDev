@@ -2,7 +2,7 @@
 import { ImageResponse } from "next/og";
 import { getMeme } from "./_actions";
 
-export const runtime = "edge";
+// export const runtime = "edge";
 export const alt = "Meme Preview";
 export const size = {
   width: 1200,
@@ -10,7 +10,12 @@ export const size = {
 };
 export const contentType = "image/png";
 
-export default async function Image({ params }: { params: { id: string } }) {
+export default async function Image({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   // We can't use getMeme directly if it uses headers() and we are in edge runtime without proper polyfills sometimes,
   // OR if getMeme has side effects.
   // getMeme uses 'use server' which acts as an RPC call if imported in client, but here we are on server.
@@ -18,7 +23,7 @@ export default async function Image({ params }: { params: { id: string } }) {
   // Note: If db connection (Postgres) is not edge compatible, this will fail in edge runtime.
   // Drizzle with neon-http IS edge compatible.
 
-  const meme = await getMeme(params.id);
+  const meme = await getMeme(id);
 
   if (!meme) {
     return new ImageResponse(
