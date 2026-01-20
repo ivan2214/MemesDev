@@ -3,11 +3,14 @@
 import { desc, eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { commentsTable, likesTable, memesTable, userTable } from "@/db/schemas";
+import { likesTable, memesTable, user as userTable } from "@/db/schemas";
 import { auth } from "@/lib/auth";
 import type { Meme } from "@/types/meme";
+import type { UserProfile } from "@/types/profile";
 
-export async function getUserProfile(userId: string) {
+export async function getUserProfile(userId: string): Promise<{
+  user?: UserProfile | null;
+}> {
   const users = await db
     .select({
       id: userTable.id,
@@ -21,7 +24,7 @@ export async function getUserProfile(userId: string) {
     .limit(1);
 
   if (!users[0]) {
-    return { user: null, stats: null };
+    return { user: null };
   }
 
   // Get stats
@@ -35,18 +38,25 @@ export async function getUserProfile(userId: string) {
     .from(likesTable)
     .where(eq(likesTable.userId, userId));
 
-  const commentsCountResult = await db
+  /*   const commentsCountResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(commentsTable)
-    .where(eq(commentsTable.userId, userId));
+    .where(eq(commentsTable.userId, userId)); */
 
   const stats = {
     memesCount: Number(memesCount[0]?.count || 0),
     likesCount: Number(likesCount[0]?.count || 0),
-    commentsCount: Number(commentsCountResult[0]?.count || 0),
+    /* commentsCount: Number(commentsCountResult[0]?.count || 0), */
   };
 
-  return { user: users[0], stats };
+  const user: UserProfile = {
+    ...users[0],
+    memesCount: stats.memesCount,
+    totalLikes: stats.likesCount,
+    /* commentsCount: stats.commentsCount, */
+  };
+
+  return { user };
 }
 
 export async function getUserMemes(

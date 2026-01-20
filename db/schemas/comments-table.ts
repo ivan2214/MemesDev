@@ -1,13 +1,13 @@
 import { relations } from "drizzle-orm";
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { userTable } from "./auth-schema";
+import { user } from "./auth-schema";
 import { memesTable } from "./memes-table";
 
 export const commentsTable = pgTable("comments", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
-    .references(() => userTable.id, { onDelete: "cascade" }),
+    .references(() => user.id, { onDelete: "cascade" }),
   memeId: uuid("meme_id")
     .notNull()
     .references(() => memesTable.id, { onDelete: "cascade" }),
@@ -16,9 +16,9 @@ export const commentsTable = pgTable("comments", {
 });
 
 export const commentRelations = relations(commentsTable, ({ one }) => ({
-  user: one(userTable, {
+  user: one(user, {
     fields: [commentsTable.userId],
-    references: [userTable.id],
+    references: [user.id],
   }),
   meme: one(memesTable, {
     fields: [commentsTable.memeId],

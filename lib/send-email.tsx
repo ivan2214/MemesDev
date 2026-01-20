@@ -1,7 +1,7 @@
-import { render } from "@react-email/components";
+import { render } from "@react-email/render";
 import { transporter } from "@/config/mail.config";
+import MagicLinkEmail from "@/emails/magic-link-email";
 import { env } from "@/env/server";
-import MagicLinkEmail from "./email-templates/magic-link-email";
 
 interface BaseEmailParams {
   to: string;

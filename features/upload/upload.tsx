@@ -1,190 +1,284 @@
 "use client";
 
-import { ImageIcon, Upload, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import type React from "react";
+import { useUploadFiles } from "@better-upload/client";
+import { useForm } from "@tanstack/react-form";
+import { CheckIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/features/auth/auth";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import {
+  Tags,
+  TagsContent,
+  TagsEmpty,
+  TagsGroup,
+  TagsInput,
+  TagsItem,
+  TagsList,
+  TagsTrigger,
+  TagsValue,
+} from "@/components/ui/shadcn-io/tags";
+import { UploadDropzoneProgress } from "@/components/ui/upload-dropzone-progress";
+
+const defaultTags = [
+  { id: "react", label: "React" },
+  { id: "typescript", label: "TypeScript" },
+  { id: "javascript", label: "JavaScript" },
+  { id: "nextjs", label: "Next.js" },
+  { id: "vuejs", label: "Vue.js" },
+  { id: "angular", label: "Angular" },
+  { id: "svelte", label: "Svelte" },
+  { id: "nodejs", label: "Node.js" },
+  { id: "python", label: "Python" },
+  { id: "ruby", label: "Ruby" },
+  { id: "java", label: "Java" },
+  { id: "csharp", label: "C#" },
+  { id: "php", label: "PHP" },
+  { id: "go", label: "Go" },
+];
+
+const formSchema = z.object({
+  tags: z
+    .array(z.object({ id: z.string(), label: z.string() }))
+    .min(1, "Escriba al menos una etiqueta"),
+  files: z.array(z.file()).min(1, "Sube al menos un archivo"),
+});
 
 export function UploadMeme() {
-  const router = useRouter();
-  const { isAuthenticated } = useAuth();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [tags, setTags] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [newTag, setNewTag] = useState<{
+    id: string;
+    label: string;
+  }>({
+    id: "",
+    label: "",
+  });
 
-  if (!isAuthenticated) {
-    router.push("/");
-    return null;
-  }
+  const form = useForm({
+    defaultValues: {
+      tags: [
+        {
+          id: "",
+          label: "",
+        },
+      ],
+      files: [] as File[],
+    },
+    validators: {
+      onSubmit: formSchema,
+    },
+    onSubmit: async ({ value }) => {
+      const { files } = await uploader.upload(value.files);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+      // call your API here
+      console.log({
+        tags: value.tags,
+        objectKeys: files.map((file) => file.objectInfo.key),
+      });
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!imageFile) {
-      setError("Please select an image");
+  const uploader = useUploadFiles({
+    route: "memes",
+  });
+
+  const handleRemove = (id: string) => {
+    const selected = form.state.values.tags;
+    if (!selected.some((t) => t.id === id)) {
       return;
     }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const formData = new FormData();
-      formData.append("image", imageFile);
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("tags", tags);
-
-      const response = await fetch("/api/memes/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload meme");
-      }
-
-      const data = await response.json();
-      router.push(`/meme/${data.id}`);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to upload meme. Please try again.");
-    } finally {
-      setLoading(false);
+    console.log(`removed: ${id}`);
+    form.setFieldValue(
+      "tags",
+      selected.filter((t) => t.id !== id),
+    );
+  };
+  const handleSelect = (id: string, value: string) => {
+    const selected = form.state.values.tags;
+    if (selected.some((t) => t.id === id)) {
+      handleRemove(id);
+      return;
     }
+    console.log(`selected: ${id}`);
+    form.setFieldValue("tags", [...selected, { id: id, label: value }]);
+  };
+  const handleCreateTag = () => {
+    console.log(`created: ${newTag}`);
+
+    form.setFieldValue("tags", [...form.state.values.tags, newTag]);
+
+    setNewTag({
+      id: "",
+      label: "",
+    });
   };
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-balance">Upload a Meme</CardTitle>
-          <CardDescription className="text-pretty">
-            Share your programming humor with the community
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="image">Meme Image *</Label>
-              <div className="flex flex-col gap-4">
-                {preview ? (
-                  <div className="relative">
-                    {/** biome-ignore lint/performance/noImgElement: <temp> */}
-                    <img
-                      src={preview || "/placeholder.svg"}
-                      alt="Preview"
-                      className="max-h-96 w-full rounded-lg border border-border object-contain"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="destructive"
-                      className="absolute top-2 right-2"
-                      onClick={() => {
-                        setImageFile(null);
-                        setPreview("");
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <label
-                    htmlFor="image"
-                    className="flex h-64 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-border border-dashed bg-muted/50 transition-colors hover:bg-muted"
-                  >
-                    <ImageIcon className="mb-4 h-12 w-12 text-muted-foreground" />
-                    <p className="font-medium text-foreground text-sm">
-                      Click to upload an image
-                    </p>
-                    <p className="mt-1 text-muted-foreground text-xs">
-                      PNG, JPG, GIF up to 10MB
-                    </p>
-                  </label>
-                )}
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                  required
-                />
-              </div>
-            </div>
+    <Card className="mx-auto w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Form Uploader</CardTitle>
+        <CardDescription>Upload files to a specific folder.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form
+          id="uploader-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+        >
+          <FieldGroup>
+            <form.Field name="tags">
+              {(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
+                const tags = field.state.value.filter(
+                  (t) => t.id !== "" && t.label !== "",
+                );
 
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                placeholder="When the code finally works..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Add context or a funny caption"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags</Label>
-              <Input
-                id="tags"
-                placeholder="javascript, react, debugging (comma separated)"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-              />
-              <p className="text-muted-foreground text-xs">
-                Separate tags with commas to help others find your meme
-              </p>
-            </div>
-
-            {error && <p className="text-destructive text-sm">{error}</p>}
-
-            <Button type="submit" className="w-full gap-2" disabled={loading}>
-              <Upload className="h-4 w-4" />
-              {loading ? "Uploading..." : "Upload Meme"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>Tags</FieldLabel>
+                    <Tags className="max-w-[300px]">
+                      <TagsTrigger placeholder="Selecciona una etiqueta">
+                        {tags.map((tag) => (
+                          <TagsValue
+                            key={tag.id}
+                            onRemove={() => handleRemove(tag.id)}
+                          >
+                            {tag.label}
+                          </TagsValue>
+                        ))}
+                      </TagsTrigger>
+                      <TagsContent>
+                        <TagsInput
+                          onValueChange={(value) => {
+                            setNewTag({
+                              id: value,
+                              label: value,
+                            });
+                          }}
+                          placeholder="Search tag..."
+                        />
+                        <TagsList>
+                          <TagsEmpty>
+                            <button
+                              className="mx-auto flex cursor-pointer items-center gap-2"
+                              onClick={handleCreateTag}
+                              type="button"
+                            >
+                              <PlusIcon
+                                className="text-muted-foreground"
+                                size={14}
+                              />
+                              Create new tag: {newTag.label}
+                            </button>
+                          </TagsEmpty>
+                          <TagsGroup>
+                            {defaultTags.map((tag) => (
+                              <TagsItem
+                                key={tag.id}
+                                onSelect={() => handleSelect(tag.id, tag.label)}
+                                value={tag.id}
+                              >
+                                {tag.label}
+                                {tags.some((t) => t.id === tag.id) && (
+                                  <CheckIcon
+                                    className="text-muted-foreground"
+                                    size={14}
+                                  />
+                                )}
+                              </TagsItem>
+                            ))}
+                          </TagsGroup>
+                        </TagsList>
+                      </TagsContent>
+                    </Tags>
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                );
+              }}
+            </form.Field>
+            <form.Field name="files">
+              {(field) => {
+                const isInvalid =
+                  (field.state.meta.isTouched && !field.state.meta.isValid) ||
+                  uploader.isError;
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>Folder name</FieldLabel>
+                    {field.state.value.length > 0 ? (
+                      <div className="flex flex-col">
+                        {field.state.value.map((file) => (
+                          <span key={file.name} className="text-sm">
+                            {file.name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <UploadDropzoneProgress
+                        id={field.name}
+                        control={uploader.control}
+                        description={{
+                          maxFiles: 5,
+                          maxFileSize: "5MB",
+                        }}
+                        uploadOverride={(files) => {
+                          field.handleChange(Array.from(files));
+                        }}
+                      />
+                    )}
+                    {isInvalid && (
+                      <FieldError
+                        errors={
+                          uploader.error
+                            ? [{ message: uploader.error.message }]
+                            : field.state.meta.errors
+                        }
+                      />
+                    )}
+                  </Field>
+                );
+              }}
+            </form.Field>
+          </FieldGroup>
+        </form>
+      </CardContent>
+      <CardFooter>
+        <Field orientation="horizontal">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              form.reset();
+              uploader.reset();
+            }}
+          >
+            Reset
+          </Button>
+          <Button
+            type="submit"
+            form="uploader-form"
+            disabled={uploader.isPending}
+          >
+            Submit
+          </Button>
+        </Field>
+      </CardFooter>
+    </Card>
   );
 }

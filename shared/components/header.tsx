@@ -71,21 +71,15 @@ export function Header() {
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  render={() => (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-2 bg-transparent"
-                    >
-                      <User className="h-4 w-4" />
-                      <span className="hidden sm:inline">{user?.name}</span>
-                    </Button>
-                  )}
-                />
+                  className={"flex items-center gap-2 bg-transparent"}
+                >
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">{user?.name}</span>
+                </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem>
-                    <Link href="/profile">My Profile</Link>
+                    <Link href={`/profile/${user?.id}`}>My Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>

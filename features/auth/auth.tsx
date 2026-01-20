@@ -70,6 +70,7 @@ export function AuthDialog({ children }: { children: React.ReactElement }) {
                   onClick={async () => {
                     await signIn.magicLink({
                       email,
+
                       fetchOptions: {
                         onRequest: () => {
                           setLoading(true);
@@ -121,7 +122,7 @@ export function AuthDialog({ children }: { children: React.ReactElement }) {
                   onClick={async () => {
                     await signIn.social({
                       provider: "google",
-                      callbackURL: "/dashboard",
+                      callbackURL: "/",
                       fetchOptions: {
                         onRequest: () => {
                           setLoading(true);
@@ -166,7 +167,8 @@ export function AuthDialog({ children }: { children: React.ReactElement }) {
                   onClick={async () => {
                     await signIn.social({
                       provider: "github",
-                      callbackURL: "/dashboard",
+                      callbackURL: "/",
+
                       fetchOptions: {
                         onRequest: () => {
                           setLoading(true);

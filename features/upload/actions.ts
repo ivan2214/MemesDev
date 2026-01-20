@@ -1,6 +1,5 @@
 "use server";
 
-import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { db } from "@/db";
@@ -14,17 +13,14 @@ export async function uploadMeme(formData: FormData) {
     throw new Error("Unauthorized");
   }
 
-  const file = formData.get("image") as File;
   const tags = formData.get("tags") as string;
+  const imageUrl = formData.get("imageUrl") as string;
 
-  if (!file) {
+  if (!imageUrl) {
     throw new Error("Image is required");
   }
 
-  // Upload to Vercel Blob
-  const blob = await put(file.name, file, {
-    access: "public",
-  });
+  // Upload to meme
 
   // Save to database
   const tagsArray = tags ? tags.split(",").map((t) => t.trim()) : [];
@@ -33,7 +29,7 @@ export async function uploadMeme(formData: FormData) {
     .insert(memesTable)
     .values({
       userId: session.user.id,
-      imageUrl: blob.url,
+      imageUrl: imageUrl,
       tags: tagsArray,
     })
     .returning();

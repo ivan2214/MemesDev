@@ -11,7 +11,7 @@ import { commentsTable } from "./comments-table";
 import { likesTable } from "./likes-table";
 import { memesTable } from "./memes-table";
 
-export const userTable = pgTable("user", {
+export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
@@ -38,7 +38,7 @@ export const session = pgTable(
     userAgent: text("user_agent"),
     userId: text("user_id")
       .notNull()
-      .references(() => userTable.id, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "cascade" }),
   },
   (table) => [index("session_userId_idx").on(table.userId)],
 );
@@ -51,7 +51,7 @@ export const account = pgTable(
     providerId: text("provider_id").notNull(),
     userId: text("user_id")
       .notNull()
-      .references(() => userTable.id, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "cascade" }),
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
@@ -91,7 +91,7 @@ export const passkey = pgTable(
     publicKey: text("public_key").notNull(),
     userId: text("user_id")
       .notNull()
-      .references(() => userTable.id, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "cascade" }),
     credentialID: text("credential_id").notNull(),
     counter: integer("counter").notNull(),
     deviceType: text("device_type").notNull(),
@@ -106,7 +106,7 @@ export const passkey = pgTable(
   ],
 );
 
-export const userRelations = relations(userTable, ({ many }) => ({
+export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   passkeys: many(passkey),
@@ -116,22 +116,22 @@ export const userRelations = relations(userTable, ({ many }) => ({
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
-  user: one(userTable, {
+  user: one(user, {
     fields: [session.userId],
-    references: [userTable.id],
+    references: [user.id],
   }),
 }));
 
 export const accountRelations = relations(account, ({ one }) => ({
-  user: one(userTable, {
+  user: one(user, {
     fields: [account.userId],
-    references: [userTable.id],
+    references: [user.id],
   }),
 }));
 
 export const passkeyRelations = relations(passkey, ({ one }) => ({
-  user: one(userTable, {
+  user: one(user, {
     fields: [passkey.userId],
-    references: [userTable.id],
+    references: [user.id],
   }),
 }));

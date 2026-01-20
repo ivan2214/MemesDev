@@ -8,6 +8,7 @@ export interface Meme {
   user: {
     id: string;
     name: string;
+    image?: string | null;
   };
   isLiked?: boolean;
 }

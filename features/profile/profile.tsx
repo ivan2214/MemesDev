@@ -1,121 +1,28 @@
 "use client";
 
 import { Calendar, Heart, ImageIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MemeCard } from "@/shared/components/meme-card";
 import type { Meme } from "@/types/meme";
+import type { UserProfile } from "@/types/profile";
 
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  created_at: string;
-  memes_count: number;
-  total_likes: number;
-}
-
-export function ProfilePage({ userId }: { userId: string }) {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [userMemes, setUserMemes] = useState<Meme[]>([]);
-  const [likedMemes, setLikedMemes] = useState<Meme[]>([]);
-  const [loading, setLoading] = useState(true);
+export function ProfilePage({
+  profile,
+  userMemes,
+  likedMemes,
+}: {
+  profile: UserProfile;
+  userMemes: Meme[];
+  likedMemes: Meme[];
+}) {
   const [activeTab, setActiveTab] = useState("uploads");
-
-  useEffect(() => {
-    loadProfile();
-    loadUserMemes();
-  }, [userId]);
-
-  const loadProfile = async () => {
-    try {
-      const response = await fetch(`/api/profile/${userId}`);
-      if (!response.ok) throw new Error("Failed to fetch profile");
-
-      const data = await response.json();
-      setProfile(data.profile);
-    } catch (error) {
-      console.error("[v0] Failed to load profile:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadUserMemes = async () => {
-    try {
-      const response = await fetch(`/api/profile/${userId}/memes`);
-      if (!response.ok) throw new Error("Failed to fetch memes");
-
-      const data = await response.json();
-      setUserMemes(data.memes);
-    } catch (error) {
-      console.error("[v0] Failed to load user memes:", error);
-    }
-  };
-
-  const loadLikedMemes = async () => {
-    if (likedMemes.length > 0) return; // Already loaded
-
-    try {
-      const response = await fetch(`/api/profile/${userId}/liked`);
-      if (!response.ok) throw new Error("Failed to fetch liked memes");
-
-      const data = await response.json();
-      setLikedMemes(data.memes);
-    } catch (error) {
-      console.error("[v0] Failed to load liked memes:", error);
-    }
-  };
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    if (value === "liked") {
-      loadLikedMemes();
-    }
   };
-
-  const handleLike = async (memeId: string) => {
-    try {
-      const response = await fetch("/api/memes/like", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memeId }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-
-        // Update in both lists
-        setUserMemes((prev) =>
-          prev.map((meme) =>
-            meme.id === memeId
-              ? { ...meme, is_liked: data.liked, likes_count: data.likes_count }
-              : meme,
-          ),
-        );
-        setLikedMemes((prev) =>
-          prev.map((meme) =>
-            meme.id === memeId
-              ? { ...meme, is_liked: data.liked, likes_count: data.likes_count }
-              : meme,
-          ),
-        );
-      }
-    } catch (error) {
-      console.error("[v0] Failed to like meme:", error);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner className="h-8 w-8" />
-      </div>
-    );
-  }
 
   if (!profile) {
     return (
@@ -143,19 +50,19 @@ export function ProfilePage({ userId }: { userId: string }) {
               <div className="flex items-center gap-2">
                 <ImageIcon className="h-5 w-5 text-muted-foreground" />
                 <span className="text-sm">
-                  <strong>{profile.memes_count}</strong> memes
+                  <strong>{profile.memesCount}</strong> memes
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Heart className="h-5 w-5 text-muted-foreground" />
                 <span className="text-sm">
-                  <strong>{profile.total_likes}</strong> likes
+                  <strong>{profile.totalLikes}</strong> likes
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-muted-foreground" />
                 <span className="text-sm">
-                  Joined {new Date(profile.created_at).toLocaleDateString()}
+                  Joined {new Date(profile.createdAt).toLocaleDateString()}
                 </span>
               </div>
             </div>
@@ -176,7 +83,7 @@ export function ProfilePage({ userId }: { userId: string }) {
                 <MemeCard
                   key={meme.id}
                   meme={meme}
-                  onLike={handleLike}
+                  /* onLike={handleLike} */
                   isLiked={meme.isLiked}
                 />
               ))}
@@ -198,7 +105,7 @@ export function ProfilePage({ userId }: { userId: string }) {
                 <MemeCard
                   key={meme.id}
                   meme={meme}
-                  onLike={handleLike}
+                  /* onLike={handleLike} */
                   isLiked={meme.isLiked}
                 />
               ))}

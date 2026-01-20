@@ -5,7 +5,9 @@ export default function UploadPage() {
   return (
     <>
       <Header />
-      <UploadMeme />
+      <section className="container mx-auto h-full w-full px-4 py-8">
+        <UploadMeme />
+      </section>
     </>
   );
 }

@@ -4,8 +4,14 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { commentsTable, likesTable, memesTable, userTable } from "@/db/schemas";
+import {
+  commentsTable,
+  likesTable,
+  memesTable,
+  user as userTable,
+} from "@/db/schemas";
 import { auth } from "@/lib/auth";
+import type { Meme } from "@/types/meme";
 
 export async function toggleLike(memeId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -51,23 +57,25 @@ export async function toggleLike(memeId: string) {
   }
 }
 
-export async function getMemeDetails(memeId: string) {
+export async function getMemeDetails(
+  memeId: string,
+): Promise<{ meme: Meme | null }> {
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
 
   const memes = await db
     .select({
       id: memesTable.id,
-      title: memesTable.title,
-      description: memesTable.description,
       imageUrl: memesTable.imageUrl,
       tags: memesTable.tags,
       likesCount: memesTable.likesCount,
       commentsCount: memesTable.commentsCount,
       createdAt: memesTable.createdAt,
-      userId: userTable.id,
-      userName: userTable.name,
-      userImage: userTable.image,
+      user: {
+        id: userTable.id,
+        name: userTable.name,
+        image: userTable.image,
+      },
       isLiked: userId
         ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`
         : sql<boolean>`false`,
