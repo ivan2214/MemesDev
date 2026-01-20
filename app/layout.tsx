@@ -52,7 +52,7 @@ export const metadata: Metadata = {
       "Descubre y comparte los memes de programación más divertidos. Sube, dale a 'me gusta', comenta y ríete con la comunidad de desarrolladores.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image.webp",
         width: 1200,
         height: 630,
         alt: "MemesDev - Memes de programación para desarrolladores",
