@@ -1,7 +1,7 @@
 "use client";
 
 import { useUploadFiles } from "@better-upload/client";
-import { UploadDropzoneProgress } from "@/components/ui/upload-dropzone-progress";
+import { UploadDropzoneProgress } from "@/components/ui/upload-dropzone";
 
 export function Uploader() {
   const { control } = useUploadFiles({

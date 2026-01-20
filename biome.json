@@ -14,7 +14,8 @@
       "!dist",
       "!build",
       "!e2e",
-      "!.agent"
+      "!.agent",
+      "!drizzle"
     ]
   },
   "formatter": {

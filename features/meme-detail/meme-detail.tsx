@@ -4,108 +4,80 @@ import { ArrowLeft, Heart, MessageCircle, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
-import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useState } from "react";
+import { toast } from "sonner";
+import { postComment, toggleLikeMeme } from "@/actions/meme";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { AuthDialog, useAuth } from "@/features/auth/auth";
+import type { Comment } from "@/types/comment";
 import type { Meme } from "@/types/meme";
 
-interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  user: {
-    id: string;
-    name: string;
-  };
+interface MemeDetailProps {
+  memeId: string;
+  initialMeme: Meme; // Using any for now to match the server action return type easier or should define strict type
+  initialComments: Comment[];
 }
 
-export function MemeDetail({ memeId }: { memeId: string }) {
+export function MemeDetail({
+  memeId,
+  initialMeme,
+  initialComments,
+}: MemeDetailProps) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const [meme, setMeme] = useState<Meme | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [meme, setMeme] = useState<Meme>(initialMeme);
+  const [comments, setComments] = useState<Comment[]>(initialComments);
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
 
-  useEffect(() => {
-    loadMeme();
-    loadComments();
-  }, [memeId]);
-
-  const loadMeme = async () => {
-    try {
-      const response = await fetch(`/api/memes/${memeId}`);
-      if (!response.ok) throw new Error("Failed to fetch meme");
-
-      const data = await response.json();
-      setMeme(data.meme);
-    } catch (error) {
-      console.error("[v0] Failed to load meme:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadComments = async () => {
-    try {
-      const response = await fetch(`/api/memes/${memeId}/comments`);
-      if (!response.ok) throw new Error("Failed to fetch comments");
-
-      const data = await response.json();
-      setComments(data.comments);
-    } catch (error) {
-      console.error("[v0] Failed to load comments:", error);
-    }
-  };
-
+  // Optimistic update for like
   const handleLike = async () => {
-    if (!isAuthenticated || !meme) return;
+    if (!isAuthenticated) return;
+
+    // Optimistic UI update
+    const previousMeme = { ...meme };
+    const newIsLiked = !meme.isLiked;
+    const newLikesCount = newIsLiked
+      ? meme.likesCount + 1
+      : meme.likesCount - 1;
+
+    setMeme({
+      ...meme,
+      isLiked: newIsLiked,
+      likesCount: newLikesCount,
+    });
 
     try {
-      const response = await fetch("/api/memes/like", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memeId: meme.id }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setMeme({
-          ...meme,
-          isLiked: data.liked,
-          likesCount: data.likesCount,
-        });
+      const result = await toggleLikeMeme(memeId);
+      // Ensure state matches server response if needed, but optimistic usually enough for toggles
+      if (result.liked !== newIsLiked) {
+        // Revert if server disagrees (rare given logic)
+        setMeme(previousMeme);
       }
     } catch (error) {
-      console.error("[v0] Failed to like meme:", error);
+      console.error("Failed to like meme:", error);
+      setMeme(previousMeme);
+      toast.error("Failed to update like");
     }
   };
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentText.trim() || !meme) return;
+    if (!commentText.trim()) return;
 
     setSubmittingComment(true);
     try {
-      const response = await fetch(`/api/memes/${memeId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: commentText }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setComments([data.comment, ...comments]);
-        setCommentText("");
-        setMeme({ ...meme, commentsCount: meme.commentsCount + 1 });
-      }
+      const newComment = await postComment(memeId, commentText);
+      setComments([newComment, ...comments]);
+      setCommentText("");
+      setMeme({ ...meme, commentsCount: meme.commentsCount + 1 });
+      toast.success("Comment posted!");
     } catch (error) {
-      console.error("[v0] Failed to post comment:", error);
+      console.error("Failed to post comment:", error);
+      toast.error("Failed to post comment");
     } finally {
       setSubmittingComment(false);
     }
@@ -119,20 +91,12 @@ export function MemeDetail({ memeId }: { memeId: string }) {
         });
       } catch (err) {
         console.error("Failed to share meme:", err);
-        // User cancelled
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard");
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner className="h-8 w-8" />
-      </div>
-    );
-  }
 
   if (!meme) {
     return (
@@ -169,7 +133,7 @@ export function MemeDetail({ memeId }: { memeId: string }) {
             <CardContent className="p-6">
               {meme.tags && meme.tags.length > 0 && (
                 <div className="mb-6 flex flex-wrap gap-2">
-                  {meme.tags.map((tag) => (
+                  {meme.tags.map((tag: string) => (
                     <Link
                       key={tag}
                       href={`/search?tag=${encodeURIComponent(tag)}`}
@@ -185,11 +149,23 @@ export function MemeDetail({ memeId }: { memeId: string }) {
                   href={`/profile/${meme.user.id}`}
                   className="flex items-center gap-3"
                 >
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback>
-                      {meme.user.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  {meme.user.image ? (
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage
+                        src={meme.user.image || "/placeholder.svg"}
+                      />
+                      <AvatarFallback>
+                        {meme.user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={"https://i.pravatar.cc/300"} />
+                      <AvatarFallback>
+                        {meme.user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                   <div>
                     <p className="font-medium">{meme.user.name}</p>
                     <p className="text-muted-foreground text-xs">
@@ -264,16 +240,28 @@ export function MemeDetail({ memeId }: { memeId: string }) {
             {comments.map((comment) => (
               <Card key={comment.id} className="p-4">
                 <div className="mb-2 flex items-start gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="text-xs">
-                      {comment.user.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  {comment.user.image ? (
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage
+                        src={comment.user.image || "/placeholder.svg"}
+                      />
+                      <AvatarFallback className="text-xs">
+                        {comment.user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={"https://i.pravatar.cc/300"} />
+                      <AvatarFallback className="text-xs">
+                        {comment.user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                   <div className="flex-1">
                     <div className="mb-1 flex items-center gap-2">
                       <span className="font-medium">{comment.user.name}</span>
                       <span className="text-muted-foreground text-xs">
-                        {new Date(comment.created_at).toLocaleDateString()}
+                        {new Date(comment.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                     <p className="text-pretty text-sm">{comment.content}</p>

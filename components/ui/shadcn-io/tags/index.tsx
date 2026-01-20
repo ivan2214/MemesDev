@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: <necessary> */
 "use client";
 
 import { XIcon } from "lucide-react";
@@ -163,7 +164,8 @@ export const TagsValue = ({
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
-              handleRemove();
+              e.stopPropagation();
+              onRemove?.();
             }
           }}
           role="button"
