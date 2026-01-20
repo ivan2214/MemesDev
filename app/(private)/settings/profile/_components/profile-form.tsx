@@ -120,7 +120,7 @@ export function ProfileForm({
       const meta = props.meta;
       console.log("meta:", meta);
       const errors = props.formApi.state.errors;
-      console.log("errors:", errors);
+      console.log("errors:", { errors });
 
       toast.error("Error al actualizar el perfil");
     },
