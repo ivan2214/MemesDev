@@ -73,7 +73,7 @@ export function HomePage({ initialMemes }: { initialMemes: Meme[] }) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="flex flex-col gap-6">
             {memes.map((meme) => (
               <MemeCard key={meme.id} meme={meme} isLiked={meme.isLiked} />
             ))}

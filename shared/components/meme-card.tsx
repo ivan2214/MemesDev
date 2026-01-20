@@ -42,7 +42,7 @@ export function MemeCard({ meme, isLiked }: MemeCardProps) {
   };
 
   return (
-    <Card className="group overflow-hidden transition-all hover:shadow-lg">
+    <Card className="group overflow-hidden p-0 transition-all hover:shadow-lg">
       <Link href={`/meme/${meme.id}`}>
         <div className="relative aspect-square overflow-hidden bg-muted">
           {/** biome-ignore lint/performance/noImgElement: <temp> */}

@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import type React from "react";
 import "./globals.css";
 import { Header } from "@/shared/components/header";
+import { MainLayout } from "@/shared/components/main-layout";
 import { Toaster } from "@/shared/components/ui/sonner";
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -42,7 +43,7 @@ export default function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         <Header />
-        {children}
+        <MainLayout>{children}</MainLayout>
         <Analytics />
         <Toaster richColors />
       </body>

@@ -70,20 +70,20 @@ export function RandomPage({ initialMemes }: { initialMemes: Meme[] }) {
   }, [hasMore, loading, loadMoreMemes]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Shuffle className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-balance font-bold text-4xl">Random Memes</h1>
-            <p className="text-pretty text-muted-foreground">
-              Discover something unexpected
+            <h1 className="text-balance font-bold text-3xl">Random Memes</h1>
+            <p className="text-pretty text-muted-foreground text-sm">
+              Descubre algo inesperado
             </p>
           </div>
         </div>
         <Button onClick={shuffleAll} disabled={loading} className="gap-2">
           <Shuffle className="h-4 w-4" />
-          {loading ? "Loading..." : "Shuffle All"}
+          {loading ? "Cargando..." : "Mezclar"}
         </Button>
       </div>
 
@@ -93,7 +93,7 @@ export function RandomPage({ initialMemes }: { initialMemes: Meme[] }) {
         </div>
       ) : memes.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="flex flex-col gap-6">
             {memes.map((meme, index) => (
               <MemeCard
                 key={`${meme.id}-${index}`}
@@ -104,7 +104,7 @@ export function RandomPage({ initialMemes }: { initialMemes: Meme[] }) {
           </div>
 
           {hasMore && (
-            <div ref={observerTarget} className="mt-8 flex justify-center py-8">
+            <div ref={observerTarget} className="flex justify-center py-8">
               <Spinner className="h-8 w-8" />
             </div>
           )}
@@ -112,9 +112,9 @@ export function RandomPage({ initialMemes }: { initialMemes: Meme[] }) {
       ) : (
         <div className="flex min-h-[600px] flex-col items-center justify-center gap-4">
           <Shuffle className="h-16 w-16 text-muted-foreground/50" />
-          <p className="text-lg text-muted-foreground">No memes found</p>
+          <p className="text-lg text-muted-foreground">No hay memes</p>
           <p className="text-muted-foreground text-sm">
-            Try uploading some memes first!
+            ¡Prueba subiendo algunos memes primero!
           </p>
         </div>
       )}

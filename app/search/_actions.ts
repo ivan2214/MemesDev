@@ -7,17 +7,23 @@ import { likesTable, memesTable, user as userTable } from "@/db/schemas";
 import { auth } from "@/lib/auth";
 import type { Meme } from "@/types/meme";
 
-export async function searchMemes(
-  query: string,
+export type SortType = "recent" | "likes" | "comments";
+
+export async function getMemes({
+  query = "",
   offset = 0,
   limit = 12,
-): Promise<{ memes: Meme[] }> {
+  sort = "recent",
+}: {
+  query?: string;
+  offset?: number;
+  limit?: number;
+  sort?: SortType;
+}): Promise<{ memes: Meme[] }> {
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
 
-  const searchPattern = `%${query}%`;
-
-  const memes = await db
+  const baseQuery = db
     .select({
       id: memesTable.id,
       imageUrl: memesTable.imageUrl,
@@ -35,15 +41,40 @@ export async function searchMemes(
     })
     .from(memesTable)
     .innerJoin(userTable, eq(memesTable.userId, userTable.id))
-    .where(
-      or(
-        sql`EXISTS (SELECT 1 FROM unnest(${memesTable.tags}) AS tag WHERE tag ILIKE ${searchPattern})`,
-      ),
-    )
-    .orderBy(desc(memesTable.createdAt))
     .limit(limit)
     .offset(offset);
 
+  // Add search filter if query exists
+  if (query.trim()) {
+    const searchPattern = `%${query}%`;
+    baseQuery.where(
+      or(
+        sql`EXISTS (SELECT 1 FROM unnest(${memesTable.tags}) AS tag WHERE tag ILIKE ${searchPattern})`,
+      ),
+    );
+  }
+
+  // Apply sorting
+  switch (sort) {
+    case "likes":
+      baseQuery.orderBy(
+        desc(memesTable.likesCount),
+        desc(memesTable.createdAt),
+      );
+      break;
+    case "comments":
+      baseQuery.orderBy(
+        desc(memesTable.commentsCount),
+        desc(memesTable.createdAt),
+      );
+      break;
+    case "recent":
+    default:
+      baseQuery.orderBy(desc(memesTable.createdAt));
+      break;
+  }
+
+  const memes = await baseQuery;
   return { memes };
 }
 
@@ -60,4 +91,13 @@ export async function getAllTags(): Promise<{ tags: string[] }> {
     .filter((tag): tag is string => tag !== null && tag !== "");
 
   return { tags: [...new Set(tags)].sort() };
+}
+
+// Keep for backward compatibility
+export async function searchMemes(
+  query: string,
+  offset = 0,
+  limit = 12,
+): Promise<{ memes: Meme[] }> {
+  return getMemes({ query, offset, limit, sort: "recent" });
 }

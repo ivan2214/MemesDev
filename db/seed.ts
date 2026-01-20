@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { eq } from "drizzle-orm";
+import type { Table } from "drizzle-orm";
 import "dotenv/config";
 import { db } from "./index";
 import {
@@ -143,142 +143,200 @@ function getRandomComment(): string {
   return faker.helpers.arrayElement(COMMENT_TEMPLATES);
 }
 
+// Función para insertar en lotes
+async function batchInsert<T>(
+  table: Table,
+  data: T[],
+  batchSize: number = 100,
+): Promise<void> {
+  for (let i = 0; i < data.length; i += batchSize) {
+    const batch = data.slice(i, i + batchSize);
+    await db.insert(table).values(batch);
+  }
+}
+
 async function seed() {
+  performance.mark("seed-start");
   console.log("🌱 Starting seed...\n");
 
   // Clear existing data
+  performance.mark("clear-start");
   console.log("🧹 Clearing existing data...");
-  await db.delete(commentsTable);
-  await db.delete(likesTable);
-  await db.delete(memesTable);
-  await db.delete(verification);
-  await db.delete(account);
-  await db.delete(session);
-  await db.delete(user);
-  console.log("✅ Existing data cleared\n");
+  await Promise.all([
+    db.delete(commentsTable),
+    db.delete(likesTable),
+    db.delete(memesTable),
+    db.delete(verification),
+    db.delete(account),
+    db.delete(session),
+    db.delete(user),
+  ]);
+  performance.mark("clear-end");
+  performance.measure("clear-data", "clear-start", "clear-end");
+  const clearDuration = performance.getEntriesByName("clear-data")[0].duration;
+  console.log(
+    `✅ Existing data cleared in ${(clearDuration / 1000).toFixed(2)}s\n`,
+  );
 
-  // Create users
-  console.log("👥 Creating users...");
-  const userIds: string[] = [];
+  // Pre-generar todos los datos en memoria
+  performance.mark("generate-start");
+  console.log("📝 Generating data in memory...");
 
-  for (let i = 0; i < 15; i++) {
+  // Crear usuarios en memoria
+  const users = Array.from({ length: 15 }, () => {
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
-    const userId = faker.string.uuid();
-
-    await db.insert(user).values({
-      id: userId,
+    return {
+      id: faker.string.uuid(),
       name: `${firstName} ${lastName}`,
       email: faker.internet.email({ firstName, lastName }).toLowerCase(),
       emailVerified: true,
       image: faker.image.avatar(),
       createdAt: faker.date.past({ years: 1 }),
       updatedAt: new Date(),
-    });
+    };
+  });
 
-    userIds.push(userId);
-  }
-  console.log(`✅ Created ${userIds.length} users\n`);
+  const userIds = users.map((u) => u.id);
 
-  // Create memes with tracking for counts
-  console.log("🖼️  Creating memes...");
-  const memeData: { id: string; likesCount: number; commentsCount: number }[] =
-    [];
+  // Crear memes en memoria
+  const memes = Array.from({ length: 60 }, () => ({
+    id: faker.string.uuid(),
+    userId: faker.helpers.arrayElement(userIds),
+    imageUrl: getRandomMemeUrl(),
+    tags: getRandomTags(),
+    likesCount: 0,
+    commentsCount: 0,
+    createdAt: faker.date.past({ years: 1 }),
+  }));
 
-  for (let i = 0; i < 60; i++) {
-    const randomUserId = faker.helpers.arrayElement(userIds);
-    const memeId = faker.string.uuid();
-    const tags = getRandomTags();
+  const memeIds = memes.map((m) => m.id);
 
-    await db.insert(memesTable).values({
-      id: memeId,
-      userId: randomUserId,
-      imageUrl: getRandomMemeUrl(),
-      tags: tags,
-      likesCount: 0,
-      commentsCount: 0,
-      createdAt: faker.date.past({ years: 1 }),
-    });
-
-    memeData.push({ id: memeId, likesCount: 0, commentsCount: 0 });
-  }
-  console.log(`✅ Created ${memeData.length} memes\n`);
-
-  // Create likes
-  console.log("❤️  Creating likes...");
-  let likeCount = 0;
+  // Crear likes en memoria
   const likePairs = new Set<string>();
+  const likes = [];
+  const likeCounts = new Map<string, number>();
 
-  for (let i = 0; i < 200; i++) {
-    const randomUserId = faker.helpers.arrayElement(userIds);
-    const randomMemeIndex = faker.number.int({
-      min: 0,
-      max: memeData.length - 1,
-    });
-    const randomMeme = memeData[randomMemeIndex];
-    const pairKey = `${randomUserId}-${randomMeme.id}`;
+  while (likes.length < 200) {
+    const userId = faker.helpers.arrayElement(userIds);
+    const memeId = faker.helpers.arrayElement(memeIds);
+    const pairKey = `${userId}-${memeId}`;
 
-    // Avoid duplicate likes
-    if (likePairs.has(pairKey)) continue;
-    likePairs.add(pairKey);
-
-    await db.insert(likesTable).values({
-      userId: randomUserId,
-      memeId: randomMeme.id,
-      createdAt: faker.date.past({ years: 1 }),
-    });
-
-    // Track count locally
-    randomMeme.likesCount++;
-    likeCount++;
+    if (!likePairs.has(pairKey)) {
+      likePairs.add(pairKey);
+      likes.push({
+        userId,
+        memeId,
+        createdAt: faker.date.past({ years: 1 }),
+      });
+      likeCounts.set(memeId, (likeCounts.get(memeId) || 0) + 1);
+    }
   }
-  console.log(`✅ Created ${likeCount} likes\n`);
 
-  // Create comments
-  console.log("💬 Creating comments...");
-  let commentCount = 0;
-
-  for (let i = 0; i < 100; i++) {
-    const randomUserId = faker.helpers.arrayElement(userIds);
-    const randomMemeIndex = faker.number.int({
-      min: 0,
-      max: memeData.length - 1,
-    });
-    const randomMeme = memeData[randomMemeIndex];
-
-    await db.insert(commentsTable).values({
-      userId: randomUserId,
-      memeId: randomMeme.id,
+  // Crear comentarios en memoria
+  const comments = Array.from({ length: 100 }, () => {
+    const memeId = faker.helpers.arrayElement(memeIds);
+    return {
+      userId: faker.helpers.arrayElement(userIds),
+      memeId,
       content: getRandomComment(),
       createdAt: faker.date.past({ years: 1 }),
-    });
+    };
+  });
 
-    // Track count locally
-    randomMeme.commentsCount++;
-    commentCount++;
-  }
-  console.log(`✅ Created ${commentCount} comments\n`);
+  // Calcular counts
+  const commentCounts = new Map<string, number>();
+  comments.forEach((comment) => {
+    commentCounts.set(
+      comment.memeId,
+      (commentCounts.get(comment.memeId) || 0) + 1,
+    );
+  });
 
-  // Update meme counts
-  console.log("📊 Updating meme counts...");
-  for (const meme of memeData) {
-    await db
-      .update(memesTable)
-      .set({
-        likesCount: meme.likesCount,
-        commentsCount: meme.commentsCount,
-      })
-      .where(eq(memesTable.id, meme.id));
-  }
-  console.log("✅ Meme counts updated\n");
+  // Actualizar counts en los memes
+  memes.forEach((meme) => {
+    meme.likesCount = likeCounts.get(meme.id) || 0;
+    meme.commentsCount = commentCounts.get(meme.id) || 0;
+  });
+
+  performance.mark("generate-end");
+  performance.measure("generate-data", "generate-start", "generate-end");
+  const generateDuration =
+    performance.getEntriesByName("generate-data")[0].duration;
+  console.log(
+    `✅ Data generated in memory in ${(generateDuration / 1000).toFixed(2)}s\n`,
+  );
+
+  // Insertar todos los datos en lotes
+  console.log("💾 Inserting data into database...");
+
+  performance.mark("insert-start");
+
+  performance.mark("insert-users-memes-start");
+  await Promise.all([
+    batchInsert(user, users, 100),
+    batchInsert(memesTable, memes, 100),
+  ]);
+  performance.mark("insert-users-memes-end");
+  performance.measure(
+    "insert-users-memes",
+    "insert-users-memes-start",
+    "insert-users-memes-end",
+  );
+  const usersMemesDuration =
+    performance.getEntriesByName("insert-users-memes")[0].duration;
+  console.log(
+    `  ⏱️  Users & Memes inserted in ${(usersMemesDuration / 1000).toFixed(2)}s`,
+  );
+
+  performance.mark("insert-likes-comments-start");
+  await Promise.all([
+    batchInsert(likesTable, likes, 100),
+    batchInsert(commentsTable, comments, 100),
+  ]);
+  performance.mark("insert-likes-comments-end");
+  performance.measure(
+    "insert-likes-comments",
+    "insert-likes-comments-start",
+    "insert-likes-comments-end",
+  );
+  const likesCommentsDuration = performance.getEntriesByName(
+    "insert-likes-comments",
+  )[0].duration;
+  console.log(
+    `  ⏱️  Likes & Comments inserted in ${(likesCommentsDuration / 1000).toFixed(2)}s`,
+  );
+
+  performance.mark("insert-end");
+  performance.measure("insert-all", "insert-start", "insert-end");
+  const insertDuration = performance.getEntriesByName("insert-all")[0].duration;
+
+  console.log(
+    `✅ All data inserted in ${(insertDuration / 1000).toFixed(2)}s\n`,
+  );
+
+  performance.mark("seed-end");
+  performance.measure("seed-total", "seed-start", "seed-end");
+  const totalDuration = performance.getEntriesByName("seed-total")[0].duration;
 
   console.log("🎉 Seed completed successfully!");
   console.log(`
-Summary:
-- Users: ${userIds.length}
-- Memes: ${memeData.length}
-- Likes: ${likeCount}
-- Comments: ${commentCount}
+📊 Performance Summary:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏱️  Clear existing data:  ${(clearDuration / 1000).toFixed(2)}s
+⏱️  Generate in memory:   ${(generateDuration / 1000).toFixed(2)}s
+⏱️  Insert to database:   ${(insertDuration / 1000).toFixed(2)}s
+   ├─ Users & Memes:     ${(usersMemesDuration / 1000).toFixed(2)}s
+   └─ Likes & Comments:  ${(likesCommentsDuration / 1000).toFixed(2)}s
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Total time:            ${(totalDuration / 1000).toFixed(2)}s
+
+📦 Data Created:
+   • Users:     ${users.length}
+   • Memes:     ${memes.length}
+   • Likes:     ${likes.length}
+   • Comments:  ${comments.length}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   `);
 
   process.exit(0);
