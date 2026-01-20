@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Header } from "@/shared/components/header";
-import { getUserLikedMemes, getUserMemes, getUserProfile } from "./_actions";
+import { getUserMemes, getUserProfile } from "./_actions";
 import { ProfilePage } from "./_components/profile-page";
 
 export async function generateMetadata({
@@ -54,14 +54,8 @@ export default async function Page({ params }: { params: { id: string } }) {
   }
 
   const { memes: userMemes } = await getUserMemes(id);
-  const { memes: likedMemes } = await getUserLikedMemes(id);
 
   return (
-    <ProfilePage
-      profile={profile}
-      initialUserMemes={userMemes}
-      initialLikedMemes={likedMemes}
-      userId={id}
-    />
+    <ProfilePage profile={profile} initialUserMemes={userMemes} userId={id} />
   );
 }

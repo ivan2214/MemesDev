@@ -180,7 +180,7 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
             {meme.tags.slice(0, 5).map((tag) => {
               const TagIcon = getTagIcon(tag.slug);
               return (
-                <Link key={tag.id} href={`/search?tag=${tag.slug}`}>
+                <Link key={tag.id} href={`/search?tags=${tag.slug}`}>
                   <Badge
                     variant={
                       activeTags?.includes(tag.slug)

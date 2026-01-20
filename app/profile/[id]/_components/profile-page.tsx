@@ -10,46 +10,38 @@ import {
   AvatarImage,
 } from "@/shared/components/ui/avatar";
 import { Badge } from "@/shared/components/ui/badge";
-import { Card } from "@/shared/components/ui/card";
-import { Spinner } from "@/shared/components/ui/spinner";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/shared/components/ui/tabs";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/card";
+import { Spinner } from "@/shared/components/ui/spinner";
+
 import type { Meme } from "@/types/meme";
 import type { UserProfile } from "@/types/profile";
-import { getUserLikedMemes, getUserMemes } from "../_actions";
+import { getUserMemes } from "../_actions";
 
 const PAGE_SIZE = 12;
 
 export function ProfilePage({
   profile,
   initialUserMemes,
-  initialLikedMemes,
+
   userId,
 }: {
   profile: UserProfile;
   initialUserMemes: Meme[];
-  initialLikedMemes: Meme[];
+
   userId: string;
 }) {
-  const [activeTab, setActiveTab] = useState("uploads");
   const [userMemes, setUserMemes] = useState<Meme[]>(initialUserMemes);
-  const [likedMemes, setLikedMemes] = useState<Meme[]>(initialLikedMemes);
   const [loadingUploads, setLoadingUploads] = useState(false);
-  const [loadingLiked, setLoadingLiked] = useState(false);
   const [hasMoreUploads, setHasMoreUploads] = useState(
     initialUserMemes.length >= PAGE_SIZE,
   );
-  const [hasMoreLiked, setHasMoreLiked] = useState(
-    initialLikedMemes.length >= PAGE_SIZE,
-  );
   const [offsetUploads, setOffsetUploads] = useState(initialUserMemes.length);
-  const [offsetLiked, setOffsetLiked] = useState(initialLikedMemes.length);
   const uploadsObserver = useRef<HTMLDivElement>(null);
-  const likedObserver = useRef<HTMLDivElement>(null);
 
   const loadMoreUploads = useCallback(async () => {
     setLoadingUploads(true);
@@ -67,31 +59,10 @@ export function ProfilePage({
     }
   }, [userId, offsetUploads]);
 
-  const loadMoreLiked = useCallback(async () => {
-    setLoadingLiked(true);
-    try {
-      const data = await getUserLikedMemes(userId, offsetLiked, PAGE_SIZE);
-      if (data.memes.length < PAGE_SIZE) {
-        setHasMoreLiked(false);
-      }
-      setLikedMemes((prev) => [...prev, ...data.memes]);
-      setOffsetLiked((prev) => prev + data.memes.length);
-    } catch (error) {
-      console.error("Failed to load liked memes:", error);
-    } finally {
-      setLoadingLiked(false);
-    }
-  }, [userId, offsetLiked]);
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (
-          entries[0].isIntersecting &&
-          hasMoreUploads &&
-          !loadingUploads &&
-          activeTab === "uploads"
-        ) {
+        if (entries[0].isIntersecting && hasMoreUploads && !loadingUploads) {
           loadMoreUploads();
         }
       },
@@ -108,38 +79,7 @@ export function ProfilePage({
         observer.unobserve(target);
       }
     };
-  }, [hasMoreUploads, loadingUploads, activeTab, loadMoreUploads]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (
-          entries[0].isIntersecting &&
-          hasMoreLiked &&
-          !loadingLiked &&
-          activeTab === "liked"
-        ) {
-          loadMoreLiked();
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    const target = likedObserver.current;
-    if (target) {
-      observer.observe(target);
-    }
-
-    return () => {
-      if (target) {
-        observer.unobserve(target);
-      }
-    };
-  }, [hasMoreLiked, loadingLiked, activeTab, loadMoreLiked]);
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
+  }, [hasMoreUploads, loadingUploads, loadMoreUploads]);
 
   if (!profile) {
     return (
@@ -236,66 +176,37 @@ export function ProfilePage({
         </div>
       </Card>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="mb-8 grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="uploads">Subidos</TabsTrigger>
-          <TabsTrigger value="liked">Me gustan</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="uploads">
-          {userMemes.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {userMemes.map((meme) => (
-                  <MemeCard key={meme.id} meme={meme} isLiked={meme.isLiked} />
-                ))}
-              </div>
-              {hasMoreUploads && (
-                <div
-                  ref={uploadsObserver}
-                  className="mt-8 flex justify-center py-8"
-                >
-                  <Spinner className="h-8 w-8" />
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
-              <ImageIcon className="h-16 w-16 text-muted-foreground/50" />
-              <p className="text-lg text-muted-foreground">
-                No hay memes subidos todavía
-              </p>
+      {userMemes.length > 0 ? (
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="font-bold text-2xl">
+              Memes publicados por {profile.name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-6">
+              {userMemes.map((meme) => (
+                <MemeCard key={meme.id} meme={meme} isLiked={meme.isLiked} />
+              ))}
             </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="liked">
-          {likedMemes.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {likedMemes.map((meme) => (
-                  <MemeCard key={meme.id} meme={meme} isLiked={meme.isLiked} />
-                ))}
+            {hasMoreUploads && (
+              <div
+                ref={uploadsObserver}
+                className="mt-8 flex justify-center py-8"
+              >
+                <Spinner className="h-8 w-8" />
               </div>
-              {hasMoreLiked && (
-                <div
-                  ref={likedObserver}
-                  className="mt-8 flex justify-center py-8"
-                >
-                  <Spinner className="h-8 w-8" />
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
-              <Heart className="h-16 w-16 text-muted-foreground/50" />
-              <p className="text-lg text-muted-foreground">
-                No has likeado todavía
-              </p>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+          <ImageIcon className="h-16 w-16 text-muted-foreground/50" />
+          <p className="text-lg text-muted-foreground">
+            No hay memes subidos todavía
+          </p>
+        </div>
+      )}
     </div>
   );
 }
