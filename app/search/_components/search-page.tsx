@@ -8,7 +8,8 @@ import { MemeCard } from "@/shared/components/meme-card";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Spinner } from "@/shared/components/ui/spinner";
-import type { Meme, Tag } from "@/types/meme";
+import type { Meme } from "@/types/meme";
+import type { Tag } from "@/types/tag";
 import { getMemes, type SortType } from "../_actions";
 
 const PAGE_SIZE = 12;

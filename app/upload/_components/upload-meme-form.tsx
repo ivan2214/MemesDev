@@ -16,6 +16,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/shared/components/ui/field";
+import { Input } from "@/shared/components/ui/input";
 import {
   Tags,
   TagsContent,
@@ -28,48 +29,45 @@ import {
   TagsValue,
 } from "@/shared/components/ui/shadcn-io/tags";
 import { UploadDropzone } from "@/shared/components/ui/upload-dropzone";
+import type { Tag } from "@/types/tag";
+
+type TagForForm = Omit<Tag, "createdAt" | "updatedAt">;
 
 const defaultTags = [
-  { id: "react", label: "React" },
-  { id: "typescript", label: "TypeScript" },
-  { id: "javascript", label: "JavaScript" },
-  { id: "nextjs", label: "Next.js" },
-  { id: "vuejs", label: "Vue.js" },
-  { id: "angular", label: "Angular" },
-  { id: "svelte", label: "Svelte" },
-  { id: "nodejs", label: "Node.js" },
-  { id: "python", label: "Python" },
-  { id: "ruby", label: "Ruby" },
-  { id: "java", label: "Java" },
-  { id: "csharp", label: "C#" },
-  { id: "php", label: "PHP" },
-  { id: "go", label: "Go" },
+  { id: "react", name: "React" },
+  { id: "typescript", name: "TypeScript" },
+  { id: "javascript", name: "JavaScript" },
+  { id: "nextjs", name: "Next.js" },
+  { id: "vuejs", name: "Vue.js" },
+  { id: "angular", name: "Angular" },
+  { id: "svelte", name: "Svelte" },
+  { id: "nodejs", name: "Node.js" },
+  { id: "python", name: "Python" },
+  { id: "ruby", name: "Ruby" },
+  { id: "java", name: "Java" },
+  { id: "csharp", name: "C#" },
+  { id: "php", name: "PHP" },
+  { id: "go", name: "Go" },
 ];
 
 const formSchema = z.object({
-  tags: z
-    .array(z.object({ id: z.string(), label: z.string() }))
-    .min(1, "Escriba al menos una etiqueta"),
+  tags: z.array(z.custom<TagForForm>()).min(1, "Escriba al menos una etiqueta"),
   file: z.file().min(1, "Seleccione un archivo"),
+  title: z.string().min(1, "Escriba un titulo").optional(),
+  category: z.string().min(1, "Escriba una categoria").optional(),
 });
 export function UploadMemeForm() {
-  const [newTag, setNewTag] = useState<{
-    id: string;
-    label: string;
-  } | null>(null);
+  const [newTag, setNewTag] = useState<TagForForm | null>(null);
 
   const form = useForm({
     defaultValues: {
-      tags: [
-        {
-          id: "",
-          label: "",
-        },
-      ],
+      tags: [] as TagForForm[],
       file: [] as never as File,
+      title: "",
+      category: "",
     },
     validators: {
-      onSubmit: formSchema,
+      onSubmit: (value) => formSchema.parse(value),
     },
     onSubmit: async ({ value }) => {
       if (!value.file) {
@@ -83,8 +81,10 @@ export function UploadMemeForm() {
       });
 
       await uploadMeme({
-        tags: value.tags.map((t) => t.label),
+        tags: value.tags,
         imageKey: file.objectInfo.key,
+        category: value.category,
+        title: value.title,
       });
     },
   });
@@ -112,7 +112,10 @@ export function UploadMemeForm() {
       return;
     }
 
-    form.setFieldValue("tags", [...selected, { id: id, label: value }]);
+    form.setFieldValue("tags", [
+      ...selected,
+      { id: id, name: value, slug: value.toLowerCase().replace(" ", "-") },
+    ]);
     setNewTag(null);
   };
 
@@ -135,83 +138,6 @@ export function UploadMemeForm() {
       className="flex flex-col items-center justify-center gap-5"
     >
       <FieldGroup className="flex flex-col items-center justify-center text-center">
-        <form.Field name="tags">
-          {(field) => {
-            const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
-            const tags = field.state.value.filter(
-              (t) => t.id !== "" && t.label !== "",
-            );
-
-            return (
-              <Field
-                className="flex flex-col items-center justify-center"
-                data-invalid={isInvalid}
-              >
-                <FieldLabel className="text-center" htmlFor={field.name}>
-                  Tags
-                </FieldLabel>
-                <Tags className="max-w-[300px]">
-                  <TagsTrigger placeholder="Selecciona una etiqueta">
-                    {tags.map((tag) => (
-                      <TagsValue
-                        key={tag.id}
-                        onRemove={() => handleRemove(tag.id)}
-                      >
-                        {tag.label}
-                      </TagsValue>
-                    ))}
-                  </TagsTrigger>
-                  <TagsContent>
-                    <TagsInput
-                      value={newTag?.label || ""}
-                      onValueChange={(value) => {
-                        setNewTag({
-                          id: value,
-                          label: value,
-                        });
-                      }}
-                      placeholder="Buscar..."
-                    />
-                    <TagsList>
-                      <TagsEmpty>
-                        <button
-                          className="mx-auto flex cursor-pointer items-center gap-2"
-                          onClick={handleCreateTag}
-                          type="button"
-                        >
-                          <PlusIcon
-                            className="text-muted-foreground"
-                            size={14}
-                          />
-                          Create new tag: {newTag?.label || ""}
-                        </button>
-                      </TagsEmpty>
-                      <TagsGroup>
-                        {defaultTags.map((tag) => (
-                          <TagsItem
-                            key={tag.id}
-                            onSelect={() => handleSelect(tag.id, tag.label)}
-                            value={tag.id}
-                          >
-                            {tag.label}
-                            {tags.some((t) => t.id === tag.id) && (
-                              <CheckIcon
-                                className="text-muted-foreground"
-                                size={14}
-                              />
-                            )}
-                          </TagsItem>
-                        ))}
-                      </TagsGroup>
-                    </TagsList>
-                  </TagsContent>
-                </Tags>
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
-              </Field>
-            );
-          }}
-        </form.Field>
         <form.Field name="file">
           {(field) => {
             const isInvalid =
@@ -273,6 +199,128 @@ export function UploadMemeForm() {
                     }
                   />
                 )}
+              </Field>
+            );
+          }}
+        </form.Field>
+
+        <form.Field name="title">
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldLabel htmlFor={field.name}>Titulo</FieldLabel>
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  aria-invalid={isInvalid}
+                  placeholder="Titulo"
+                />
+                {isInvalid && <FieldError errors={field.state.meta.errors} />}
+              </Field>
+            );
+          }}
+        </form.Field>
+
+        <form.Field name="category">
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldLabel htmlFor={field.name}>Categoría</FieldLabel>
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  onBlur={field.handleBlur}
+                  aria-invalid={isInvalid}
+                  placeholder="Ej. Creador de Memes, Curador..."
+                  value={field.state.value || ""}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+              </Field>
+            );
+          }}
+        </form.Field>
+
+        <form.Field name="tags">
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+            const tags = field.state.value.filter(
+              (t) => t.id !== "" && t.name !== "",
+            );
+
+            return (
+              <Field
+                className="flex flex-col items-center justify-center"
+                data-invalid={isInvalid}
+              >
+                <FieldLabel className="text-center" htmlFor={field.name}>
+                  Tags
+                </FieldLabel>
+                <Tags className="max-w-[300px]">
+                  <TagsTrigger placeholder="Selecciona una etiqueta">
+                    {tags.map((tag) => (
+                      <TagsValue
+                        key={tag.id}
+                        onRemove={() => handleRemove(tag.id)}
+                      >
+                        {tag.name}
+                      </TagsValue>
+                    ))}
+                  </TagsTrigger>
+                  <TagsContent>
+                    <TagsInput
+                      value={newTag?.name || ""}
+                      onValueChange={(value) => {
+                        setNewTag({
+                          id: value,
+                          name: value,
+                          slug: value.toLowerCase().replace(" ", "-"),
+                        });
+                      }}
+                      placeholder="Buscar..."
+                    />
+                    <TagsList>
+                      <TagsEmpty>
+                        <button
+                          className="mx-auto flex cursor-pointer items-center gap-2"
+                          onClick={handleCreateTag}
+                          type="button"
+                        >
+                          <PlusIcon
+                            className="text-muted-foreground"
+                            size={14}
+                          />
+                          Create new tag: {newTag?.name || ""}
+                        </button>
+                      </TagsEmpty>
+                      <TagsGroup>
+                        {defaultTags.map((tag) => (
+                          <TagsItem
+                            key={tag.id}
+                            onSelect={() => handleSelect(tag.id, tag.name)}
+                            value={tag.id}
+                          >
+                            {tag.name}
+                            {tags.some((t) => t.id === tag.id) && (
+                              <CheckIcon
+                                className="text-muted-foreground"
+                                size={14}
+                              />
+                            )}
+                          </TagsItem>
+                        ))}
+                      </TagsGroup>
+                    </TagsList>
+                  </TagsContent>
+                </Tags>
+                {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
             );
           }}

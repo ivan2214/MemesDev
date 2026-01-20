@@ -18,6 +18,11 @@ export async function getMeme(memeId: string): Promise<Meme | null> {
     with: {
       user: true,
       likes: true,
+      tags: {
+        with: {
+          tag: true,
+        },
+      },
     },
   });
 
@@ -30,7 +35,7 @@ export async function getMeme(memeId: string): Promise<Meme | null> {
   return {
     id: meme.id,
     imageUrl: meme.imageUrl,
-    tags: meme.tags || undefined,
+    tags: meme.tags.map((mt) => mt.tag) || undefined,
     likesCount: meme.likesCount,
     commentsCount: meme.commentsCount,
     createdAt: meme.createdAt,
