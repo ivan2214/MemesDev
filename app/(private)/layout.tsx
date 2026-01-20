@@ -1,40 +1,14 @@
 import type React from "react";
-import { db } from "@/db";
-import { AppSidebar } from "@/shared/components/app-sidebar";
-import { Header } from "@/shared/components/header";
-import { MobileNav } from "@/shared/components/mobile-nav";
-import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
+import { requireUser } from "@/data/user";
 
-interface MainLayoutProps {
+import { MainLayout } from "@/shared/components/main-layout";
+
+interface PrivateLayoutProps {
   children: React.ReactNode;
 }
 
-export async function getCategories() {
-  const categories = await db.query.categoriesTable.findMany();
-  return categories;
-}
+export default async function PrivateLayout({ children }: PrivateLayoutProps) {
+  await requireUser();
 
-export async function getBrowseTags() {
-  const browseTags = await db.query.tagsTable.findMany();
-  return browseTags;
-}
-
-export async function MainLayout({ children }: MainLayoutProps) {
-  const categories = await getCategories();
-  const browseTags = await getBrowseTags();
-
-  return (
-    <SidebarProvider>
-      <AppSidebar categories={categories} browseTags={browseTags} />
-      <SidebarInset>
-        <Header />
-
-        {/* Main Content Column */}
-        <main className="w-full max-w-2xl px-4 py-6 pb-20 md:pb-6">
-          {children}
-        </main>
-      </SidebarInset>
-      <MobileNav />
-    </SidebarProvider>
-  );
+  return <MainLayout showRightSidebar={false}>{children}</MainLayout>;
 }

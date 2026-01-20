@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MemeCard } from "@/shared/components/meme-card";
 import { Spinner } from "@/shared/components/ui/spinner";
 import type { Meme } from "@/types/meme";
-import { getMemes } from "../_actions";
+import { getMemes } from "../(public)/_actions";
 
 const PAGE_SIZE = 12;
 

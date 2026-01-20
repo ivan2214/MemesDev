@@ -1,36 +1,36 @@
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import type React from "react";
 import "./globals.css";
-import { MainLayout } from "@/shared/components/main-layout";
+import { env } from "@/env/server";
+
 import { Toaster } from "@/shared/components/ui/sonner";
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "https://devmemes.com",
-  ),
+  metadataBase: new URL(env.APP_URL),
   title: {
-    default: "DevMemes - Programming Memes for Developers",
+    default: "DevMemes - Memes de programación para desarrolladores",
     template: "%s | DevMemes",
   },
   description:
-    "Discover and share the funniest programming memes. Upload, like, comment, and laugh with the developer community.",
+    "Descubre y comparte los memes de programación más divertidos. Sube, dale a 'me gusta', comenta y ríete con la comunidad de desarrolladores.",
   keywords: [
-    "programming memes",
-    "developer humor",
-    "coding memes",
-    "software engineering",
-    "tech humor",
-    "web development",
-    "javascript memes",
+    "memes de programación",
+    "humor de programadores",
+    "memes de codificación",
+    "ingeniería de software",
+    "humor de tecnología",
+    "desarrollo web",
+    "memes de JavaScript",
+    "memes de TypeScript",
+    "memes de Nextjs",
+    "memes de Java",
+    "memes divertidos",
+    "memes de C",
   ],
-  authors: [{ name: "DevMemes Team" }],
-  creator: "DevMemes",
-  publisher: "DevMemes",
+  authors: [{ name: "ivan2214", url: "https://github.com/Ivan2214" }],
+  creator: "ivan2214",
+  publisher: "ivan2214",
   robots: {
     index: true,
     follow: true,
@@ -45,26 +45,26 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "/",
+    url: env.APP_URL,
     siteName: "DevMemes",
-    title: "DevMemes - Programming Memes for Developers",
+    title: "DevMemes - Memes de programación para desarrolladores",
     description:
-      "Discover and share the funniest programming memes. Upload, like, comment, and laugh with the developer community.",
+      "Descubre y comparte los memes de programación más divertidos. Sube, dale a 'me gusta', comenta y ríete con la comunidad de desarrolladores.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "DevMemes - Programming Memes",
+        alt: "DevMemes - Memes de programación para desarrolladores",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "DevMemes - Programming Memes for Developers",
+    title: "DevMemes - Memes de programación para desarrolladores",
     description:
-      "Discover and share the funniest programming memes. Upload, like, comment, and laugh with the developer community.",
-    creator: "@devmemes",
+      "Descubre y comparte los memes de programación más divertidos. Sube, dale a 'me gusta', comenta y ríete con la comunidad de desarrolladores.",
+    creator: "@bongiovanniDev",
   },
   icons: {
     icon: [
@@ -89,7 +89,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-        <MainLayout>{children}</MainLayout>
+        {children}
         <Analytics />
         <Toaster richColors />
       </body>

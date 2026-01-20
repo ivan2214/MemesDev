@@ -24,14 +24,37 @@ import {
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 
-export function AuthDialog({ children }: { children: React.ReactElement }) {
-  const [open, setOpen] = useState(false);
+interface AuthDialogProps {
+  children?: React.ReactElement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  defaultOpen?: boolean;
+}
+
+export function AuthDialog({
+  children,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
+  defaultOpen = false,
+}: AuthDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (newOpen: boolean) => {
+    if (setControlledOpen) {
+      setControlledOpen(newOpen);
+    }
+    if (!isControlled) {
+      setInternalOpen(newOpen);
+    }
+  };
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={children} />
+      {children && <DialogTrigger render={children} />}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-balance">

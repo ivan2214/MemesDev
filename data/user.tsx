@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { auth } from "@/lib/auth";
 import "server-only";
+import { ErrorTypeMessages } from "@/shared/_constants";
 
 export const getCurrentUser = cache(async () => {
   const session = await auth.api.getSession({
@@ -15,7 +16,7 @@ export const getCurrentUser = cache(async () => {
 export const requireUser = cache(async () => {
   const session = await getCurrentUser();
   if (!session?.user) {
-    redirect("/error?error=auth");
+    redirect(`/error?error=${ErrorTypeMessages.auth}`);
   }
   return session.user;
 });

@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
 import type { SearchAction, WebSite, WithContext } from "schema-dts";
+import { env } from "@/env/server";
+import { HomePage } from "../_components/home-page";
 import { getMemes } from "./_actions";
-import { HomePage } from "./_components/home-page";
 
 export const metadata: Metadata = {
-  title: "DevMemes - The Best Programming Memes",
+  title: "DevMemes - La mejor página de memes para programadores",
+  description:
+    "Memes de React, JavaScript, Node.js, Python y más. Comparte tus memes favoritos y descubre los de otros programadores.",
   alternates: {
-    canonical: "/",
+    canonical: env.APP_URL,
+  },
+  authors: {
+    name: "Ivan2214",
+    url: "https://github.com/Ivan2214",
   },
 };
 

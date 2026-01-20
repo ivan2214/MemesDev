@@ -1,3 +1,5 @@
+"use server";
+
 import { ilike } from "drizzle-orm";
 import { db } from "@/db";
 import { categoriesTable } from "@/db/schemas";
