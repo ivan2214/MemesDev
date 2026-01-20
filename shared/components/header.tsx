@@ -1,6 +1,7 @@
 "use client";
 
-import { Code2, LogInIcon, LogOut, User } from "lucide-react";
+import { LogInIcon, LogOut, User } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { signOut } from "@/lib/auth/auth-client";
 import { AuthDialog, useAuth } from "@/shared/components/auth-dialog";
@@ -31,7 +32,7 @@ export function Header() {
             href="/"
             className="flex items-center gap-2 font-bold font-mono text-xl md:hidden"
           >
-            <Code2 className="h-6 w-6 text-primary" />
+            <Image src="/logo.png" alt="Logo" width={24} height={24} />
             <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
               DevMemes
             </span>

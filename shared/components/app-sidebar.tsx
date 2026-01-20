@@ -2,7 +2,6 @@
 
 import {
   ChevronDown,
-  Code2,
   Flame,
   Home,
   Route,
@@ -10,6 +9,7 @@ import {
   Shuffle,
   Upload,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/shared/components/ui/badge";
@@ -76,7 +76,7 @@ export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
           href="/"
           className="flex items-center gap-2 font-bold font-mono text-lg"
         >
-          <Code2 className="h-5 w-5 text-primary" />
+          <Image src="/logo-rb.png" alt="Logo" width={60} height={60} />
           <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
             DevMemes
           </span>

@@ -58,7 +58,7 @@ export async function getMemes({
               .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
               .where(
                 and(
-                  eq(memeTagsTable.memeId, memesTable.id),
+                  sql`${memeTagsTable.memeId} = "memesTable"."id"`,
                   ilike(tagsTable.name, `%${query.trim()}%`),
                 ),
               ),
@@ -76,7 +76,7 @@ export async function getMemes({
             .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
             .where(
               and(
-                eq(memeTagsTable.memeId, memesTable.id),
+                sql`${memeTagsTable.memeId} = "memesTable"."id"`,
                 inArray(tagsTable.slug, tags),
               ),
             ),
@@ -92,7 +92,7 @@ export async function getMemes({
             .from(categoriesTable)
             .where(
               and(
-                eq(categoriesTable.id, memesTable.categoryId),
+                sql`${categoriesTable.id} = "memesTable"."category_id"`,
                 eq(categoriesTable.slug, category),
               ),
             ),
@@ -139,7 +139,7 @@ export async function getMemes({
       },
       extras: {
         isLiked: userId
-          ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = ${memesTable.id} AND ${likesTable.userId} = ${userId})`.as(
+          ? sql<boolean>`EXISTS(SELECT 1 FROM ${likesTable} WHERE ${likesTable.memeId} = "memesTable"."id" AND ${likesTable.userId} = ${userId})`.as(
               "isLiked",
             )
           : sql<boolean>`false`.as("isLiked"),

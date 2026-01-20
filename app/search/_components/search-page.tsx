@@ -73,6 +73,7 @@ export function SearchPage({
       q: string,
       currentOffset: number,
       currentSort: SortType,
+      currentTags: string[],
       reset = false,
     ) => {
       setLoading(true);
@@ -82,6 +83,7 @@ export function SearchPage({
           offset: currentOffset,
           limit: PAGE_SIZE,
           sort: currentSort,
+          tags: currentTags,
         });
 
         if (data.memes.length < PAGE_SIZE) {
@@ -109,7 +111,7 @@ export function SearchPage({
         if (entries[0].isIntersecting && hasMore && !loading) {
           const newOffset = offset + PAGE_SIZE;
           setOffset(newOffset);
-          doSearch(searchQuery, newOffset, sort);
+          doSearch(searchQuery, newOffset, sort, selectedTags);
         }
       },
       { threshold: 0.1 },
@@ -138,7 +140,7 @@ export function SearchPage({
       newSort: sort,
       newTags: [],
     });
-    doSearch(query, 0, sort, true);
+    doSearch(query, 0, sort, selectedTags, true);
   };
 
   const handleTagClick = (tag: string) => {
@@ -151,7 +153,7 @@ export function SearchPage({
       newSort: sort,
       newTags,
     });
-    doSearch(searchQuery, 0, sort, true);
+    doSearch(searchQuery, 0, sort, newTags, true);
   };
 
   const handleSortChange = (newSort: SortType) => {
@@ -164,7 +166,7 @@ export function SearchPage({
       newSort,
       newTags: selectedTags,
     });
-    doSearch(searchQuery, 0, newSort, true);
+    doSearch(searchQuery, 0, newSort, selectedTags, true);
   };
 
   const clearSearch = () => {
@@ -178,7 +180,7 @@ export function SearchPage({
       newSort: sort,
       newTags: [],
     });
-    doSearch("", 0, sort, true);
+    doSearch("", 0, sort, [], true);
   };
 
   return (
