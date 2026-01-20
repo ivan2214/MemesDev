@@ -67,6 +67,12 @@ export function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem className="w-full cursor-pointer hover:bg-accent">
+                  <Link className="w-full" href={`/settings/profile`}>
+                    Configuración del perfil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="w-full cursor-pointer hover:bg-accent"
                   onClick={handleSignOut}

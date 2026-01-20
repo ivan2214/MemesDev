@@ -20,7 +20,7 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-  imageKey: text("image_key").unique().notNull(),
+  imageKey: text("image_key").unique(),
   bio: text("bio"),
   socials: json("socials").$type<{ platform: string; url: string }[]>(),
   categoryId: uuid("category_id").references(() => categoriesTable.id),

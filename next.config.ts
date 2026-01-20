@@ -11,6 +11,19 @@ const nextConfig: NextConfig = {
     "@react-email/render",
     "react-email",
   ],
+  images: {
+    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "googleusercontent.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

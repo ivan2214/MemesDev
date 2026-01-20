@@ -1,4 +1,5 @@
-import type { Category, Tag } from "./meme";
+import type { Category } from "./category";
+import type { Tag } from "./tag";
 
 export interface UserProfile {
   id: string;

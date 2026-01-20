@@ -56,6 +56,7 @@ export async function getUserProfile(userId: string): Promise<{
     ...userRecord,
     memesCount: stats.memesCount,
     totalLikes: stats.likesCount,
+    tags: userRecord.tags.map((tag) => tag.tag),
   };
 
   return { user };

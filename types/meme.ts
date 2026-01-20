@@ -1,16 +1,5 @@
-export interface Tag {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  icon: string;
-  color: string;
-}
+import type { Category } from "./category";
+import type { Tag } from "./tag";
 
 export interface Meme {
   id: string;

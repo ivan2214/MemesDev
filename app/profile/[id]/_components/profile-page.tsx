@@ -171,7 +171,7 @@ export function ProfilePage({
               </h1>
               {profile.category && (
                 <Badge variant="secondary" className="text-sm">
-                  {profile.category}
+                  {profile.category.name}
                 </Badge>
               )}
             </div>
@@ -187,8 +187,8 @@ export function ProfilePage({
             {profile.tags && profile.tags.length > 0 && (
               <div className="mb-4 flex flex-wrap justify-center gap-2 sm:justify-start">
                 {profile.tags.map((tag) => (
-                  <Badge key={tag} variant="outline">
-                    {tag}
+                  <Badge key={tag.id} variant="outline">
+                    {tag.name}
                   </Badge>
                 ))}
               </div>

@@ -3,7 +3,7 @@
 import { useUploadFile } from "@better-upload/client";
 import { useForm } from "@tanstack/react-form";
 
-import { PlusIcon, TrashIcon, X } from "lucide-react";
+import { CheckIcon, PlusIcon, TrashIcon, X } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,37 +25,43 @@ import {
   Tags,
   TagsContent,
   TagsEmpty,
+  TagsGroup,
   TagsInput,
+  TagsItem,
   TagsList,
   TagsTrigger,
   TagsValue,
 } from "@/shared/components/ui/shadcn-io/tags";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { UploadDropzone } from "@/shared/components/ui/upload-dropzone";
+import type { Tag } from "@/types/tag";
 import type { UserSettings } from "../_types";
+
+type TagForForm = Omit<Tag, "createdAt" | "updatedAt">;
 
 interface ProfileFormProps {
   initialData: UserSettings | null;
+  allTags: Tag[];
 }
 
 const profileFormSchema = profileSchema.extend({
-  imageFile: z.file(),
+  imageFile: z.file().optional(),
+  imagePreview: z.string().optional(),
 });
 
-export function ProfileForm({ initialData }: ProfileFormProps) {
-  const [newTag, setNewTag] = useState<{ id: string; label: string } | null>(
-    null,
-  );
+export function ProfileForm({ initialData, allTags }: ProfileFormProps) {
+  const [newTag, setNewTag] = useState<TagForForm | null>(null);
 
   const form = useForm({
     defaultValues: {
       name: initialData?.name || "",
       bio: initialData?.bio || "",
-      category: initialData?.category || "",
+      category: initialData?.category?.name,
       tags: initialData?.tags || [],
       socials: initialData?.socials || [],
       imageKey: initialData?.imageKey || "",
       imageFile: undefined as never as File,
+      imagePreview: initialData?.image || "",
     },
 
     validators: {
@@ -74,9 +80,9 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
       const data: ProfileSchema = {
         ...value,
       };
-      if (!value.imageFile) {
+      if (value.imageFile) {
         const { file } = await uploader.upload(value.imageFile);
-        data.imageKey = file.objectInfo.key;
+        data.imageKey = file.objectInfo?.key;
       }
 
       try {
@@ -87,14 +93,26 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
         toast.error("Error al actualizar el perfil");
       }
     },
+    onSubmitInvalid(props) {
+      const meta = props.meta;
+      console.log("meta:", meta);
+      const errors = props.formApi.state.errors;
+      console.log("errors:", errors);
+
+      toast.error("Error al actualizar el perfil");
+    },
   });
 
   const uploader = useUploadFile({
     route: "avatar",
+    onError(error) {
+      console.error(error);
+      toast.error("Error al subir la imagen");
+    },
   });
 
   const handleRemoveTag = (id: string) => {
-    const selected = form.state.values.tags;
+    const selected = form.state.values.tags || [];
     form.setFieldValue(
       "tags",
       selected.filter((t) => t.id !== id),
@@ -103,7 +121,28 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
 
   const handleCreateTag = () => {
     if (!newTag) return;
-    form.setFieldValue("tags", [...form.state.values.tags, newTag]);
+
+    form.setFieldValue("tags", [
+      ...(form.state.values.tags || []),
+      { ...newTag, createdAt: new Date() },
+    ]);
+    setNewTag(null);
+  };
+
+  const handleSelect = (tagSelected: TagForForm) => {
+    const { id } = tagSelected;
+    const selected = form.state.values.tags || [];
+    if (selected.some((t) => t.id === tagSelected.id)) {
+      handleRemoveTag(tagSelected.id);
+      return;
+    }
+
+    const tag = allTags.find((t) => t.id === id);
+    if (!tag) return;
+
+    const newTags = [...selected, tag];
+    form.setFieldValue("tags", newTags);
+
     setNewTag(null);
   };
 
@@ -121,30 +160,34 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
       <FieldGroup>
         <form.Field name="imageFile">
           {(field) => {
+            const file = field.state.value;
             return (
               <Field>
                 <FieldLabel>Avatar</FieldLabel>
                 <div className="flex flex-col gap-4">
-                  {field.state.value ? (
+                  {file || form.state.values.imagePreview ? (
                     <div className="relative h-32 w-32">
                       {/* Try to display image. Use a placeholder logic if needed */}
                       <Image
-                        src={URL.createObjectURL(field.state.value)}
+                        src={
+                          file
+                            ? URL.createObjectURL(file)
+                            : form.state.values.imagePreview || ""
+                        }
                         alt="Avatar"
                         className="h-full w-full rounded-full border object-cover"
-                        onError={(e) => {
-                          // Fallback if image fails (e.g. it's just a key without domain)
-                          e.currentTarget.src = "https://github.com/shadcn.png";
-                        }}
+                        width={128}
+                        height={128}
                       />
                       <Button
                         type="button"
                         variant="destructive"
                         size="icon"
                         className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                        onClick={() =>
-                          field.handleChange(undefined as never as File)
-                        }
+                        onClick={() => {
+                          field.handleChange(undefined as never as File);
+                          form.setFieldValue("imagePreview", "");
+                        }}
                       >
                         <X className="h-3 w-3" />
                       </Button>
@@ -213,7 +256,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
               <Input
                 id={field.name}
                 placeholder="Ej. Creador de Memes, Curador..."
-                value={field.state.value}
+                value={field.state.value || ""}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
             </Field>
@@ -222,41 +265,85 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
 
         {/* Tags */}
         <form.Field name="tags">
-          {(field) => (
-            <Field>
-              <FieldLabel>Tags</FieldLabel>
-              <Tags className="max-w-md">
-                <TagsTrigger placeholder="Etiquetas...">
-                  {field.state.value.map((tag) => (
-                    <TagsValue
-                      key={tag.id}
-                      onRemove={() => handleRemoveTag(tag.id)}
-                    >
-                      {tag.label}
-                    </TagsValue>
-                  ))}
-                </TagsTrigger>
-                <TagsContent>
-                  <TagsInput
-                    value={newTag?.label || ""}
-                    onValueChange={(val) => setNewTag({ id: val, label: val })}
-                    placeholder="Nueva etiqueta..."
-                  />
-                  <TagsList>
-                    <TagsEmpty>
-                      <button
-                        className="flex items-center gap-2"
-                        onClick={handleCreateTag}
-                        type="button"
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+            const tags = field.state.value?.filter(
+              (t) => t.id !== "" && t.name !== "",
+            );
+
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldLabel className="text-center" htmlFor={field.name}>
+                  Tags
+                </FieldLabel>
+                <Tags>
+                  <TagsTrigger placeholder="Selecciona una etiqueta">
+                    {tags?.map((tag) => (
+                      <TagsValue
+                        key={tag.id}
+                        onRemove={() => handleRemoveTag(tag.id)}
                       >
-                        <PlusIcon size={14} /> Creart "{newTag?.label}"
-                      </button>
-                    </TagsEmpty>
-                  </TagsList>
-                </TagsContent>
-              </Tags>
-            </Field>
-          )}
+                        {tag.name}
+                      </TagsValue>
+                    ))}
+                  </TagsTrigger>
+                  <TagsContent>
+                    <TagsInput
+                      value={newTag?.name || ""}
+                      onValueChange={(value) => {
+                        setNewTag({
+                          id: value,
+                          name: value,
+                          slug: value.toLowerCase().replace(" ", "-"),
+                        });
+                      }}
+                      placeholder="Buscar..."
+                    />
+                    <TagsList>
+                      <TagsEmpty>
+                        <button
+                          className="mx-auto flex cursor-pointer items-center gap-2"
+                          onClick={handleCreateTag}
+                          type="button"
+                        >
+                          <PlusIcon
+                            className="text-muted-foreground"
+                            size={14}
+                          />
+                          Create new tag: {newTag?.name || ""}
+                        </button>
+                      </TagsEmpty>
+                      <TagsGroup>
+                        {allTags.map((tag) => (
+                          <TagsItem
+                            key={tag.id}
+                            onSelect={() =>
+                              handleSelect({
+                                id: tag.id,
+                                name: tag.name,
+                                slug: tag.slug,
+                              })
+                            }
+                            value={tag.slug}
+                          >
+                            {tag.name}
+                            {tags?.some((t) => t.id === tag.id) && (
+                              <CheckIcon
+                                className="text-muted-foreground"
+                                size={14}
+                              />
+                            )}
+                          </TagsItem>
+                        ))}
+                      </TagsGroup>
+                    </TagsList>
+                  </TagsContent>
+                </Tags>
+                {isInvalid && <FieldError errors={field.state.meta.errors} />}
+              </Field>
+            );
+          }}
         </form.Field>
 
         {/* Socials - Dynamic Array */}
@@ -321,11 +408,21 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
         </form.Field>
       </FieldGroup>
 
-      <div className="flex justify-end gap-4">
-        <Button type="button" variant="outline" onClick={() => form.reset()}>
+      <div className="flex cursor-pointer justify-end gap-4">
+        <Button
+          className="cursor-pointer"
+          type="button"
+          variant="outline"
+          onClick={() => form.reset()}
+          disabled={form.state.isSubmitting}
+        >
           Restablecer
         </Button>
-        <Button type="submit" disabled={form.state.isSubmitting}>
+        <Button
+          className="cursor-pointer"
+          type="submit"
+          disabled={form.state.isSubmitting}
+        >
           {form.state.isSubmitting ? "Guardando..." : "Guardar Cambios"}
         </Button>
       </div>

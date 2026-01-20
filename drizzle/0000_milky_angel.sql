@@ -32,7 +32,7 @@ CREATE TABLE "user" (
 	"email" text NOT NULL,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
-	"image_key" text NOT NULL,
+	"image_key" text,
 	"bio" text,
 	"socials" json,
 	"category_id" uuid,

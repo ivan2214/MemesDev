@@ -1,6 +1,15 @@
 "use server";
 
-import { and, desc, eq, exists, ilike, or, type SQL } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  exists,
+  ilike,
+  inArray,
+  or,
+  type SQL,
+} from "drizzle-orm";
 
 import { headers } from "next/headers";
 import { db } from "@/db";
@@ -36,34 +45,38 @@ export async function getMemes({
     const userId = session?.user?.id;
 
     // Construir filtros
-    const filters = [];
+    const filters: SQL[] = [];
 
+    // Filtro por Query (Título o Tags)
     if (query.trim()) {
-      filters.push(
-        or(
-          ilike(memesTable.title, `%${query.trim()}%`),
-          exists(
-            db
-              .select()
-              .from(memeTagsTable)
-              .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
-              .where(
-                and(
-                  eq(memeTagsTable.memeId, memesTable.id),
-                  ilike(tagsTable.name, `%${query.trim()}%`),
-                ),
+      const searchFilter = or(
+        ilike(memesTable.title, `%${query.trim()}%`),
+        exists(
+          db
+            .select({ id: memeTagsTable.id })
+            .from(memeTagsTable)
+            .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
+            .where(
+              and(
+                eq(memeTagsTable.memeId, memesTable.id),
+                ilike(tagsTable.name, `%${query.trim()}%`),
               ),
-          ),
+            ),
         ),
       );
+
+      if (searchFilter) {
+        filters.push(searchFilter);
+      }
     }
 
+    // Filtro por Tags específicas
     if (tags.length > 0) {
       for (const tag of tags) {
         filters.push(
           exists(
             db
-              .select()
+              .select({ id: memeTagsTable.id })
               .from(memeTagsTable)
               .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
               .where(
@@ -77,20 +90,18 @@ export async function getMemes({
       }
     }
 
+    // Filtro por Categoría
     if (category) {
-      filters.push(
-        exists(
-          db
-            .select()
-            .from(categoriesTable)
-            .where(
-              and(
-                eq(categoriesTable.id, memesTable.categoryId),
-                eq(categoriesTable.slug, category),
-              ),
-            ),
-        ),
-      );
+      const categoryData = await db.query.categoriesTable.findFirst({
+        where: eq(categoriesTable.slug, category),
+        columns: { id: true },
+      });
+
+      if (categoryData) {
+        filters.push(eq(memesTable.categoryId, categoryData.id));
+      } else {
+        return { memes: [] };
+      }
     }
 
     // Ordenamiento
@@ -110,11 +121,26 @@ export async function getMemes({
         break;
     }
 
+    // Paso 1: Obtener IDs de los memes que coinciden con los filtros
+    // Usamos db.select para evitar problemas de alias en subqueries
+    const matchedMemes = await db
+      .select({ id: memesTable.id })
+      .from(memesTable)
+      .where(and(...filters))
+      .orderBy(...orderBy)
+      .limit(limit)
+      .offset(offset);
+
+    if (matchedMemes.length === 0) {
+      return { memes: [] };
+    }
+
+    const memeIds = matchedMemes.map((m) => m.id);
+
+    // Paso 2: Traer la data completa usando db.query
     const memesData = await db.query.memesTable.findMany({
-      where: and(...filters),
+      where: inArray(memesTable.id, memeIds),
       orderBy: orderBy,
-      limit,
-      offset,
       with: {
         user: {
           columns: {

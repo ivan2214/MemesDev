@@ -7,14 +7,16 @@ async function SearchContent({
   query,
   sort,
   tagsSearch,
+  category,
 }: {
   query: string;
   sort: SortType;
   tagsSearch?: string[];
+  category?: string;
 }) {
   const [{ tags }, { memes }] = await Promise.all([
     getAllTags(),
-    getMemes({ query, offset: 0, limit: 12, sort, tags: tagsSearch }),
+    getMemes({ query, offset: 0, limit: 12, sort, tags: tagsSearch, category }),
   ]);
 
   return (
@@ -31,7 +33,12 @@ async function SearchContent({
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; sort?: string; tags?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    sort?: string;
+    tags?: string;
+    category?: string;
+  }>;
 }) {
   const params = await searchParams;
   const query = params.q || "";
@@ -39,11 +46,16 @@ export default async function Page({
   const tagsSearch = params.tags
     ? decodeURIComponent(params.tags).split(",")
     : undefined;
-  console.log(tagsSearch);
+  const category = params.category || "";
 
   return (
     <Suspense fallback={<Loading />}>
-      <SearchContent query={query} sort={sort} tagsSearch={tagsSearch} />
+      <SearchContent
+        query={query}
+        sort={sort}
+        tagsSearch={tagsSearch}
+        category={category}
+      />
     </Suspense>
   );
 }
