@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { CollectionPage, WithContext } from "schema-dts";
+import { getCurrentUser } from "@/data/user";
 import { env } from "@/env/server";
 import { getAllTags, getMemesForSearch, type SortType } from "./_actions";
 import { SearchPage } from "./_components/search-page";
@@ -67,6 +68,7 @@ async function SearchContent({
   tagsSearch?: string[];
   category?: string;
 }) {
+  const user = await getCurrentUser();
   const [{ tags }, { memes }] = await Promise.all([
     getAllTags(),
     getMemesForSearch({
@@ -76,6 +78,7 @@ async function SearchContent({
       sort,
       tags: tagsSearch,
       category,
+      userId: user?.id,
     }),
   ]);
 

@@ -11,7 +11,13 @@ import { getRandomMemes } from "../_actions";
 
 const PAGE_SIZE = 8;
 
-export function RandomPage({ initialMemes }: { initialMemes: Meme[] }) {
+export function RandomPage({
+  initialMemes,
+  userId,
+}: {
+  initialMemes: Meme[];
+  userId?: string;
+}) {
   const [memes, setMemes] = useState<Meme[]>(initialMemes);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -30,7 +36,7 @@ export function RandomPage({ initialMemes }: { initialMemes: Meme[] }) {
     try {
       // Pasar los IDs ya cargados para excluirlos
       const excludeIds = Array.from(loadedMemeIds.current);
-      const data = await getRandomMemes(PAGE_SIZE, undefined, excludeIds);
+      const data = await getRandomMemes(PAGE_SIZE, userId, excludeIds);
 
       if (data.memes.length === 0) {
         setHasMore(false);

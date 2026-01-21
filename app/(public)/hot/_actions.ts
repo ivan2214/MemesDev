@@ -1,7 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 import { getUserLikeds } from "@/server/dal/likes";
 import {
   getHotMemes as getHotMemesDal,
@@ -16,27 +14,21 @@ export async function getHotMemes({
   limit = 12,
   sort = "hot",
   timeRange = "24h",
-  skipAuth = false,
+  userId,
 }: {
   offset?: number;
   limit?: number;
   sort?: "recent" | "hot";
   timeRange?: TimeRange;
-  skipAuth?: boolean;
+  userId?: string;
 }): Promise<{ memes: Meme[] }> {
   try {
-    const session = skipAuth
-      ? null
-      : await auth.api.getSession({
-          headers: await headers(),
-        });
-    const userId = session?.user?.id;
-
     const memesData = await getHotMemesDal({
       offset,
       limit,
       sort,
       timeRange,
+      userId,
     });
 
     if (memesData.length === 0) {

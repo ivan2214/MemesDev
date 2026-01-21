@@ -120,11 +120,13 @@ export async function getHotMemes({
   limit = 12,
   sort = "hot",
   timeRange = "24h",
+  userId,
 }: {
   offset?: number;
   limit?: number;
   sort?: "recent" | "hot";
   timeRange?: TimeRange;
+  userId?: string;
 }) {
   "use cache";
   cacheTag(CACHE_TAGS.MEMES, "hot-memes"); // Granular tags? maybe `hot-memes-${timeRange}`?
@@ -137,13 +139,15 @@ export async function getHotMemes({
     ? gte(memesTable.createdAt, timeFilter)
     : undefined;
 
+  const whereClause2 = userId ? not(eq(memesTable.userId, userId)) : undefined;
+
   const orderBy =
     sort === "hot"
       ? [desc(memesTable.likesCount), desc(memesTable.createdAt)]
       : [desc(memesTable.createdAt)];
 
   return await db.query.memesTable.findMany({
-    where: whereClause,
+    where: and(whereClause, whereClause2),
     orderBy: orderBy,
     limit,
     offset,
@@ -173,6 +177,7 @@ export async function searchMemesDal({
   offset = 0,
   limit = 12,
   sort = "recent",
+  userId,
 }: {
   query?: string;
   tags?: string[];
@@ -180,6 +185,7 @@ export async function searchMemesDal({
   offset?: number;
   limit?: number;
   sort?: "recent" | "likes" | "comments";
+  userId?: string;
 }) {
   "use cache";
   cacheLife(CACHE_LIFE.SHORT);
@@ -262,6 +268,11 @@ export async function searchMemesDal({
     default:
       orderBy = [desc(memesTable.createdAt)];
       break;
+  }
+
+  // Excluir memes del usuario
+  if (userId) {
+    filters.push(not(eq(memesTable.userId, userId)));
   }
 
   // Paso 1: Obtener IDs

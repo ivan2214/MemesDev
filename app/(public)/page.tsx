@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import type { SearchAction, WebSite, WithContext } from "schema-dts";
+import { getCurrentUser } from "@/data/user";
 import { env } from "@/env/server";
 import { getMemes } from "./_actions";
 import { HomePage } from "./_components/home-page";
 
 async function HomeMemesVerifier() {
-  const { memes } = await getMemes(0, 12, false);
+  const user = await getCurrentUser();
+  const { memes } = await getMemes(0, 12, user?.id);
   return <HomePage initialMemes={memes} />;
 }
 

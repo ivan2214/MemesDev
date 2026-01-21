@@ -1,7 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 import { getAllTags as getAllTagsDal } from "@/server/dal/categories"; // Assuming tags also in DAL or create tags DAL
 // I put getAllTags in `server/dal/categories.ts` (misnamed maybe but grouping static data)
 import { getUserLikeds } from "@/server/dal/likes";
@@ -18,6 +16,7 @@ export async function getMemesForSearch({
   offset = 0,
   limit = 12,
   sort = "recent",
+  userId,
 }: {
   query?: string;
   tags?: string[];
@@ -25,11 +24,9 @@ export async function getMemesForSearch({
   offset?: number;
   limit?: number;
   sort?: SortType;
+  userId?: string;
 }): Promise<{ memes: Meme[] }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    const userId = session?.user?.id;
-
     const memesData = await searchMemesDal({
       query,
       tags,
@@ -37,6 +34,7 @@ export async function getMemesForSearch({
       offset,
       limit,
       sort,
+      userId,
     });
 
     if (memesData.length === 0) {

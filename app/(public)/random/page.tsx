@@ -23,5 +23,5 @@ export const metadata: Metadata = {
 export default async function Page() {
   const userId = await getCurrentUser();
   const { memes } = await getRandomMemes(8, userId?.id);
-  return <RandomPage initialMemes={memes} />;
+  return <RandomPage initialMemes={memes} userId={userId?.id} />;
 }

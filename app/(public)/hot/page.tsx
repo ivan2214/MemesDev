@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import type { CollectionPage, WithContext } from "schema-dts";
+import { getCurrentUser } from "@/data/user";
 import { env } from "@/env/server";
 import type { TimeRange } from "@/server/dal/memes";
 import { getHotMemes } from "./_actions";
 import { HotPage } from "./_components/hot-page";
 
 async function HotMemesVerifier({ timeRange }: { timeRange: TimeRange }) {
+  const userId = await getCurrentUser();
   const { memes } = await getHotMemes({
     offset: 0,
     limit: 12,
     sort: "hot",
     timeRange,
-    skipAuth: false,
+    userId: userId?.id,
   });
   return <HotPage initialMemes={memes} initialTimeRange={timeRange} />;
 }
@@ -38,18 +39,7 @@ export default function Page({
 }: {
   searchParams: Promise<{ t?: string }>;
 }) {
-  // Use default timeRange for fallback as we can't access searchParams yet
-  const defaultTimeRange: TimeRange = "24h";
-
-  return (
-    <Suspense
-      fallback={
-        <HotPage initialMemes={[]} initialTimeRange={defaultTimeRange} />
-      }
-    >
-      <HotPageInner searchParams={searchParams} />
-    </Suspense>
-  );
+  return <HotPageInner searchParams={searchParams} />;
 }
 
 async function HotPageInner({
@@ -65,7 +55,7 @@ async function HotPageInner({
     limit: 12,
     sort: "hot",
     timeRange,
-    skipAuth: true, // Static for fallback (but here we are dynamic anyway due to searchParams)
+    userId: undefined,
   });
 
   const jsonLd: WithContext<CollectionPage> = {

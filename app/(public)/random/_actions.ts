@@ -1,6 +1,6 @@
 "use server";
 
-import { inArray, not } from "drizzle-orm";
+import { and, eq, inArray, not, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { memesTable } from "@/db/schemas";
 import { getUserLikeds } from "@/server/dal/likes";
@@ -13,11 +13,22 @@ export async function getRandomMemes(
 ): Promise<{ memes: Meme[] }> {
   try {
     // Obtener todos los memes (o los que no están excluidos)
+
+    const whereClause1 =
+      excludeIds.length > 0
+        ? not(inArray(memesTable.id, excludeIds))
+        : undefined;
+    const whereClause2 = userId
+      ? not(eq(memesTable.userId, userId))
+      : undefined;
+
+    const where: SQL[] = [];
+
+    if (whereClause1) where.push(whereClause1);
+    if (whereClause2) where.push(whereClause2);
+
     const allMemes = await db.query.memesTable.findMany({
-      where:
-        excludeIds.length > 0
-          ? not(inArray(memesTable.id, excludeIds))
-          : undefined,
+      where: and(...where),
       with: {
         user: {
           columns: {
