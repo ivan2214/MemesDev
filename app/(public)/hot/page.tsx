@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import type { CollectionPage, WithContext } from "schema-dts";
 import { env } from "@/env/server";
-import type { TimeRange } from "./_actions";
+import type { TimeRange } from "@/server/dal/memes";
 import { getHotMemes } from "./_actions";
 import { HotPage } from "./_components/hot-page";
+
+async function HotMemesVerifier({ timeRange }: { timeRange: TimeRange }) {
+  const { memes } = await getHotMemes({
+    offset: 0,
+    limit: 12,
+    sort: "hot",
+    timeRange,
+    skipAuth: false,
+  });
+  return <HotPage initialMemes={memes} initialTimeRange={timeRange} />;
+}
 
 export const metadata: Metadata = {
   title: "Memes Populares | MemesDev",
@@ -21,7 +33,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Page({
+export default function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ t?: string }>;
+}) {
+  // Use default timeRange for fallback as we can't access searchParams yet
+  const defaultTimeRange: TimeRange = "24h";
+
+  return (
+    <Suspense
+      fallback={
+        <HotPage initialMemes={[]} initialTimeRange={defaultTimeRange} />
+      }
+    >
+      <HotPageInner searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function HotPageInner({
   searchParams,
 }: {
   searchParams: Promise<{ t?: string }>;
@@ -34,6 +65,7 @@ export default async function Page({
     limit: 12,
     sort: "hot",
     timeRange,
+    skipAuth: true, // Static for fallback (but here we are dynamic anyway due to searchParams)
   });
 
   const jsonLd: WithContext<CollectionPage> = {
@@ -63,7 +95,8 @@ export default async function Page({
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <HotPage initialMemes={memes} initialTimeRange={timeRange} />
+
+      <HotMemesVerifier timeRange={timeRange} />
     </>
   );
 }

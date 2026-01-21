@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import type { CollectionPage, WithContext } from "schema-dts";
 import { env } from "@/env/server";
 import { getAllTags, getMemes, type SortType } from "./_actions";
 import { SearchPage } from "./_components/search-page";
-import Loading from "./loading";
 
 interface SearchParams {
   q?: string;
@@ -127,13 +125,11 @@ export default async function Page({
   const category = params.category || "";
 
   return (
-    <Suspense fallback={<Loading />}>
-      <SearchContent
-        query={query}
-        sort={sort}
-        tagsSearch={tagsSearch}
-        category={category}
-      />
-    </Suspense>
+    <SearchContent
+      query={query}
+      sort={sort}
+      tagsSearch={tagsSearch}
+      category={category}
+    />
   );
 }

@@ -1,6 +1,3 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 import type { Metadata } from "next";
 import { env } from "@/env/server";
 import { getRandomMemes } from "./_actions";
@@ -22,7 +19,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Page() {
-  const { memes } = await getRandomMemes(8);
+async function RandomMemesVerifier() {
+  const { memes } = await getRandomMemes(8, false);
   return <RandomPage initialMemes={memes} />;
+}
+
+export default function Page() {
+  return <RandomMemesVerifier />;
 }

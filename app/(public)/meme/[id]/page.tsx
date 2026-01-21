@@ -1,10 +1,30 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+
 import type { SocialMediaPosting, WithContext } from "schema-dts";
 import { env } from "@/env/server";
+import { auth } from "@/lib/auth";
+import { getUserLikeds } from "@/server/dal/likes";
+import { getMeme as getMemeDal } from "@/server/dal/memes";
 import { getComments } from "@/shared/actions/meme-actions";
-import { getMeme } from "./_actions";
+
+import type { Meme } from "@/types/meme";
 import { MemeDetail } from "./_components/meme-detail";
+
+async function MemeVerifier({ meme, memeId }: { meme: Meme; memeId: string }) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const { comments } = await getComments(memeId);
+  let isLiked = false;
+
+  if (session?.user?.id) {
+    const likes = await getUserLikeds(session.user.id, [memeId]);
+    isLiked = likes.length > 0;
+  }
+
+  const fullMeme = { ...meme, isLiked };
+  return <MemeDetail memeId={memeId} meme={fullMeme} comments={comments} />;
+}
 
 export async function generateMetadata({
   params,
@@ -12,14 +32,19 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const meme = await getMeme(id);
+  const memeData = await getMemeDal(id);
 
-  if (!meme) {
+  if (!memeData) {
     return {
       title: "Meme no encontrado | MemesDev",
       description: "El meme que buscas no existe o ha sido eliminado.",
     };
   }
+
+  const meme: Meme = {
+    ...memeData,
+    tags: memeData.tags.map((t) => t.tag),
+  };
 
   const title = meme.title || "Meme de programación";
   const limit = 150;
@@ -67,12 +92,17 @@ export default async function MemePage({
 }) {
   const { id } = await params;
 
-  const meme = await getMeme(id);
-  const { comments } = await getComments(id);
+  const memeData = await getMemeDal(id);
+  // getComments removed from here to avoid uncached data access
 
-  if (!meme) {
+  if (!memeData) {
     notFound();
   }
+
+  const meme: Meme = {
+    ...memeData,
+    tags: memeData.tags.map((t) => t.tag),
+  };
 
   const jsonLd: WithContext<SocialMediaPosting> = {
     "@context": "https://schema.org",
@@ -115,7 +145,8 @@ export default async function MemePage({
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <MemeDetail memeId={id} meme={meme} comments={comments} />
+
+      <MemeVerifier meme={meme} memeId={id} />
     </>
   );
 }

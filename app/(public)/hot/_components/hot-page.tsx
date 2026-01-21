@@ -3,23 +3,15 @@
 import { Flame } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { TimeRange } from "@/server/dal/memes";
 import { MemeCard } from "@/shared/components/meme-card";
 import { Button } from "@/shared/components/ui/button";
 import { Spinner } from "@/shared/components/ui/spinner";
 import type { Meme } from "@/types/meme";
-import { getHotMemes, type TimeRange } from "../_actions";
+import { getHotMemes } from "../_actions";
+import { TIME_RANGES } from "../_constants";
 
 const PAGE_SIZE = 12;
-
-const TIME_RANGES: { value: TimeRange; label: string }[] = [
-  { value: "24h", label: "24 horas" },
-  { value: "3d", label: "3 días" },
-  { value: "7d", label: "7 días" },
-  { value: "1m", label: "1 mes" },
-  { value: "3m", label: "3 meses" },
-  { value: "1y", label: "1 año" },
-  { value: "all", label: "Todo" },
-];
 
 export function HotPage({
   initialMemes,

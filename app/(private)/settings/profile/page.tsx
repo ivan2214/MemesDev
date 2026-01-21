@@ -1,10 +1,26 @@
+import { Suspense } from "react";
 import { getAllTags } from "@/app/(public)/search/_actions";
 import { getAllCategories } from "@/shared/actions/category-actions";
+import { Spinner } from "@/shared/components/ui/spinner";
+import type { Category } from "@/types/category";
+import type { Tag } from "@/types/tag";
 import { getUserSettings } from "./_actions";
 import { ProfileForm } from "./_components/profile-form";
 
-export default async function SettingsProfilePage() {
+async function SettingsFetcher({
+  tags,
+  categories,
+}: {
+  tags: Tag[];
+  categories: Category[];
+}) {
   const user = await getUserSettings();
+  return (
+    <ProfileForm initialData={user} tagsDB={tags} categoriesDB={categories} />
+  );
+}
+
+export default async function SettingsProfilePage() {
   const { tags } = await getAllTags();
   const categories = await getAllCategories();
 
@@ -16,7 +32,15 @@ export default async function SettingsProfilePage() {
           Actualiza tu información personal, avatar y redes sociales.
         </p>
       </div>
-      <ProfileForm initialData={user} tagsDB={tags} categoriesDB={categories} />
+      <Suspense
+        fallback={
+          <div className="flex justify-center p-8">
+            <Spinner />
+          </div>
+        }
+      >
+        <SettingsFetcher tags={tags} categories={categories} />
+      </Suspense>
     </div>
   );
 }

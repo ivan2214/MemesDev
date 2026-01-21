@@ -1,48 +1,35 @@
 "use server";
 
-import { desc, eq, not } from "drizzle-orm";
 import { headers } from "next/headers";
-import { db } from "@/db";
-import { likesTable, memesTable } from "@/db/schemas";
 import { auth } from "@/lib/auth";
+import { getUserLikeds } from "@/server/dal/likes";
+import { getRecentMemes } from "@/server/dal/memes";
 import type { Meme } from "@/types/meme";
 
 export async function getMemes(
   offset = 0,
   limit = 12,
+  skipAuth = false,
 ): Promise<{ memes: Meme[] }> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = skipAuth
+    ? null
+    : await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
 
-  const memesData = await db.query.memesTable.findMany({
-    orderBy: [desc(memesTable.createdAt)],
-    where: not(eq(memesTable.userId, userId || "")),
-    limit,
-    offset,
-    with: {
-      user: {
-        columns: {
-          id: true,
-          name: true,
-          image: true,
-        },
-      },
-      category: true,
-      tags: {
-        with: {
-          tag: true,
-        },
-      },
-      likes: userId
-        ? {
-            where: eq(likesTable.userId, userId),
-            columns: {
-              userId: true,
-            },
-          }
-        : undefined,
-    },
-  });
+  const memesData = await getRecentMemes({ offset, limit });
+
+  if (memesData.length === 0) {
+    return { memes: [] };
+  }
+
+  let likedMemeIds = new Set<string>();
+  if (userId) {
+    const likes = await getUserLikeds(
+      userId,
+      memesData.map((m) => m.id),
+    );
+    likedMemeIds = new Set(likes);
+  }
 
   // Transformar resultado para coincidir con el tipo Meme
   const memes: Meme[] = memesData.map((meme) => ({
@@ -55,7 +42,7 @@ export async function getMemes(
     commentsCount: meme.commentsCount,
     createdAt: meme.createdAt,
     user: meme.user,
-    isLiked: meme.likes?.length > 0,
+    isLiked: likedMemeIds.has(meme.id),
   }));
 
   return { memes };

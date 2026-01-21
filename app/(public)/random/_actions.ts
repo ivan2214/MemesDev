@@ -1,47 +1,40 @@
 "use server";
 
-import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
-import { db } from "@/db";
-import { likesTable } from "@/db/schemas";
 import { auth } from "@/lib/auth";
+import { getUserLikeds } from "@/server/dal/likes";
+import { getRecentMemes } from "@/server/dal/memes";
 import type { Meme } from "@/types/meme";
 
-export async function getRandomMemes(limit = 8): Promise<{ memes: Meme[] }> {
+export async function getRandomMemes(
+  limit = 8,
+  skipAuth = false,
+): Promise<{ memes: Meme[] }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = skipAuth
+      ? null
+      : await auth.api.getSession({ headers: await headers() });
     const userId = session?.user?.id;
 
-    const memesData = await db.query.memesTable.findMany({
-      orderBy: (memes, { desc }) => [desc(memes.createdAt)],
-      limit: 50, // Fetch more to shuffle on client side
-      with: {
-        user: {
-          columns: {
-            id: true,
-            name: true,
-            image: true,
-          },
-        },
-        category: true,
-        tags: {
-          with: {
-            tag: true,
-          },
-        },
-        likes: userId
-          ? {
-              where: eq(likesTable.userId, userId),
-              columns: {
-                userId: true,
-              },
-            }
-          : undefined,
-      },
-    });
+    // Fetch 50 most recent (cached)
+    const memesData = await getRecentMemes({ limit: 50 });
 
-    const shuffled = memesData.sort(() => 0.5 - Math.random());
+    if (memesData.length === 0) {
+      return { memes: [] };
+    }
+
+    // Shuffle
+    const shuffled = [...memesData].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, limit);
+
+    let likedMemeIds = new Set<string>();
+    if (userId) {
+      const likes = await getUserLikeds(
+        userId,
+        selected.map((m) => m.id),
+      );
+      likedMemeIds = new Set(likes);
+    }
 
     const memes: Meme[] = selected.map((meme) => ({
       id: meme.id,
@@ -53,7 +46,7 @@ export async function getRandomMemes(limit = 8): Promise<{ memes: Meme[] }> {
       commentsCount: meme.commentsCount,
       createdAt: meme.createdAt,
       user: meme.user,
-      isLiked: meme.likes?.length > 0,
+      isLiked: likedMemeIds.has(meme.id),
     }));
 
     return { memes };

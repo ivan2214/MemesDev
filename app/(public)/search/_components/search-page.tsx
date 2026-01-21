@@ -11,14 +11,9 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import type { Meme } from "@/types/meme";
 import type { Tag } from "@/types/tag";
 import { getMemes, type SortType } from "../_actions";
+import { SORT_OPTIONS } from "../_constants";
 
 const PAGE_SIZE = 12;
-
-const SORT_OPTIONS: { value: SortType; label: string }[] = [
-  { value: "recent", label: "Más recientes" },
-  { value: "likes", label: "Más likes" },
-  { value: "comments", label: "Más comentarios" },
-];
 
 export function SearchPage({
   initialMemes,

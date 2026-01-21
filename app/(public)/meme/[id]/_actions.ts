@@ -1,11 +1,9 @@
 "use server";
 
-import { eq } from "drizzle-orm";
-
 import { headers } from "next/headers";
-import { db } from "@/db";
-import { memesTable } from "@/db/schemas";
 import { auth } from "@/lib/auth";
+import { getUserLikeds } from "@/server/dal/likes";
+import { getMeme as getMemeDal } from "@/server/dal/memes";
 import type { Meme } from "@/types/meme";
 
 export async function getMeme(memeId: string): Promise<Meme | null> {
@@ -13,33 +11,26 @@ export async function getMeme(memeId: string): Promise<Meme | null> {
     headers: await headers(),
   });
 
-  const meme = await db.query.memesTable.findFirst({
-    where: eq(memesTable.id, memeId),
-    with: {
-      user: true,
-      likes: true,
-      tags: {
-        with: {
-          tag: true,
-        },
-      },
-    },
-  });
+  const meme = await getMemeDal(memeId);
 
   if (!meme) return null;
 
-  const isLiked = session?.user
-    ? meme.likes.some((like) => like.userId === session.user.id)
-    : false;
+  let isLiked = false;
+  if (session?.user) {
+    const likes = await getUserLikeds(session.user.id, [memeId]);
+    isLiked = likes.length > 0;
+  }
 
   return {
     id: meme.id,
     imageUrl: meme.imageUrl,
+    title: meme.title,
     tags: meme.tags.map((mt) => mt.tag) || undefined,
     likesCount: meme.likesCount,
     commentsCount: meme.commentsCount,
     createdAt: meme.createdAt,
     isLiked,
+    category: meme.category, // Added category passing if available in Meme type or DAL
     user: {
       id: meme.user.id,
       name: meme.user.name,

@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import type { SearchAction, WebSite, WithContext } from "schema-dts";
 import { env } from "@/env/server";
-import { HomePage } from "../_components/home-page";
 import { getMemes } from "./_actions";
+import { HomePage } from "./_components/home-page";
+
+async function HomeMemesVerifier() {
+  const { memes } = await getMemes(0, 12, false);
+  return <HomePage initialMemes={memes} />;
+}
 
 export const metadata: Metadata = {
   title: "MemesDev - La mejor página de memes para programadores",
@@ -18,8 +23,6 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const { memes } = await getMemes(0, 12);
-
   const jsonLd: WithContext<WebSite> = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -44,7 +47,8 @@ export default async function Page() {
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <HomePage initialMemes={memes} />
+
+      <HomeMemesVerifier />
     </>
   );
 }

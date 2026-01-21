@@ -1,9 +1,7 @@
 "use server";
 
-import { cache } from "react";
-import { db } from "@/db";
+import { getAllCategories as getAllCategoriesDal } from "@/server/dal/categories";
 
-export const getAllCategories = cache(async () => {
-  const categories = await db.query.categoriesTable.findMany();
-  return categories;
-});
+export const getAllCategories = async () => {
+  return await getAllCategoriesDal();
+};

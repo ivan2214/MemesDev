@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MemeCard } from "@/shared/components/meme-card";
 import { Spinner } from "@/shared/components/ui/spinner";
 import type { Meme } from "@/types/meme";
-import { getMemes } from "../(public)/_actions";
+import { getMemes } from "../_actions";
 
 const PAGE_SIZE = 12;
 
@@ -16,7 +16,6 @@ export function HomePage({ initialMemes }: { initialMemes: Meme[] }) {
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const loadMemes = useCallback(async (currentOffset: number) => {
-    
     setLoading(true);
     try {
       const data = await getMemes(currentOffset, PAGE_SIZE);
@@ -58,7 +57,7 @@ export function HomePage({ initialMemes }: { initialMemes: Meme[] }) {
   }, [hasMore, loading, offset, loadMemes]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="space-y-6">
       <div className="mb-8">
         <h1 className="mb-2 text-balance font-bold text-4xl">Últimos Memes</h1>
         <p className="text-pretty text-muted-foreground">
