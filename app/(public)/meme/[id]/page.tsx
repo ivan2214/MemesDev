@@ -72,19 +72,13 @@ export async function generateMetadata({
           height: 630,
           alt: meme.title || "Meme",
         },
-        {
-          url: meme.imageUrl,
-          width: 1200,
-          height: 630,
-          alt: meme.title || "Meme",
-        },
       ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${title} | MemesDev`,
       description: description.substring(0, limit),
-      images: [ogImage, meme.imageUrl],
+      images: [ogImage],
     },
     alternates: {
       canonical: `${env.APP_URL}/meme/${meme.id}`,
