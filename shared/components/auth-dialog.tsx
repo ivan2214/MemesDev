@@ -208,10 +208,11 @@ export function AuthDialog({
 }
 
 export function useAuth() {
-  const { data: session, isPending } = useSession();
+  const { data: session, isPending, isRefetching } = useSession();
+  const isAuthenticated = !isPending && !isRefetching && !!session?.user;
   return {
     user: session?.user,
     isLoading: isPending,
-    isAuthenticated: !!session?.user,
+    isAuthenticated,
   };
 }

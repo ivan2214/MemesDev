@@ -88,7 +88,7 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
     } catch (error) {
       console.error("[MemeCard] Failed to like meme:", error);
     }
-  }, [meme.id, isLiked]);
+  }, [meme.id, meme.user.id, isAuthenticated, currentUserId, isLiked]);
 
   const formattedDate = formatDistanceToNow(new Date(meme.createdAt), {
     addSuffix: true,
