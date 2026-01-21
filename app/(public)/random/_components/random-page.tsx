@@ -6,10 +6,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MemeCard } from "@/shared/components/meme-card";
 import { Button } from "@/shared/components/ui/button";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { PAGE_SIZE } from "@/shared/constants";
 import type { Meme } from "@/types/meme";
 import { getRandomMemes } from "../_actions";
-
-const PAGE_SIZE = 8;
 
 export function RandomPage({
   initialMemes,

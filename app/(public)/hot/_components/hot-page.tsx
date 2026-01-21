@@ -7,11 +7,10 @@ import type { TimeRange } from "@/server/dal/memes";
 import { MemeCard } from "@/shared/components/meme-card";
 import { Button } from "@/shared/components/ui/button";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { PAGE_SIZE } from "@/shared/constants";
 import type { Meme } from "@/types/meme";
 import { getHotMemes } from "../_actions";
 import { TIME_RANGES } from "../_constants";
-
-const PAGE_SIZE = 12;
 
 export function HotPage({
   initialMemes,

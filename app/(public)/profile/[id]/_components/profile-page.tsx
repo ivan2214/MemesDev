@@ -17,11 +17,10 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { PAGE_SIZE } from "@/shared/constants";
 import type { Meme } from "@/types/meme";
 import type { UserProfile } from "@/types/profile";
 import { getUserMemes } from "../_actions";
-
-const PAGE_SIZE = 12;
 
 export function ProfilePage({
   profile,

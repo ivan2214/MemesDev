@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getAllTags } from "@/app/(public)/search/_actions";
+import { getAllTags } from "@/server/dal/categories";
 import { getAllCategories } from "@/shared/actions/category-actions";
 import { Spinner } from "@/shared/components/ui/spinner";
 import type { Category } from "@/types/category";
@@ -21,7 +21,7 @@ async function SettingsFetcher({
 }
 
 export default async function SettingsProfilePage() {
-  const { tags } = await getAllTags();
+  const tags = await getAllTags();
   const categories = await getAllCategories();
 
   return (

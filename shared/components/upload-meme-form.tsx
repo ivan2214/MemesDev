@@ -101,8 +101,6 @@ export function UploadMemeForm({
         return;
       }
 
-      
-
       await uploadMeme({
         tags: value.tags,
         imageKey: imageKey,
@@ -112,9 +110,7 @@ export function UploadMemeForm({
       form.reset();
       onClose();
     },
-    onSubmitInvalid(props) {
-      
-
+    onSubmitInvalid() {
       toast.error("Error al actualizar el perfil");
     },
   });
@@ -215,75 +211,6 @@ export function UploadMemeForm({
       className="flex w-full flex-col items-center justify-center gap-5"
     >
       <FieldGroup className="flex flex-col items-center justify-center text-center">
-        <form.Field name="file">
-          {(field) => {
-            const isInvalid =
-              (field.state.meta.isTouched && !field.state.meta.isValid) ||
-              uploader.isError;
-            const name = field.state.value.name;
-            const extension = name?.split(".").pop();
-            const fileName = `${name?.slice(0, 10)}.${extension}`;
-            return (
-              <Field data-invalid={isInvalid}>
-                <FieldLabel className="p-0" htmlFor={field.name}>
-                  Meme
-                </FieldLabel>
-                {field.state.value.name ? (
-                  <div className="">
-                    <div className="relative mx-auto flex w-96 items-center gap-2">
-                      <Image
-                        src={URL.createObjectURL(field.state.value)}
-                        alt={field.state.value.name}
-                        width={384}
-                        height={216}
-                        className="aspect-auto h-full w-full rounded border object-cover"
-                      />
-                      <Button
-                        variant="destructive"
-                        type="button"
-                        className="absolute -top-5 -right-5 rounded-full"
-                        size="icon-xs"
-                        onClick={() => {
-                          field.handleChange(undefined as never as File);
-                        }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <Badge variant="secondary" className="mt-4">
-                      {fileName}
-                    </Badge>
-                  </div>
-                ) : (
-                  <UploadDropzone
-                    id={field.name}
-                    control={uploader.control}
-                    accept="image/*"
-                    description={{
-                      maxFiles: 1,
-                      maxFileSize: "5MB",
-                    }}
-                    uploadOverride={(file) => {
-                      field.handleChange(file);
-                    }}
-                    isAvatarVariant={false}
-                    multiple={false}
-                  />
-                )}
-                {isInvalid && (
-                  <FieldError
-                    errors={
-                      uploader.error
-                        ? [{ message: uploader.error.message }]
-                        : field.state.meta.errors
-                    }
-                  />
-                )}
-              </Field>
-            );
-          }}
-        </form.Field>
-
         <form.Field name="title">
           {(field) => {
             const isInvalid =
@@ -457,6 +384,75 @@ export function UploadMemeForm({
             );
           }}
         </form.Field>
+
+        <form.Field name="file">
+          {(field) => {
+            const isInvalid =
+              (field.state.meta.isTouched && !field.state.meta.isValid) ||
+              uploader.isError;
+            const name = field.state.value.name;
+            const extension = name?.split(".").pop();
+            const fileName = `${name?.slice(0, 10)}.${extension}`;
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldLabel className="p-0" htmlFor={field.name}>
+                  Meme
+                </FieldLabel>
+                {field.state.value.name ? (
+                  <div className="">
+                    <div className="relative mx-auto flex w-96 items-center gap-2">
+                      <Image
+                        src={URL.createObjectURL(field.state.value)}
+                        alt={field.state.value.name}
+                        width={384}
+                        height={216}
+                        className="aspect-auto h-full w-full rounded border object-cover"
+                      />
+                      <Button
+                        variant="destructive"
+                        type="button"
+                        className="absolute -top-5 -right-5 rounded-full"
+                        size="icon-xs"
+                        onClick={() => {
+                          field.handleChange(undefined as never as File);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <Badge variant="secondary" className="mt-4">
+                      {fileName}
+                    </Badge>
+                  </div>
+                ) : (
+                  <UploadDropzone
+                    id={field.name}
+                    control={uploader.control}
+                    accept="image/*"
+                    description={{
+                      maxFiles: 1,
+                      maxFileSize: "5MB",
+                    }}
+                    uploadOverride={(file) => {
+                      field.handleChange(file);
+                    }}
+                    isAvatarVariant={false}
+                    multiple={false}
+                  />
+                )}
+                {isInvalid && (
+                  <FieldError
+                    errors={
+                      uploader.error
+                        ? [{ message: uploader.error.message }]
+                        : field.state.meta.errors
+                    }
+                  />
+                )}
+              </Field>
+            );
+          }}
+        </form.Field>
       </FieldGroup>
       <Field orientation="horizontal" className="ml-auto w-fit">
         <div className="flex items-center gap-2">
@@ -466,6 +462,7 @@ export function UploadMemeForm({
             onClick={() => {
               form.reset();
               uploader.reset();
+              onClose();
             }}
             className="cursor-pointer"
           >
