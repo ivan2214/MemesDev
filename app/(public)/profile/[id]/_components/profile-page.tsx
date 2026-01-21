@@ -136,7 +136,7 @@ export function ProfilePage({
               <div className="mb-4 flex flex-wrap justify-center gap-3 sm:justify-start">
                 {profile.socials.map((social) => (
                   <Link
-                    key={social.url}
+                    key={social.platform}
                     href={social.url}
                     target="_blank"
                     rel="noopener noreferrer"
