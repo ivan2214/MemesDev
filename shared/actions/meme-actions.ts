@@ -50,6 +50,12 @@ export async function toggleLike(memeId: string) {
         .where(eq(memesTable.id, memeId));
     }
 
+    revalidatePath("/");
+    revalidatePath("/hot");
+    revalidatePath("/search");
+    revalidatePath("/random");
+    revalidatePath(`/meme/${memeId}`);
+
     return { liked: false };
   } else {
     // Like
@@ -69,6 +75,12 @@ export async function toggleLike(memeId: string) {
         .set({ likesCount: meme.likesCount + 1 })
         .where(eq(memesTable.id, memeId));
     }
+
+    revalidatePath("/");
+    revalidatePath("/hot");
+    revalidatePath("/search");
+    revalidatePath("/random");
+    revalidatePath(`/meme/${memeId}`);
 
     return { liked: true };
   }

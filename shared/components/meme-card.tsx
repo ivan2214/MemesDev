@@ -47,6 +47,12 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
   const currentUserId = isAuthenticated ? user?.id : null;
   const [copied, setCopied] = useState(false);
 
+  // Optimistic UI state
+  const [likedState, setLikedState] = useState({
+    isLiked: isLiked ?? meme.isLiked ?? false,
+    likesCount: meme.likesCount,
+  });
+
   const handleShare = useCallback(async () => {
     const shareUrl = `${window.location.origin}/meme/${meme.id}`;
 
@@ -83,12 +89,37 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
       });
     }
 
+    // Optimistic update
+    const previousState = likedState;
+    const newIsLiked = !previousState.isLiked;
+
+    setLikedState({
+      isLiked: newIsLiked,
+      likesCount: newIsLiked
+        ? previousState.likesCount + 1
+        : Math.max(0, previousState.likesCount - 1),
+    });
+
     try {
-      await toggleLike(meme.id);
+      const { liked } = await toggleLike(meme.id);
+
+      // Verify server state matches our optimistic state
+      if (liked !== newIsLiked) {
+        // If discrepancy, correct it
+        setLikedState((prev) => ({
+          isLiked: liked,
+          likesCount: liked
+            ? prev.likesCount + 1
+            : Math.max(0, prev.likesCount - 1),
+        }));
+      }
     } catch (error) {
       console.error("[MemeCard] Failed to like meme:", error);
+      // Revert on error
+      setLikedState(previousState);
+      toast.error("Error al procesar el like");
     }
-  }, [meme.id, meme.user.id, isAuthenticated, currentUserId, isLiked]);
+  }, [meme.id, meme.user.id, isAuthenticated, currentUserId, likedState]);
 
   const formattedDate = formatDistanceToNow(new Date(meme.createdAt), {
     addSuffix: true,
@@ -214,13 +245,13 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
             <Button
               variant="ghost"
               size="lg"
-              className={`gap-2 ${meme.isLiked ? "text-red-500" : ""}`}
+              className={`gap-2 ${likedState.isLiked ? "text-red-500" : ""}`}
               onClick={handleLike}
             >
               <Heart
-                className={`h-5 w-5 ${meme.isLiked ? "fill-current" : ""}`}
+                className={`h-5 w-5 ${likedState.isLiked ? "fill-current" : ""}`}
               />
-              <span>{meme.likesCount}</span>
+              <span>{likedState.likesCount}</span>
             </Button>
           ) : (
             <AuthDialog>

@@ -1,6 +1,6 @@
 "use server";
 
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, not } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { likesTable, memesTable } from "@/db/schemas";
@@ -16,6 +16,7 @@ export async function getMemes(
 
   const memesData = await db.query.memesTable.findMany({
     orderBy: [desc(memesTable.createdAt)],
+    where: not(eq(memesTable.userId, userId || "")),
     limit,
     offset,
     with: {
