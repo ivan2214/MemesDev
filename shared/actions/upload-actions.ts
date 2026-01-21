@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import sharp from "sharp";
 import { getCurrentUser } from "@/data/user";
 import { env } from "@/env/server";
@@ -53,27 +54,23 @@ export async function uploadOptimizedImage(formData: FormData) {
   // Ensure bucketUrl doesn't have trailing slash and key doesn't have leading slash collision
   const url = `${bucketUrl}/${key}`;
 
-  const headers: Record<string, string> = {
-    "Content-Type": "image/webp",
-  };
-
-  if (type === "avatar") {
-    headers["x-amz-meta-userId"] = user.id;
-  } else {
-    headers["x-amz-meta-author"] = user.id;
-  }
-
   const res = await s3.s3.fetch(url, {
     method: "PUT",
     body: optimizedBuffer as unknown as BodyInit,
-    headers,
+    headers: {
+      "Content-Length": optimizedBuffer.length.toString(),
+    },
   });
 
   if (!res.ok) {
     console.error("S3 Upload Error:", await res.text());
     throw new Error("Error al subir la imagen a S3");
   }
-
+  revalidatePath("/");
+  revalidatePath("/profile");
+  revalidatePath("/hot");
+  revalidatePath("/search");
+  revalidatePath("/random");
   return {
     key,
     url,
