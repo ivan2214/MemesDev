@@ -1,8 +1,8 @@
 "use client";
 
 import { Calendar, Heart, ImageIcon, User } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-
 import { MemeCard } from "@/shared/components/meme-card";
 import {
   Avatar,
@@ -17,7 +17,6 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 import { Spinner } from "@/shared/components/ui/spinner";
-
 import type { Meme } from "@/types/meme";
 import type { UserProfile } from "@/types/profile";
 import { getUserMemes } from "../_actions";
@@ -137,7 +136,7 @@ export function ProfilePage({
             {profile.socials && profile.socials.length > 0 && (
               <div className="mb-4 flex flex-wrap justify-center gap-3 sm:justify-start">
                 {profile.socials.map((social) => (
-                  <a
+                  <Link
                     key={social.url}
                     href={social.url}
                     target="_blank"
@@ -146,7 +145,7 @@ export function ProfilePage({
                   >
                     {/* Maybe try to match icon? For now just text/link */}
                     {social.platform || "Link"}
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}
