@@ -2,19 +2,13 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import {
-  Calendar,
-  Check,
-  Heart,
-  MessageCircle,
-  Share2,
-  User,
-} from "lucide-react";
+import { Calendar, Heart, MessageCircle, Share2, User } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { toggleLike } from "@/shared/actions/meme-actions";
+import { MemeShare } from "@/shared/components/meme-share";
 import {
   Avatar,
   AvatarFallback,
@@ -45,37 +39,11 @@ interface MemeCardProps {
 export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
   const { user, isAuthenticated } = useAuth();
   const currentUserId = isAuthenticated ? user?.id : null;
-  const [copied, setCopied] = useState(false);
-
   // Optimistic UI state
   const [likedState, setLikedState] = useState({
     isLiked: isLiked ?? meme.isLiked ?? false,
     likesCount: meme.likesCount,
   });
-
-  const handleShare = useCallback(async () => {
-    const shareUrl = `${window.location.origin}/meme/${meme.id}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          url: shareUrl,
-          title: meme.title || "Mira este meme 😂",
-        });
-      } catch (err) {
-        console.error("Error al compartir:", err);
-
-        await navigator.clipboard.writeText(shareUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-    } else {
-      // Fallback: copy to clipboard
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  }, [meme.id, meme.title]);
 
   const handleLike = useCallback(async () => {
     if (!isAuthenticated) {
@@ -274,24 +242,16 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
           </Link>
         </div>
 
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={handleShare}
-          className="gap-1.5 transition-all"
+        <MemeShare
+          memeId={meme.id}
+          memeTitle={meme.title || undefined}
+          memeImageUrl={meme.imageUrl}
+          userName={meme.user.name}
         >
-          {copied ? (
-            <>
-              <Check className="h-4 w-4 text-green-500" />
-              <span className="text-green-500 text-xs">Copiado</span>
-            </>
-          ) : (
-            <>
-              <Share2 className="h-4 w-4" />
-              <span className="hidden text-xs sm:inline">Compartir</span>
-            </>
-          )}
-        </Button>
+          <Button variant="ghost" size="lg">
+            <Share2 className="h-5 w-5" />
+          </Button>
+        </MemeShare>
       </CardFooter>
     </Card>
   );

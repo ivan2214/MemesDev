@@ -53,6 +53,8 @@ export async function generateMetadata({
       ? `Mira este meme de programación: "${meme.title}" por ${meme.user.name}. ${meme.likesCount} me gusta.`
       : `Mira este meme de programación subido por ${meme.user.name}. ${meme.likesCount} me gusta y ${meme.commentsCount} comentarios.`;
 
+  console.log(meme.imageUrl);
+
   return {
     title: `${title} | MemesDev`,
     description: description.substring(0, limit),
@@ -66,9 +68,8 @@ export async function generateMetadata({
       images: [
         {
           url: meme.imageUrl,
-          width: 800,
-          height: 600,
-          alt: title,
+
+          alt: meme.title || "Meme",
         },
       ],
     },
@@ -76,8 +77,14 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: `${title} | MemesDev`,
       description: description.substring(0, limit),
-      images: [meme.imageUrl],
-      creator: "@MemesDev", // Asumiendo un handle genérico o del usuario si existiera
+      creator: "@ivan2214", // Asumiendo un handle genérico o del usuario si existiera
+      images: [
+        {
+          url: meme.imageUrl,
+
+          alt: meme.title || "Meme",
+        },
+      ],
     },
     alternates: {
       canonical: `${env.APP_URL}/meme/${meme.id}`,

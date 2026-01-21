@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
 import { toast } from "sonner";
+
 import { addComment, toggleLike } from "@/shared/actions/meme-actions";
 import { AuthDialog, useAuth } from "@/shared/components/auth-dialog";
+
 import {
   Avatar,
   AvatarFallback,
@@ -18,6 +20,7 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { Textarea } from "@/shared/components/ui/textarea";
 import type { Comment } from "@/types/comment";
 import type { Meme } from "@/types/meme";
+import { MemeShare } from "../../../../../shared/components/meme-share";
 
 interface MemeDetailProps {
   memeId: string;
@@ -56,21 +59,6 @@ export function MemeDetail({ memeId, meme, comments }: MemeDetailProps) {
       toast.error("Failed to post comment");
     } finally {
       setSubmittingComment(false);
-    }
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          url: window.location.href,
-        });
-      } catch (err) {
-        console.error("Failed to share meme:", err);
-      }
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied to clipboard");
     }
   };
 
@@ -182,9 +170,16 @@ export function MemeDetail({ memeId, meme, comments }: MemeDetailProps) {
                     <MessageCircle className="h-5 w-5" />
                     <span>{meme.commentsCount}</span>
                   </Button>
-                  <Button variant="ghost" size="lg" onClick={handleShare}>
-                    <Share2 className="h-5 w-5" />
-                  </Button>
+                  <MemeShare
+                    memeId={meme.id}
+                    memeTitle={meme.title || undefined}
+                    memeImageUrl={meme.imageUrl}
+                    userName={meme.user.name}
+                  >
+                    <Button variant="ghost" size="lg">
+                      <Share2 className="h-5 w-5" />
+                    </Button>
+                  </MemeShare>
                 </div>
               </div>
             </CardContent>
