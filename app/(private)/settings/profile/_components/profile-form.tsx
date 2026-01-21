@@ -69,8 +69,8 @@ export function ProfileForm({
     defaultValues: {
       name: initialData?.name || "",
       bio: initialData?.bio || "",
-      tags: null as TagForForm[] | null,
-      category: null as CategoryForm | null,
+      tags: initialData?.tags || (null as TagForForm[] | null),
+      category: initialData?.category || (null as CategoryForm | null),
       socials: initialData?.socials || [],
       imageKey: initialData?.imageKey || "",
       imageFile: undefined as never as File,
@@ -116,7 +116,7 @@ export function ProfileForm({
         toast.error("Error al actualizar el perfil");
       }
     },
-    onSubmitInvalid(props) {
+    onSubmitInvalid() {
       toast.error("Error al actualizar el perfil");
     },
   });
@@ -466,6 +466,7 @@ export function ProfileForm({
         </form.Field>
 
         {/* Socials - Dynamic Array */}
+        {/* Socials - Dynamic Array */}
         <form.Field name="socials">
           {(field) => (
             <Field>
@@ -478,7 +479,10 @@ export function ProfileForm({
                       value={social.platform}
                       onChange={(e) => {
                         const newSocials = [...field.state.value];
-                        newSocials[index].platform = e.target.value;
+                        newSocials[index] = {
+                          ...newSocials[index],
+                          platform: e.target.value,
+                        };
                         field.handleChange(newSocials);
                       }}
                       className="w-1/3"
@@ -488,7 +492,10 @@ export function ProfileForm({
                       value={social.url}
                       onChange={(e) => {
                         const newSocials = [...field.state.value];
-                        newSocials[index].url = e.target.value;
+                        newSocials[index] = {
+                          ...newSocials[index],
+                          url: e.target.value,
+                        };
                         field.handleChange(newSocials);
                       }}
                       className="flex-1"

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import type { ProfilePage as SchemaProfilePage, WithContext } from "schema-dts";
 import { env } from "@/env/server";
 import type { UserProfile } from "@/types/profile";
@@ -110,17 +109,8 @@ export default async function Page({
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <Suspense
-        fallback={
-          <ProfilePage
-            profile={profile}
-            initialUserMemes={userMemes}
-            userId={id}
-          />
-        }
-      >
-        <ProfileMemesVerifier userId={id} profile={profile} />
-      </Suspense>
+
+      <ProfileMemesVerifier userId={id} profile={profile} />
     </>
   );
 }
