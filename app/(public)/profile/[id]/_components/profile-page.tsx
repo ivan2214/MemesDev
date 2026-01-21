@@ -182,7 +182,7 @@ export function ProfilePage({
               Memes publicados por {profile.name}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="py-5">
             <div className="flex flex-col gap-6">
               {userMemes.map((meme) => (
                 <MemeCard key={meme.id} meme={meme} isLiked={meme.isLiked} />
