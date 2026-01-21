@@ -1,26 +1,25 @@
 "use client";
 
-import { ArrowLeft, Heart, MessageCircle, Share2 } from "lucide-react";
-import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { addComment, toggleLike } from "@/shared/actions/meme-actions";
+import { addComment } from "@/shared/actions/meme-actions";
 import { AuthDialog, useAuth } from "@/shared/components/auth-dialog";
-
+import { MemeCard } from "@/shared/components/meme-card";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@/shared/components/ui/avatar";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent } from "@/shared/components/ui/card";
+import { Card } from "@/shared/components/ui/card";
 import { Textarea } from "@/shared/components/ui/textarea";
 import type { Comment } from "@/types/comment";
 import type { Meme } from "@/types/meme";
-import { MemeShare } from "../../../../../shared/components/meme-share";
 
 interface MemeDetailProps {
   memeId: string;
@@ -33,18 +32,6 @@ export function MemeDetail({ memeId, meme, comments }: MemeDetailProps) {
   const { isAuthenticated } = useAuth();
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
-
-  const handleLike = async () => {
-    if (!isAuthenticated) return;
-
-    try {
-      const result = await toggleLike(memeId);
-      toast.success(result.liked ? "Liked" : "Unliked");
-    } catch (error) {
-      console.error("Failed to like meme:", error);
-      toast.error("Failed to update like");
-    }
-  };
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,106 +71,7 @@ export function MemeDetail({ memeId, meme, comments }: MemeDetailProps) {
 
       <div className="grid gap-8">
         <div>
-          <Card className="overflow-hidden p-0">
-            <div className="relative bg-muted">
-              {/** biome-ignore lint/performance/noImgElement: <temp> */}
-              <img
-                src={meme.imageUrl || "/placeholder.svg"}
-                alt={meme.id}
-                className="w-full object-contain"
-                style={{ maxHeight: "80vh" }}
-              />
-            </div>
-            <CardContent className="p-6">
-              {meme.tags && meme.tags.length > 0 && (
-                <div className="mb-6 flex flex-wrap gap-2">
-                  {meme.tags.map((tag) => (
-                    <Link
-                      key={tag.id}
-                      href={`/search?tags=${encodeURIComponent(tag.slug)}`}
-                      className="rounded-full bg-secondary px-3 py-1 font-medium text-secondary-foreground text-sm transition-colors hover:bg-secondary/80"
-                    >
-                      #{tag.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-center justify-between border-border border-t pt-4">
-                <Link
-                  href={`/profile/${meme.user.id}`}
-                  className="flex items-center gap-3"
-                >
-                  {meme.user.image ? (
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage
-                        src={meme.user.image || "/placeholder.svg"}
-                      />
-                      <AvatarFallback>
-                        {meme.user.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={"https://i.pravatar.cc/300"} />
-                      <AvatarFallback>
-                        {meme.user.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div>
-                    <p className="font-medium">{meme.user.name}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {new Date(meme.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </Link>
-                <div className="flex items-center gap-2">
-                  {isAuthenticated ? (
-                    <Button
-                      variant="ghost"
-                      size="lg"
-                      className={`gap-2 ${meme.isLiked ? "text-red-500" : ""}`}
-                      onClick={handleLike}
-                    >
-                      <Heart
-                        className={`h-5 w-5 ${meme.isLiked ? "fill-current" : ""}`}
-                      />
-                      <span>{meme.likesCount}</span>
-                    </Button>
-                  ) : (
-                    <AuthDialog>
-                      <Button
-                        variant="ghost"
-                        size="lg"
-                        className="cursor-pointer gap-2"
-                      >
-                        <Heart className="h-5 w-5" />
-                        <span>{meme.likesCount}</span>
-                      </Button>
-                    </AuthDialog>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    className="gap-2 disabled:cursor-pointer"
-                  >
-                    <MessageCircle className="h-5 w-5" />
-                    <span>{meme.commentsCount}</span>
-                  </Button>
-                  <MemeShare
-                    memeId={meme.id}
-                    memeTitle={meme.title || undefined}
-                    memeImageUrl={meme.imageUrl}
-                    userName={meme.user.name}
-                  >
-                    <Button variant="ghost" size="lg">
-                      <Share2 className="h-5 w-5" />
-                    </Button>
-                  </MemeShare>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <MemeCard meme={meme} isLiked={meme.isLiked} />
         </div>
 
         <div id="comments">

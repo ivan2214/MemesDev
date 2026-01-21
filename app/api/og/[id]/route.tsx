@@ -31,35 +31,61 @@ function getS3KeyFromUrl(imageUrl: string): string | null {
   }
 }
 
-// Helper function to get image from S3 and convert to PNG base64
+// Helper function to fetch from external URL and convert to PNG base64
+async function fetchExternalImage(imageUrl: string): Promise<Buffer | null> {
+  try {
+    console.log("[OG API] Fetching external image:", imageUrl);
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      console.error(
+        "[OG API] Failed to fetch external image:",
+        response.status,
+      );
+      return null;
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (error) {
+    console.error("[OG API] Error fetching external image:", error);
+    return null;
+  }
+}
+
+// Helper function to get image and convert to PNG base64
 async function getImageAsBase64(imageUrl: string): Promise<string | null> {
   try {
     const key = getS3KeyFromUrl(imageUrl);
+    let buffer: Buffer | null = null;
 
-    if (!key) {
-      console.error("[OG API] Could not extract key from URL:", imageUrl);
-      return null;
+    // Check if it's an S3 image (has memes/ prefix)
+    if (key && key.startsWith("memes/")) {
+      console.log("[OG API] Fetching from S3 with key:", key);
+
+      const { blob } = await getObject(s3, {
+        bucket: env.S3_BUCKET_NAME,
+        key,
+      });
+
+      if (blob) {
+        const arrayBuffer = await blob.arrayBuffer();
+        buffer = Buffer.from(arrayBuffer);
+      }
     }
 
-    console.log("[OG API] Fetching from S3 with key:", key);
-
-    const { blob } = await getObject(s3, {
-      bucket: env.S3_BUCKET_NAME,
-      key,
-    });
-
-    if (!blob) {
-      console.error("[OG API] No blob returned from S3");
-      return null;
+    // If not S3 or S3 failed, try external fetch
+    if (!buffer) {
+      buffer = await fetchExternalImage(imageUrl);
     }
 
-    const arrayBuffer = await blob.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    if (!buffer) {
+      console.error("[OG API] Could not fetch image from any source");
+      return null;
+    }
 
     // Convert to PNG using sharp (handles webp, jpg, png, etc.)
     const pngBuffer = await sharp(buffer)
       .png()
-      .resize(800, 450, {
+      .resize(1100, 500, {
         fit: "inside",
         withoutEnlargement: true,
       })
@@ -173,8 +199,8 @@ export async function GET(
         {/* Main meme image */}
         <img
           src={imageBase64}
-          width={800}
-          height={450}
+          width={1100}
+          height={500}
           style={{
             objectFit: "contain",
             borderRadius: 12,
@@ -187,19 +213,19 @@ export async function GET(
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            marginTop: 20,
+            marginTop: 12,
             color: "white",
           }}
         >
-          <div style={{ fontSize: 32, fontWeight: 700, display: "flex" }}>
+          <div style={{ fontSize: 28, fontWeight: 700, display: "flex" }}>
             {meme.title || "Meme de programación"}
           </div>
           <div
             style={{
-              fontSize: 20,
+              fontSize: 18,
               opacity: 0.8,
               display: "flex",
-              marginTop: 8,
+              marginTop: 4,
             }}
           >
             MemesDev • {meme.user.name}
