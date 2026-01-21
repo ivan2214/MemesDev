@@ -1,7 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 import { getUserLikeds } from "@/server/dal/likes";
 import {
   getUserMemesDal,
@@ -21,13 +19,8 @@ export async function getUserMemes(
   userId: string,
   offset = 0,
   limit = 12,
-  skipAuth = false,
+  currentUserId?: string,
 ): Promise<{ memes: Meme[] }> {
-  const session = skipAuth
-    ? null
-    : await auth.api.getSession({ headers: await headers() });
-  const currentUserId = session?.user?.id;
-
   const memesData = await getUserMemesDal({ userId, offset, limit });
 
   if (memesData.length === 0) {

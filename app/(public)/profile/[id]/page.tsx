@@ -1,22 +1,9 @@
 import type { Metadata } from "next";
 import type { ProfilePage as SchemaProfilePage, WithContext } from "schema-dts";
+import { getCurrentUser } from "@/data/user";
 import { env } from "@/env/server";
-import type { UserProfile } from "@/types/profile";
 import { getUserMemes, getUserProfile } from "./_actions";
 import { ProfilePage } from "./_components/profile-page";
-
-async function ProfileMemesVerifier({
-  userId,
-  profile,
-}: {
-  userId: string;
-  profile: UserProfile;
-}) {
-  const { memes } = await getUserMemes(userId, 0, 12, false);
-  return (
-    <ProfilePage profile={profile} initialUserMemes={memes} userId={userId} />
-  );
-}
 
 export async function generateMetadata({
   params,
@@ -77,7 +64,10 @@ export default async function Page({
     );
   }
 
-  const { memes: userMemes } = await getUserMemes(id, 0, 12, true);
+  // Single fetch with auth enabled to check likes and get all data needed
+  const currentUser = await getCurrentUser();
+
+  const { memes: userMemes } = await getUserMemes(id, 0, 12, currentUser?.id);
 
   const jsonLd: WithContext<SchemaProfilePage> = {
     "@context": "https://schema.org",
@@ -110,7 +100,7 @@ export default async function Page({
         }}
       />
 
-      <ProfileMemesVerifier userId={id} profile={profile} />
+      <ProfilePage profile={profile} initialUserMemes={userMemes} userId={id} />
     </>
   );
 }

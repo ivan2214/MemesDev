@@ -1,8 +1,8 @@
+import "server-only";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { auth } from "@/lib/auth";
-import "server-only";
 import { ErrorTypeMessages } from "@/shared/constants";
 
 export const getCurrentUser = cache(async () => {
