@@ -43,7 +43,7 @@ type CategoryForm = Omit<
 
 const formSchema = z.object({
   file: z.file().min(1, "Seleccione un archivo"),
-  title: z.string().min(1, "Escriba un titulo").optional(),
+  title: z.string().optional(),
   tags: z.array(z.custom<TagForForm>()).nullable(),
   category: z.custom<CategoryForm>().nullable(),
 });
