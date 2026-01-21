@@ -2,7 +2,8 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Heart, MessageCircle, Share2, User } from "lucide-react";
+import { Heart, MessageCircle, MoreHorizontal, Share2 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -16,19 +17,16 @@ import {
 } from "@/shared/components/ui/avatar";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/shared/components/ui/card";
-import {
-  getCategoryStyles,
-  getIconByName,
-  getTagIcon,
-} from "@/shared/lib/tag-icons";
+import { getCategoryStyles, getIconByName } from "@/shared/lib/tag-icons";
 import type { Meme } from "@/types/meme";
+import { useQueryParams } from "../hooks/use-query-params";
 import { AuthDialog, useAuth } from "./auth-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 interface MemeCardProps {
   meme: Meme;
@@ -37,12 +35,14 @@ interface MemeCardProps {
 }
 
 export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
+  const { toggleInArray, set } = useQueryParams();
+
   const { user, isAuthenticated } = useAuth();
   const currentUserId = isAuthenticated ? user?.id : null;
   // Optimistic UI state
   const [likedState, setLikedState] = useState({
-    isLiked: isLiked ?? meme.isLiked ?? false,
-    likesCount: meme.likesCount,
+    isLiked: isLiked ?? meme?.isLiked ?? false,
+    likesCount: meme?.likesCount,
   });
 
   const handleLike = useCallback(async () => {
@@ -51,7 +51,7 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
         duration: 2000,
       });
     }
-    if (currentUserId === meme.user.id) {
+    if (currentUserId === meme?.user.id) {
       return toast.error("No puedes dar like a tus propios memes", {
         duration: 2000,
       });
@@ -69,7 +69,7 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
     });
 
     try {
-      const { liked } = await toggleLike(meme.id);
+      const { liked } = await toggleLike(meme?.id);
 
       // Verify server state matches our optimistic state
       if (liked !== newIsLiked) {
@@ -87,172 +87,208 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
       setLikedState(previousState);
       toast.error("Error al procesar el like");
     }
-  }, [meme.id, meme.user.id, isAuthenticated, currentUserId, likedState]);
+  }, [meme?.id, meme?.user.id, isAuthenticated, currentUserId, likedState]);
 
-  const formattedDate = formatDistanceToNow(new Date(meme.createdAt), {
+  const formattedDate = formatDistanceToNow(new Date(meme?.createdAt), {
     addSuffix: true,
     locale: es,
   });
 
   // Obtener icono de categoría si existe
-  const CategoryIcon = meme.category?.icon
-    ? getIconByName(meme.category.icon)
+  const CategoryIcon = meme?.category?.icon
+    ? getIconByName(meme?.category.icon)
     : null;
 
   return (
-    <Card className="group gap-0 overflow-hidden border-border/40 bg-card/50 p-0 backdrop-blur-sm transition-all duration-300 hover:border-border hover:shadow-primary/5 hover:shadow-xl">
-      {/* Header - User info, Category & Date */}
-      <CardHeader className="flex flex-col gap-4 border-border/30 border-b px-4 py-3">
-        <div className="flex w-full items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Link href={`/profile/${meme.user.id}`} className="group/avatar">
-              <Avatar className="h-10 w-10 ring-2 ring-transparent transition-all group-hover/avatar:ring-primary/50">
-                <AvatarImage
-                  src={meme.user.image || undefined}
-                  alt={meme.user.name}
-                />
-                <AvatarFallback className="bg-linear-to-br from-primary/20 to-accent/20">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                </AvatarFallback>
-              </Avatar>
-            </Link>
-            <div className="flex flex-col gap-0.5">
-              <Link
-                href={`/profile/${meme.user.id}`}
-                className="font-medium text-sm leading-none transition-colors hover:text-primary"
-              >
-                {meme.user.name}
-              </Link>
-              <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                <Calendar className="h-3 w-3" />
-                <span>{formattedDate}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Category Badge */}
-          {meme.category && (
-            <Link href={`/search?category=${meme.category.slug}`}>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "shrink-0 gap-1 border font-medium text-xs uppercase tracking-wider transition-all hover:scale-105",
-                  getCategoryStyles(meme.category.color),
-                )}
-              >
-                {CategoryIcon && <CategoryIcon className="h-3 w-3" />}
-                {meme.category.name}
-              </Badge>
-            </Link>
-          )}
-        </div>
-
-        {/* Title (if exists) */}
-        {meme.title && (
-          <Link href={`/meme/${meme.id}`}>
-            <h2 className="line-clamp-2 font-semibold text-base leading-snug transition-colors hover:text-primary md:text-lg">
-              {meme.title}
-            </h2>
-          </Link>
-        )}
-      </CardHeader>
-
-      <CardContent className="p-0">
-        {/* Image */}
-        <Link href={`/meme/${meme.id}`} className="block">
-          <div className="relative overflow-hidden bg-muted/50">
-            {/* biome-ignore lint/performance/noImgElement: <temp> */}
-            <img
-              src={meme.imageUrl || "/placeholder.svg"}
-              alt={meme.title || `Meme ${meme.id}`}
-              className="w-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
-              style={{ maxHeight: "600px" }}
+    <div className="w-full max-w-full overflow-hidden rounded-lg border border-border bg-card">
+      <div className="flex items-center justify-between gap-2 p-3 sm:p-4">
+        <Link
+          href={`/profile/${meme?.user.id}`}
+          className="flex min-w-0 items-center gap-2 transition-opacity hover:opacity-80 sm:gap-3"
+        >
+          <Avatar className="h-9 w-9 shrink-0 border-2 border-primary/20 sm:h-10 sm:w-10">
+            <AvatarImage
+              src={meme?.user.image || "/placeholder.svg"}
+              alt={meme?.user.name}
             />
-            {/* Subtle gradient overlay on hover */}
-            <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            <AvatarFallback>{meme?.user.name[0]}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="truncate font-semibold text-foreground text-sm sm:text-base">
+                {meme?.user.name}
+              </span>
+              {/* {meme?.user.rank === "SENIOR" && (
+                <span className="flex-shrink-0 rounded bg-primary/20 px-1.5 py-0.5 font-medium text-primary text-xs sm:px-2">
+                  {meme?.user.rank}
+                </span>
+              )} */}
+            </div>
+            <span className="text-muted-foreground text-xs sm:text-sm">
+              {formattedDate}
+            </span>
           </div>
         </Link>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+              />
+            }
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>Report</DropdownMenuItem>
+            <DropdownMenuItem>Copy link</DropdownMenuItem>
+            <DropdownMenuItem>Hide</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
-        {/* Tags */}
-        {meme.tags && meme.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 border-border/30 border-t px-4 py-3">
-            {meme.tags.slice(0, 5).map((tag) => {
-              const TagIcon = getTagIcon(tag.slug);
-              return (
-                <Link key={tag.id} href={`/search?tags=${tag.slug}`}>
-                  <Badge
-                    variant={
-                      activeTags?.includes(tag.slug)
-                        ? "destructive"
-                        : "secondary"
-                    }
-                    className="gap-1 bg-secondary/50 px-2 py-0.5 text-xs transition-colors hover:bg-primary/20 hover:text-primary"
-                  >
-                    <TagIcon className="h-3 w-3" />
-                    {tag.name}
-                  </Badge>
-                </Link>
-              );
-            })}
-            {meme.tags.length > 5 && (
-              <Badge
-                variant="secondary"
-                className="bg-secondary/50 px-2 py-0.5 text-muted-foreground text-xs"
-              >
-                +{meme.tags.length - 5}
-              </Badge>
-            )}
-          </div>
-        )}
-      </CardContent>
+      <Link href={`/meme/${meme?.id}`}>
+        <div className="relative aspect-square w-full bg-muted">
+          <Image
+            src={meme?.imageUrl || "/placeholder.svg"}
+            alt={meme?.title || ""}
+            fill
+            className="object-contain"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 600px, 700px"
+          />
+        </div>
+      </Link>
 
-      {/* Footer - Actions */}
-      <CardFooter className="flex items-center justify-between border-border/30 border-t">
-        <div className="flex items-center gap-1">
+      <div className="space-y-2 p-3 sm:space-y-3 sm:p-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           {isAuthenticated ? (
             <Button
               variant="ghost"
-              size="lg"
-              className={`gap-2 ${likedState.isLiked ? "text-red-500" : ""}`}
+              size="icon"
+              className={cn(
+                "h-8 w-8 sm:h-9 sm:w-9",
+                meme?.isLiked && "text-primary",
+              )}
               onClick={handleLike}
             >
               <Heart
-                className={`h-5 w-5 ${likedState.isLiked ? "fill-current" : ""}`}
+                className={cn(
+                  "h-4 w-4 sm:h-5 sm:w-5",
+                  meme?.isLiked && "fill-current",
+                )}
               />
-              <span>{likedState.likesCount}</span>
             </Button>
           ) : (
             <AuthDialog>
               <Button
                 variant="ghost"
-                size="lg"
-                className="cursor-pointer gap-2"
+                size="icon"
+                className={cn(
+                  "h-8 w-8 sm:h-9 sm:w-9",
+                  meme?.isLiked && "text-primary",
+                )}
               >
-                <Heart className="h-5 w-5" />
-                <span>{meme.likesCount}</span>
+                <Heart
+                  className={cn(
+                    "h-4 w-4 sm:h-5 sm:w-5",
+                    meme?.isLiked && "fill-current",
+                  )}
+                />
               </Button>
             </AuthDialog>
           )}
-
-          <Link href={`/meme/${meme.id}#comments`}>
-            <Button size="sm" variant="ghost" className="gap-1.5">
-              <MessageCircle className="h-4 w-4" />
-              <span className="font-medium text-sm">{meme.commentsCount}</span>
+          <Link href={`/meme/${meme?.id}`}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 sm:h-9 sm:w-9"
+            >
+              <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
           </Link>
+          <MemeShare
+            memeId={meme.id}
+            memeTitle={meme.title || undefined}
+            memeImageUrl={meme.imageUrl}
+            userName={meme.user.name}
+          >
+            <Button variant="ghost" size="lg">
+              <Share2 className="h-5 w-5" />
+            </Button>
+          </MemeShare>
+          {/*     <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-8 w-8 sm:h-9 sm:w-9 ml-auto",
+              meme?.isSaved && "text-primary",
+            )}
+            onClick={handleSave}
+          >
+            <Bookmark
+              className={cn(
+                "h-4 w-4 sm:h-5 sm:w-5",
+                meme?.isSaved && "fill-current",
+              )}
+            />
+          </Button> */}
         </div>
 
-        <MemeShare
-          memeId={meme.id}
-          memeTitle={meme.title || undefined}
-          memeImageUrl={meme.imageUrl}
-          userName={meme.user.name}
-        >
-          <Button variant="ghost" size="lg">
-            <Share2 className="h-5 w-5" />
-          </Button>
-        </MemeShare>
-      </CardFooter>
-    </Card>
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-auto p-0 font-semibold text-xs hover:bg-transparent disabled:cursor-pointer sm:text-sm"
+            >
+              {meme?.likesCount} likes
+            </Button>
+            <span className="text-muted-foreground text-xs">•</span>
+            <Link href={`/meme/${meme?.id}`}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 text-muted-foreground text-xs hover:bg-transparent disabled:cursor-pointer sm:text-sm"
+              >
+                {meme?.commentsCount} comments
+              </Button>
+            </Link>
+          </div>
+          {/* category */}
+          {meme.category && meme.category.slug && (
+            <Badge
+              variant="outline"
+              className={cn(
+                "shrink-0 gap-1 border font-medium text-xs uppercase tracking-wider transition-all hover:scale-105",
+                getCategoryStyles(meme.category.color),
+              )}
+              onClick={() => set("category", meme.category?.slug || "")}
+            >
+              {CategoryIcon && <CategoryIcon className="h-3 w-3" />}
+              {meme.category.name}
+            </Badge>
+          )}
+          <Link href={`/meme/${meme?.id}`} className="block">
+            <p className="wrap-break-word line-clamp-2 text-foreground text-xs sm:text-sm">
+              {meme?.title}
+            </p>
+          </Link>
+          <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
+            {meme?.tags?.map((tag) => (
+              <Badge
+                key={tag.id}
+                variant={activeTags?.includes(tag.slug) ? "default" : "outline"}
+                className="text-xs"
+                onClick={() => toggleInArray("tags", tag.slug)}
+              >
+                #{tag.name}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import type { SortType } from "./_actions";
+import type { SortType } from "@/shared/types";
 
 export const SORT_OPTIONS: { value: SortType; label: string }[] = [
   { value: "recent", label: "Más recientes" },

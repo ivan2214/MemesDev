@@ -4,6 +4,7 @@ import { ChevronDown, Flame, Route, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import {
   Collapsible,
@@ -30,7 +31,9 @@ import {
 } from "@/shared/lib/tag-icons";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
-import { navItems } from "../constants";
+import { communities, navItems } from "../constants";
+import { useQueryParams } from "../hooks/use-query-params";
+import { Button } from "./ui/button";
 
 interface AppSidebarProps {
   categories?: Category[];
@@ -39,6 +42,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
   const pathname = usePathname();
+  const { set, toggleInArray, getArray, get } = useQueryParams();
 
   // Usar defaults si no se proporcionan datos de DB
   const displayCategories =
@@ -125,16 +129,16 @@ export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
                 <SidebarMenu>
                   {displayTags.map((tag) => {
                     const TagIcon = getTagIcon(tag.slug);
+                    const isActive = getArray("tags").includes(tag.slug);
                     return (
                       <SidebarMenuItem key={tag.id}>
-                        <SidebarMenuButton className="py-0">
-                          <Link
-                            href={`/search?tags=${tag.slug}`}
-                            className="flex h-full w-full items-center gap-2"
-                          >
-                            <TagIcon className="h-4 w-4" />
-                            <span>{tag.name}</span>
-                          </Link>
+                        <SidebarMenuButton
+                          className="cursor-pointer py-0"
+                          onClick={() => toggleInArray("tags", tag.slug)}
+                          isActive={isActive}
+                        >
+                          <TagIcon className="h-4 w-4" />
+                          <span>{tag.name}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );
@@ -142,7 +146,7 @@ export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton className="py-0">
                       <Link
-                        href="/search"
+                        href="/"
                         className="w-full text-primary hover:text-primary"
                       >
                         Ver todos →
@@ -172,17 +176,54 @@ export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
                 <div className="flex flex-wrap gap-1.5 px-2">
                   {displayCategories.map((category) => {
                     const CategoryIcon = getIconByName(category.icon);
+                    const isActive = get("category") === category.slug;
                     return (
-                      <Link
+                      <Button
                         key={category.id}
-                        href={`/search?category=${category.slug}`}
+                        onClick={() => set("category", category.slug)}
+                        variant="ghost"
+                        className={cn(
+                          "cursor-pointer gap-1 border font-medium text-[10px] transition-all hover:scale-105",
+                          isActive && getCategoryStyles(category.color),
+                        )}
+                        size="xs"
                       >
+                        <CategoryIcon className="h-3 w-3" />
+                        {category.name}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
+        {/* communities */}
+        <Collapsible defaultOpen className="group/collapsible">
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              <CollapsibleTrigger className="flex w-full items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Flame className="h-4 w-4" />
+                  Comunidades
+                </span>
+                <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent className="pt-2">
+                <div className="flex flex-wrap gap-1.5 px-2">
+                  {communities.map((community) => {
+                    return (
+                      <Link key={community.url} href={community.url}>
                         <Badge
                           variant="outline"
-                          className={`cursor-pointer gap-1 border font-medium text-[10px] transition-all hover:scale-105 ${getCategoryStyles(category.color)}`}
+                          className="cursor-pointer gap-1 border font-medium text-[10px] transition-all hover:scale-105"
                         >
-                          <CategoryIcon className="h-3 w-3" />
-                          {category.name}
+                          {community.icon && (
+                            <community.icon className="h-3 w-3" />
+                          )}
+                          {community.title}
                         </Badge>
                       </Link>
                     );

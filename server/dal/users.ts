@@ -106,13 +106,6 @@ export async function getUserMemesDal({
   });
 }
 
-// User settings data should be dynamic if it contains sensitive info?
-// Or private cache? `use cache` is shared.
-// UserSettings are fetched for the current logged in user.
-// Since `use cache` caches based on args, if we pass userId, it's cached per user.
-// But is it safe? If it contains email etc?
-// `use cache` stores in data cache.
-// Probably fine to cache if properly tagged and invalidated.
 export async function getUserSettingsDal(userId: string) {
   "use cache";
   cacheTag(CACHE_TAGS.USERS, CACHE_TAGS.user(userId));
@@ -142,3 +135,16 @@ export async function getUserSettingsDal(userId: string) {
     category: userData?.category,
   };
 }
+
+export const getTrendCreators = async () => {
+  "use cache";
+  cacheTag(CACHE_TAGS.USERS_TREND);
+  cacheLife(CACHE_LIFE.DEFAULT);
+
+  const trendCreators = await db.query.user.findMany({
+    orderBy: desc(userTable.createdAt),
+    limit: 5,
+  });
+
+  return trendCreators;
+};

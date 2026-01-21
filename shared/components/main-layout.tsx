@@ -1,19 +1,15 @@
-import { UploadIcon } from "lucide-react";
 import type React from "react";
 import { Suspense } from "react";
-import { getAllTags } from "@/app/(public)/search/_actions";
-// import { getCurrentUser } from "@/data/user";
 import { cn } from "@/lib/utils";
+import { getAllTags } from "@/server/dal/categories";
+import { getSystemStatus } from "@/server/dal/system";
+import { getTrendCreators } from "@/server/dal/users";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { getAllCategories } from "../actions/category-actions";
 import { AppSidebar } from "./app-sidebar";
-// import { AuthDialog } from "./auth-dialog";
 import { Header } from "./header";
 import { MobileNav } from "./mobile-nav";
 import { RightSidebar } from "./right-sidebar";
-import { Button } from "./ui/button";
-// import { UploadDialog } from "./upload-dialog";
-import { UserActions } from "./user-actions";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -25,8 +21,9 @@ export async function MainLayout({
   showRightSidebar,
 }: MainLayoutProps) {
   const categories = await getAllCategories();
-  const { tags } = await getAllTags();
-  // const user = await getCurrentUser(); // Moved to UserActions
+  const tags = await getAllTags();
+  const creators = showRightSidebar ? await getTrendCreators() : undefined;
+  const systemStatus = await getSystemStatus();
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-sidebar" />}>
@@ -41,24 +38,12 @@ export async function MainLayout({
             )}
           >
             {/* Main Content Column */}
-            <main className="flex w-full max-w-2xl flex-col">
-              <div className="ml-auto w-fit">
-                <Suspense
-                  fallback={
-                    <Button size="sm" disabled>
-                      <UploadIcon className="mr-2 h-4 w-4" />
-                      Subir meme
-                    </Button>
-                  }
-                >
-                  <UserActions categories={categories} tags={tags} />
-                </Suspense>
-              </div>
-              {children}
-            </main>
+            <main className="flex w-full max-w-2xl flex-col">{children}</main>
 
             {/* Right Sidebar - Solo visible en PC */}
-            {showRightSidebar && <RightSidebar />}
+            {showRightSidebar && (
+              <RightSidebar creators={creators} systemStatus={systemStatus} />
+            )}
           </div>
         </SidebarInset>
         <MobileNav />

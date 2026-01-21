@@ -15,8 +15,6 @@ import {
 
 import { cacheLife, cacheTag } from "next/cache";
 
-// The skill says: import { cacheLife } from 'next/cache'. I'll stick to that.
-// If it fails I'll try unstable.
 import { db } from "@/db";
 import {
   categoriesTable,
@@ -25,6 +23,9 @@ import {
   tagsTable,
 } from "@/db/schemas";
 import { CACHE_LIFE, CACHE_TAGS } from "@/shared/constants";
+import type { SortType } from "@/shared/types";
+import type { Meme } from "@/types/meme";
+import { getUserLikeds } from "./likes";
 
 // Helper to transform DB result to Partial Meme (without user specific info like isLiked)
 // Actually we can return the raw DB shape or a cleaner internal shape.
@@ -171,9 +172,9 @@ export async function getHotMemes({
 
 // Search might be cached with shorter duration or just rely on args
 export async function searchMemesDal({
-  query = "",
+  query,
   tags = [],
-  category = "",
+  category,
   offset = 0,
   limit = 12,
   sort = "recent",
@@ -184,20 +185,38 @@ export async function searchMemesDal({
   category?: string;
   offset?: number;
   limit?: number;
-  sort?: "recent" | "likes" | "comments";
+  sort?: SortType;
   userId?: string;
-}) {
+}): Promise<{
+  memes: Meme[];
+}> {
   "use cache";
+  cacheTag(
+    CACHE_TAGS.search({
+      query,
+      sort,
+      tags,
+      category,
+      offset,
+      limit,
+      userId,
+    }),
+  );
   cacheLife(CACHE_LIFE.SHORT);
-  // No broad cache tag for search, maybe just relies on MEMES invalidation?
-  // If we add a meme, search results might change.
-  cacheTag(CACHE_TAGS.MEMES);
 
-  // Construir filtros
+  console.log("📊 Parámetros recibidos:", {
+    query,
+    tags,
+    category,
+    sort,
+    userId,
+  });
+
+  // Array principal de filtros (se combinan con AND)
   const filters: SQL[] = [];
 
-  // Filtro por Query (Título o Tags)
-  if (query.trim()) {
+  // 1. Filtro por Query (Título o Tags)
+  if (query?.trim()) {
     const searchFilter = or(
       ilike(memesTable.title, `%${query.trim()}%`),
       exists(
@@ -219,7 +238,7 @@ export async function searchMemesDal({
     }
   }
 
-  // Filtro por Tags específicas
+  // 2. Filtro por Tags específicas (todos los tags deben estar presentes)
   if (tags.length > 0) {
     for (const tag of tags) {
       filters.push(
@@ -239,21 +258,32 @@ export async function searchMemesDal({
     }
   }
 
-  // Filtro por Categoría
-  if (category) {
+  // 3. Filtro por Categoría
+  if (category?.trim()) {
+    console.log("🔍 Buscando categoría:", category);
     const categoryData = await db.query.categoriesTable.findFirst({
-      where: eq(categoriesTable.slug, category),
-      columns: { id: true },
+      where: eq(categoriesTable.slug, category.trim()),
+      columns: { id: true, name: true, slug: true },
     });
+
+    console.log("📁 Categoría encontrada:", categoryData);
 
     if (categoryData) {
       filters.push(eq(memesTable.categoryId, categoryData.id));
+      console.log("✅ Filtro de categoría agregado");
     } else {
-      return [];
+      console.log("❌ Categoría no encontrada en la BD");
     }
+  } else {
+    console.log("⚠️ No se recibió parámetro de categoría");
   }
 
-  // Ordenamiento
+  // 4. Excluir memes del usuario actual
+  if (userId) {
+    filters.push(not(eq(memesTable.userId, userId)));
+  }
+
+  // Configurar ordenamiento
   let orderBy: SQL[];
   switch (sort) {
     case "likes":
@@ -270,28 +300,33 @@ export async function searchMemesDal({
       break;
   }
 
-  // Excluir memes del usuario
-  if (userId) {
-    filters.push(not(eq(memesTable.userId, userId)));
-  }
+  // Construir la condición WHERE final
+  const whereCondition = filters.length > 0 ? and(...filters) : undefined;
 
-  // Paso 1: Obtener IDs
+  console.log("🎯 Total de filtros aplicados:", filters.length);
+  console.log(
+    "🔎 Condición WHERE:",
+    whereCondition ? "Presente" : "Sin filtros",
+  );
+
+  // Paso 1: Obtener IDs de memes que cumplen TODOS los filtros
   const matchedMemes = await db
     .select({ id: memesTable.id })
     .from(memesTable)
-    .where(and(...filters))
+    .where(whereCondition)
     .orderBy(...orderBy)
     .limit(limit)
     .offset(offset);
 
-  if (matchedMemes.length === 0) {
-    return [];
-  }
-
   const memeIds = matchedMemes.map((m) => m.id);
 
-  // Paso 2: Traer data completa
-  return await db.query.memesTable.findMany({
+  // Si no hay resultados, retornar vacío
+  if (memeIds.length === 0) {
+    return { memes: [] };
+  }
+
+  // Paso 2: Traer data completa de los memes encontrados
+  const memesData = await db.query.memesTable.findMany({
     where: inArray(memesTable.id, memeIds),
     orderBy: orderBy,
     with: {
@@ -310,4 +345,30 @@ export async function searchMemesDal({
       },
     },
   });
+
+  // Paso 3: Verificar likes del usuario
+  let likedMemeIds = new Set<string>();
+  if (userId) {
+    const likes = await getUserLikeds(
+      userId,
+      memesData.map((m) => m.id),
+    );
+    likedMemeIds = new Set(likes);
+  }
+
+  // Paso 4: Mapear a formato Meme
+  const memes: Meme[] = memesData.map((meme) => ({
+    id: meme.id,
+    imageUrl: meme.imageUrl,
+    title: meme.title,
+    category: meme.category,
+    tags: meme.tags.map((mt) => mt.tag),
+    likesCount: meme.likesCount,
+    commentsCount: meme.commentsCount,
+    createdAt: meme.createdAt,
+    user: meme.user,
+    isLiked: likedMemeIds.has(meme.id),
+  }));
+
+  return { memes };
 }
