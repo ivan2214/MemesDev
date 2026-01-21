@@ -15,15 +15,31 @@ export function RandomPage({ initialMemes }: { initialMemes: Meme[] }) {
   const [memes, setMemes] = useState<Meme[]>(initialMemes);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+
+  // Mantener un Set con todos los IDs de memes ya mostrados
+  const loadedMemeIds = useRef<Set<string>>(
+    new Set(initialMemes.map((m) => m.id)),
+  );
+
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const loadMoreMemes = useCallback(async () => {
+    if (loading) return;
+
     setLoading(true);
     try {
-      const data = await getRandomMemes(PAGE_SIZE);
+      // Pasar los IDs ya cargados para excluirlos
+      const excludeIds = Array.from(loadedMemeIds.current);
+      const data = await getRandomMemes(PAGE_SIZE, undefined, excludeIds);
+
       if (data.memes.length === 0) {
         setHasMore(false);
       } else {
+        // Agregar los nuevos IDs al Set
+
+        for (const meme of data.memes) {
+          loadedMemeIds.current.add(meme.id);
+        }
         setMemes((prev) => [...prev, ...data.memes]);
       }
     } catch (error) {
@@ -31,13 +47,24 @@ export function RandomPage({ initialMemes }: { initialMemes: Meme[] }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loading]);
 
   const shuffleAll = async () => {
     setLoading(true);
     setMemes([]);
+
+    // Resetear el Set de IDs cargados
+    loadedMemeIds.current.clear();
+
     try {
       const data = await getRandomMemes(PAGE_SIZE);
+
+      // Agregar los nuevos IDs al Set
+
+      for (const meme of data.memes) {
+        loadedMemeIds.current.add(meme.id);
+      }
+
       setMemes(data.memes);
       setHasMore(data.memes.length > 0);
     } catch (error) {
