@@ -45,6 +45,14 @@ export async function generateMetadata({
       description,
       url: `${env.APP_URL}/search`,
       type: "website",
+      images: [
+        {
+          url: "/og-image.webp",
+          width: 1200,
+          height: 630,
+          alt: "MemesDev - Memes de programación para desarrolladores",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",

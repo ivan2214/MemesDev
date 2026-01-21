@@ -14,6 +14,14 @@ export const metadata: Metadata = {
       "Disfruta de una selección aleatoria de los mejores memes de programación.",
     url: `${env.APP_URL}/random`,
     type: "website",
+    images: [
+      {
+        url: "/og-image.webp",
+        width: 1200,
+        height: 630,
+        alt: "MemesDev - Memes de programación para desarrolladores",
+      },
+    ],
   },
   alternates: {
     canonical: `${env.APP_URL}/random`,

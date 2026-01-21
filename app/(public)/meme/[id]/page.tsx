@@ -53,7 +53,7 @@ export async function generateMetadata({
       ? `Mira este meme de programación: "${meme.title}" por ${meme.user.name}. ${meme.likesCount} me gusta.`
       : `Mira este meme de programación subido por ${meme.user.name}. ${meme.likesCount} me gusta y ${meme.commentsCount} comentarios.`;
 
-  console.log(meme.imageUrl);
+  const ogImage = `${env.APP_URL}/api/og/${meme.id}`;
 
   return {
     title: `${title} | MemesDev`,
@@ -67,8 +67,15 @@ export async function generateMetadata({
       publishedTime: meme.createdAt.toISOString(),
       images: [
         {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: meme.title || "Meme",
+        },
+        {
           url: meme.imageUrl,
-
+          width: 1200,
+          height: 630,
           alt: meme.title || "Meme",
         },
       ],
@@ -77,14 +84,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: `${title} | MemesDev`,
       description: description.substring(0, limit),
-      creator: "@ivan2214", // Asumiendo un handle genérico o del usuario si existiera
-      images: [
-        {
-          url: meme.imageUrl,
-
-          alt: meme.title || "Meme",
-        },
-      ],
+      images: [ogImage, meme.imageUrl],
     },
     alternates: {
       canonical: `${env.APP_URL}/meme/${meme.id}`,
@@ -115,7 +115,7 @@ export default async function MemePage({
     "@context": "https://schema.org",
     "@type": "SocialMediaPosting",
     headline: meme.title || "Meme de programación",
-    image: [meme.imageUrl],
+    image: [`${env.APP_URL}/meme/${meme.id}/opengraph-image`],
     datePublished: meme.createdAt.toISOString(),
     author: {
       "@type": "Person",

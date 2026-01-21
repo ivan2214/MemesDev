@@ -28,6 +28,14 @@ export const metadata: Metadata = {
       "Los memes de programación más populares y virales. Descubre el mejor humor tech del momento.",
     url: `${env.APP_URL}/hot`,
     type: "website",
+    images: [
+      {
+        url: "/og-image.webp",
+        width: 1200,
+        height: 630,
+        alt: "MemesDev - Memes de programación para desarrolladores",
+      },
+    ],
   },
   alternates: {
     canonical: `${env.APP_URL}/hot`,
