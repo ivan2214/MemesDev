@@ -117,11 +117,6 @@ export function ProfileForm({
       }
     },
     onSubmitInvalid(props) {
-      const meta = props.meta;
-      console.log("meta:", meta);
-      const errors = props.formApi.state.errors;
-      console.log("errors:", { errors });
-
       toast.error("Error al actualizar el perfil");
     },
   });

@@ -198,7 +198,7 @@ export async function uploadMeme({
 
   const imageUrl = `${env.S3_BUCKET_URL}/${imageKey}`;
 
-  console.log("imageUrl", imageUrl);
+  
 
   if (!imageUrl) {
     throw new Error("Image url is required");

@@ -35,8 +35,7 @@ export async function updateProfile(data: ProfileSchema) {
     .where(eq(userTable.id, session.user.id));
 
   if (validatedFields.imageKey) {
-    console.log("imageKey", validatedFields.imageKey);
-    console.log("imageURLForS3", imageURLForS3);
+    
     await db
       .update(userTable)
       .set({ imageKey: validatedFields.imageKey, image: imageURLForS3 })

@@ -101,10 +101,7 @@ export function UploadMemeForm({
         return;
       }
 
-      console.log({
-        tags: value.tags,
-        objectKeys: imageKey,
-      });
+      
 
       await uploadMeme({
         tags: value.tags,
@@ -116,11 +113,7 @@ export function UploadMemeForm({
       onClose();
     },
     onSubmitInvalid(props) {
-      console.log("props:", props);
-      const meta = props.meta;
-      console.log("meta:", meta);
-      const errors = props.formApi.state.errors;
-      console.log("errors:", errors);
+      
 
       toast.error("Error al actualizar el perfil");
     },
