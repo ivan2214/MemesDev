@@ -198,8 +198,6 @@ export async function uploadMeme({
 
   const imageUrl = `${env.S3_BUCKET_URL}/${imageKey}`;
 
-  
-
   if (!imageUrl) {
     throw new Error("Image url is required");
   }
@@ -323,7 +321,10 @@ export async function uploadMeme({
   }
 
   revalidatePath("/");
+  revalidatePath("/profile");
   revalidatePath("/hot");
+  revalidatePath("/search");
+  revalidatePath("/random");
 
   return { success: true, memeId: meme.id };
 }

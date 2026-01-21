@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import sharp from "sharp";
 import { getCurrentUser } from "@/data/user";
 import { env } from "@/env/server";
@@ -66,11 +65,7 @@ export async function uploadOptimizedImage(formData: FormData) {
     console.error("S3 Upload Error:", await res.text());
     throw new Error("Error al subir la imagen a S3");
   }
-  revalidatePath("/");
-  revalidatePath("/profile");
-  revalidatePath("/hot");
-  revalidatePath("/search");
-  revalidatePath("/random");
+
   return {
     key,
     url,
