@@ -30,7 +30,7 @@ import {
 } from "@/shared/lib/tag-icons";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
-import { navItems } from "../_constants";
+import { navItems } from "../constants";
 
 interface AppSidebarProps {
   categories?: Category[];

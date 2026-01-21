@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/data/user";
-import type { ErrorType } from "@/shared/_constants";
+import type { ErrorType } from "@/shared/constants";
 import ErrorContent from "./_components/error-content";
 
 export const metadata: Metadata = {

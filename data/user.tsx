@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { auth } from "@/lib/auth";
 import "server-only";
-import { ErrorTypeMessages } from "@/shared/_constants";
+import { ErrorTypeMessages } from "@/shared/constants";
 
 export const getCurrentUser = cache(async () => {
   const session = await auth.api.getSession({

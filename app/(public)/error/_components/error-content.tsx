@@ -3,13 +3,13 @@
 import { AlertCircle } from "lucide-react";
 
 import { useEffect, useState } from "react";
-import { ERROR_MESSAGES, type ErrorType } from "@/shared/_constants";
 import { AuthDialog } from "@/shared/components/auth-dialog";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@/shared/components/ui/alert";
+import { ERROR_MESSAGES, type ErrorType } from "@/shared/constants";
 
 export default function ErrorContent({ error }: { error: ErrorType }) {
   const [isAuthOpen, setAuthOpen] = useState(false);
