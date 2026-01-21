@@ -8,6 +8,7 @@ import {
   gte,
   ilike,
   inArray,
+  not,
   or,
   type SQL,
 } from "drizzle-orm";
@@ -32,9 +33,11 @@ import { CACHE_LIFE, CACHE_TAGS } from "@/shared/constants";
 export async function getRecentMemes({
   offset = 0,
   limit = 12,
+  userId,
 }: {
   offset?: number;
   limit?: number;
+  userId?: string;
 } = {}) {
   "use cache";
   cacheTag(CACHE_TAGS.MEMES, "recent-memes"); // Tag for list
@@ -59,6 +62,8 @@ export async function getRecentMemes({
         },
       },
     },
+    // Traer los que no son del usuario
+    where: userId ? not(eq(memesTable.userId, userId)) : undefined,
   });
 
   return memesData;

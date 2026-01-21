@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { CollectionPage, WithContext } from "schema-dts";
 import { env } from "@/env/server";
-import { getAllTags, getMemes, type SortType } from "./_actions";
+import { getAllTags, getMemesForSearch, type SortType } from "./_actions";
 import { SearchPage } from "./_components/search-page";
 
 interface SearchParams {
@@ -69,7 +69,14 @@ async function SearchContent({
 }) {
   const [{ tags }, { memes }] = await Promise.all([
     getAllTags(),
-    getMemes({ query, offset: 0, limit: 12, sort, tags: tagsSearch, category }),
+    getMemesForSearch({
+      query,
+      offset: 0,
+      limit: 12,
+      sort,
+      tags: tagsSearch,
+      category,
+    }),
   ]);
 
   const jsonLd: WithContext<CollectionPage> = {

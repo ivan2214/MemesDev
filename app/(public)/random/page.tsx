@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getCurrentUser } from "@/data/user";
 import { env } from "@/env/server";
 import { getRandomMemes } from "./_actions";
 import { RandomPage } from "./_components/random-page";
@@ -19,11 +20,8 @@ export const metadata: Metadata = {
   },
 };
 
-async function RandomMemesVerifier() {
-  const { memes } = await getRandomMemes(8, false);
+export default async function Page() {
+  const userId = await getCurrentUser();
+  const { memes } = await getRandomMemes(8, userId?.id);
   return <RandomPage initialMemes={memes} />;
-}
-
-export default function Page() {
-  return <RandomMemesVerifier />;
 }

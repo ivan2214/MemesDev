@@ -10,7 +10,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Spinner } from "@/shared/components/ui/spinner";
 import type { Meme } from "@/types/meme";
 import type { Tag } from "@/types/tag";
-import { getMemes, type SortType } from "../_actions";
+import { getMemesForSearch, type SortType } from "../_actions";
 import { SORT_OPTIONS } from "../_constants";
 
 const PAGE_SIZE = 12;
@@ -74,7 +74,7 @@ export function SearchPage({
     ) => {
       setLoading(true);
       try {
-        const data = await getMemes({
+        const data = await getMemesForSearch({
           query: q,
           offset: currentOffset,
           limit: PAGE_SIZE,

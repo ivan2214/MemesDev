@@ -11,7 +11,7 @@ import type { Tag } from "@/types/tag";
 
 export type SortType = "recent" | "likes" | "comments";
 
-export async function getMemes({
+export async function getMemesForSearch({
   query = "",
   tags = [],
   category = "",
@@ -83,5 +83,5 @@ export async function searchMemes(
   offset = 0,
   limit = 12,
 ): Promise<{ memes: Meme[] }> {
-  return getMemes({ query, offset, limit, sort: "recent" });
+  return getMemesForSearch({ query, offset, limit, sort: "recent" });
 }
