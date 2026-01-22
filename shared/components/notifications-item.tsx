@@ -19,7 +19,7 @@ import { Button } from "./ui/button";
 
 interface NotificationsProps {
   notification: Notification;
-  onMarkedAsRead?: (notificationId: string) => void;
+  onMarkAsRead?: (notificationId: string) => void;
 }
 
 const typeIconMap = {
@@ -38,17 +38,22 @@ const typeColorMap = {
 
 export function NotificationItem({
   notification,
-  onMarkedAsRead,
+  onMarkAsRead: onMarkAsReadCallback,
 }: NotificationsProps) {
-  const onMarkAsRead = async (e: React.MouseEvent, notificationId: string) => {
+  const handleMarkAsRead = async (
+    e: React.MouseEvent,
+    notificationId: string,
+  ) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Actualización optimista - actualizar UI inmediatamente
+    onMarkAsReadCallback?.(notificationId);
+
+    // Luego sincronizar con el servidor
     const { message, success } = await markNotificationAsRead(notificationId);
     if (!success) {
       toast.error(message);
-    } else {
-      toast.success(message);
-      onMarkedAsRead?.(notificationId);
     }
   };
 
@@ -119,7 +124,7 @@ export function NotificationItem({
                 variant="ghost"
                 size="sm"
                 className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                onClick={(e) => onMarkAsRead(e, notification.id)}
+                onClick={(e) => handleMarkAsRead(e, notification.id)}
               >
                 <Check className="h-3 w-3" />
                 Leída

@@ -4,7 +4,8 @@ import { desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { cache } from "react";
 import { db } from "@/db";
-import { notificationTable } from "@/db/schemas";
+import { notificationTable, user } from "@/db/schemas";
+import { sendEmail } from "@/lib/send-email";
 import type { NotificationType } from "../types";
 
 export const getNotifications = cache(async (userId: string) => {
@@ -54,6 +55,7 @@ export const createNotification = async (
   link: string,
   from: string,
 ) => {
+  // Crear la notificación en la base de datos
   await db.insert(notificationTable).values({
     userId,
     type,
@@ -62,4 +64,28 @@ export const createNotification = async (
     read: false,
     from,
   });
+
+  // Obtener el email del usuario para enviar la notificación
+  const targetUser = await db.query.user.findFirst({
+    where: eq(user.id, userId),
+    columns: { email: true, name: true },
+  });
+
+  if (targetUser?.email) {
+    // Enviar email de notificación (no bloqueante)
+    sendEmail({
+      type: "notification",
+      to: targetUser.email,
+      userFirstname: targetUser.name ?? undefined,
+      notificationType: type,
+      message,
+      link,
+    }).catch((error) => {
+      // Log del error pero no bloquear la creación de la notificación
+      console.error("Error enviando email de notificación:", error);
+    });
+  }
+
+  // Revalidar para que se actualicen las notificaciones en la UI
+  revalidatePath("/");
 };
