@@ -109,7 +109,6 @@ export default async function Page({
       <ProfilePage
         profile={profile}
         initialUserMemes={userMemes}
-        userId={id}
         categoriesDB={categoriesDB}
         tagsDB={tagsDB}
         currentUser={currentUser}

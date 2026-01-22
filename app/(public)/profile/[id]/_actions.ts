@@ -5,11 +5,11 @@ import {
   getUserMemesDal,
   getUserProfile as getUserProfileDal,
 } from "@/server/dal/users";
+import type { Creator } from "@/shared/types";
 import type { Meme } from "@/types/meme";
-import type { UserProfile } from "@/types/profile";
 
 export async function getUserProfile(userId: string): Promise<{
-  user?: UserProfile | null;
+  user?: Creator | null;
 }> {
   const user = await getUserProfileDal(userId);
   return { user };

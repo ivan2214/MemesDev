@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Heart, ImageIcon, User } from "lucide-react";
+import { Calendar, Heart, ImageIcon, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User as CurrentUser } from "@/lib/auth";
@@ -21,9 +21,8 @@ import {
 } from "@/shared/components/ui/card";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { PAGE_SIZE } from "@/shared/constants";
-import type { CategoryForm, TagForForm } from "@/shared/types";
+import type { CategoryForm, Creator, TagForForm } from "@/shared/types";
 import type { Meme } from "@/types/meme";
-import type { UserProfile } from "@/types/profile";
 import { getUserMemes } from "../_actions";
 
 export function ProfilePage({
@@ -31,14 +30,12 @@ export function ProfilePage({
   initialUserMemes,
   categoriesDB,
   tagsDB,
-  userId,
   currentUser,
 }: {
-  profile: UserProfile;
+  profile: Creator;
   initialUserMemes: Meme[];
   tagsDB: TagForForm[];
   categoriesDB: CategoryForm[];
-  userId: string;
   currentUser?: CurrentUser;
 }) {
   const [userMemes, setUserMemes] = useState<Meme[]>(initialUserMemes);
@@ -52,7 +49,11 @@ export function ProfilePage({
   const loadMoreUploads = useCallback(async () => {
     setLoadingUploads(true);
     try {
-      const data = await getUserMemes(userId, offsetUploads, PAGE_SIZE);
+      const data = await getUserMemes(
+        profile.id as string,
+        offsetUploads,
+        PAGE_SIZE,
+      );
       if (data.memes.length < PAGE_SIZE) {
         setHasMoreUploads(false);
       }
@@ -63,7 +64,7 @@ export function ProfilePage({
     } finally {
       setLoadingUploads(false);
     }
-  }, [userId, offsetUploads]);
+  }, [profile.id, offsetUploads]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -103,11 +104,11 @@ export function ProfilePage({
             <Avatar className="h-24 w-24 border-4 border-primary/20">
               <AvatarImage src={profile.image} />
               <AvatarFallback>
-                {profile.name.split(" ")[0].slice(0, 2)}
+                {profile.name?.split(" ")[0].slice(0, 2)}
               </AvatarFallback>
             </Avatar>
           ) : (
-            <User className="h-4 w-4" />
+            <UserIcon className="h-4 w-4" />
           )}
 
           <div className="flex-1 text-center sm:text-left">
@@ -120,7 +121,7 @@ export function ProfilePage({
                   {profile.category.name}
                 </Badge>
               )}
-              {profile.id === userId && (
+              {profile.id === currentUser?.id && (
                 <EditProfileDialog
                   categoriesDB={categoriesDB}
                   currentUser={currentUser}
@@ -129,7 +130,7 @@ export function ProfilePage({
               )}
             </div>
 
-            <p className="mb-2 text-muted-foreground">{profile.email}</p>
+            <p className="mb-2 text-muted-foreground">@{profile.name}</p>
 
             {profile.bio && (
               <p className="mb-4 max-w-xl text-center text-sm sm:text-left">
@@ -166,7 +167,7 @@ export function ProfilePage({
               <div className="flex items-center gap-2">
                 <ImageIcon className="h-5 w-5 text-muted-foreground" />
                 <span className="text-sm">
-                  <strong>{profile.memesCount}</strong> memes
+                  <strong>{profile.totalMemes}</strong> memes
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -178,8 +179,10 @@ export function ProfilePage({
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-muted-foreground" />
                 <span className="text-sm">
-                  Te registraste el{" "}
-                  {new Date(profile.createdAt).toLocaleDateString()}
+                  {profile.id === currentUser?.id
+                    ? "Te registraste el"
+                    : "Registrado el "}
+                  {new Date(profile?.createdAt || "").toLocaleDateString()}
                 </span>
               </div>
             </div>

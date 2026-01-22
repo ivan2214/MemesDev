@@ -22,7 +22,7 @@ import {
 } from "@/shared/lib/tag-icons";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
-import type { TrendCreator } from "../types";
+import type { Creator } from "../types";
 import { ToTitleCase } from "../utils";
 import { TagItem } from "./tag-item";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -30,7 +30,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 interface RightSidebarProps {
   categories?: Category[];
   popularTags?: Tag[];
-  creators?: TrendCreator[];
+  creators?: Creator[];
   systemStatus?: {
     status: boolean;
     users: number;

@@ -5,16 +5,17 @@ import { cacheLife, cacheTag } from "next/cache";
 import { getCurrentUser } from "@/data/user";
 import { db } from "@/db";
 import {
+  commentsTable,
   likesTable,
   memesTable,
   notificationTable,
   user as userTable,
 } from "@/db/schemas";
 import { CACHE_LIFE, CACHE_TAGS } from "@/shared/constants";
-import type { TrendCreator } from "@/shared/types";
+import type { Creator } from "@/shared/types";
 import type { UserProfile } from "@/types/profile";
 
-export async function getUserProfile(userId: string) {
+export async function getUserProfile(userId: string): Promise<Creator | null> {
   "use cache";
   cacheTag(CACHE_TAGS.USERS, CACHE_TAGS.user(userId));
   cacheLife(CACHE_LIFE.DEFAULT);
@@ -56,15 +57,22 @@ export async function getUserProfile(userId: string) {
     .from(likesTable)
     .where(eq(likesTable.userId, userId));
 
+  const commentsCount = await db
+    .select({ count: count() })
+    .from(commentsTable)
+    .where(eq(commentsTable.userId, userId));
+
   const stats = {
     memesCount: memesCount[0]?.count || 0,
     likesCount: likesCount[0]?.count || 0,
+    commentsCount: commentsCount[0]?.count || 0,
   };
 
-  const user: UserProfile = {
+  const user: Creator = {
     ...userRecord,
-    memesCount: stats.memesCount,
+    totalMemes: stats.memesCount,
     totalLikes: stats.likesCount,
+    totalComments: stats.commentsCount,
     tags: userRecord.tags.map((tag) => tag.tag),
   };
 
@@ -107,7 +115,7 @@ export async function getUserMemesDal({
   });
 }
 
-export const getTrendCreators = async (): Promise<TrendCreator[]> => {
+export const getTrendCreators = async (): Promise<Creator[]> => {
   "use cache";
   cacheTag(CACHE_TAGS.USERS_TREND);
   cacheLife(CACHE_LIFE.DEFAULT);

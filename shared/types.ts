@@ -36,7 +36,7 @@ export type CategoryForm = Omit<
   "createdAt" | "updatedAt" | "icon" | "color"
 >;
 
-export interface TrendCreator extends User {
+export interface Creator extends User {
   totalMemes: number;
   totalLikes: number;
   totalComments: number;

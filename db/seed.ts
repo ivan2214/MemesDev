@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import type { Table } from "drizzle-orm";
 import "dotenv/config";
+import { generateUsername } from "@/lib/auth/auth-utils";
 import { DEFAULT_CATEGORIES, DEFAULT_TAGS } from "@/shared/lib/tag-icons";
 import { db } from "./index";
 import {
@@ -223,48 +224,40 @@ async function seed() {
 
   // Crear usuarios en memoria con usernames únicos
   const usedUsernames = new Set<string>();
-  const users = Array.from({ length: 15 }, () => {
-    const firstName = faker.person.firstName();
-    const lastName = faker.person.lastName();
+  const users = await Promise.all(
+    Array.from({ length: 15 }, async () => {
+      const firstName = faker.person.firstName();
+      const lastName = faker.person.lastName();
 
-    // Generar username único
-    const baseUsername =
-      `${firstName.toLowerCase()}${lastName.toLowerCase()}`.replace(
-        /[^a-z0-9]/g,
-        "",
-      );
-    let username = baseUsername;
-    let counter = 1;
-    while (usedUsernames.has(username)) {
-      username = `${baseUsername}${counter}`;
-      counter++;
-    }
-    usedUsernames.add(username);
+      const username = await generateUsername(firstName);
 
-    return {
-      id: faker.string.uuid(),
-      name: `${firstName} ${lastName}`,
-      username,
-      email: faker.internet.email({ firstName, lastName }).toLowerCase(),
-      emailVerified: true,
-      image: faker.image.avatar(),
-      imageKey: faker.string.uuid(),
-      bio: faker.lorem.sentence(),
-      socials: [
-        {
-          platform: "Twitter",
-          url: `https://twitter.com/${username}`,
-        },
-        {
-          platform: "GitHub",
-          url: `https://github.com/${username}`,
-        },
-      ],
-      categoryId: faker.helpers.arrayElement(categoryIds),
-      createdAt: faker.date.past({ years: 1 }),
-      updatedAt: new Date(),
-    };
-  });
+      usedUsernames.add(username);
+
+      return {
+        id: faker.string.uuid(),
+        name: `${firstName} ${lastName}`,
+        username,
+        email: faker.internet.email({ firstName, lastName }).toLowerCase(),
+        emailVerified: true,
+        image: faker.image.avatar(),
+        imageKey: faker.string.uuid(),
+        bio: faker.lorem.sentence(),
+        socials: [
+          {
+            platform: "Twitter",
+            url: `https://twitter.com/${username}`,
+          },
+          {
+            platform: "GitHub",
+            url: `https://github.com/${username}`,
+          },
+        ],
+        categoryId: faker.helpers.arrayElement(categoryIds),
+        createdAt: faker.date.past({ years: 1 }),
+        updatedAt: new Date(),
+      };
+    }),
+  );
 
   const userIds = users.map((u) => u.id);
 
