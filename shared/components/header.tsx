@@ -1,42 +1,19 @@
-"use client";
-
-import { GithubIcon, LogInIcon, LogOut, UploadIcon, User } from "lucide-react";
+import { GithubIcon, LogInIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { signOut } from "@/lib/auth/auth-client";
-import { AuthDialog, useAuth } from "@/shared/components/auth-dialog";
+import { Suspense } from "react";
+import { getCurrentUser } from "@/data/user";
+import { getNotifications } from "@/server/dal/users";
+import { AuthDialog } from "@/shared/components/auth-dialog";
 import { Button } from "@/shared/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";
-import type { Category } from "@/types/category";
-import type { Tag } from "@/types/tag";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { UploadDialog } from "./upload-dialog";
+import { Notifications } from "./notifications";
+import { Skeleton } from "./ui/skeleton";
+import { UserMenu } from "./user-menu";
 
-export function Header({
-  categoriesDB,
-  tagsDB,
-}: {
-  categoriesDB: Category[];
-  tagsDB: Tag[];
-}) {
-  const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
-    router.refresh();
-  };
-
+export function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-border/40 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-border/40 border-b bg-background/45 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <SidebarTrigger className="hidden md:flex" />
@@ -52,81 +29,56 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="https://github.com/ivan2214/MemesDev">
-            <Button size="icon" variant="outline">
-              <GithubIcon className="h-4 w-4" />
-            </Button>
-          </Link>
-          {isAuthenticated ? (
-            <section className="flex items-center gap-2">
-              {user ? (
-                <UploadDialog categoriesDB={categoriesDB} tagsDB={tagsDB}>
-                  <Button size="sm">
-                    <UploadIcon className="mr-2 h-4 w-4" />
-                    Subir meme
-                  </Button>
-                </UploadDialog>
-              ) : (
-                <AuthDialog>
-                  <Button size="sm">
-                    <UploadIcon className="mr-2 h-4 w-4" />
-                    Subir meme
-                  </Button>
-                </AuthDialog>
-              )}
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  className={
-                    "flex cursor-pointer items-center gap-2 bg-transparent"
-                  }
-                >
-                  {user?.image ? (
-                    <Avatar>
-                      <AvatarImage src={user.image} />
-                      <AvatarFallback>
-                        {user.name.split(" ")[0].slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <User className="h-4 w-4" />
-                  )}
-                  <span className="hidden sm:inline">{user?.name}</span>
-                </DropdownMenuTrigger>
+          <Button
+            size="icon"
+            variant="ghost"
+            render={
+              <Link
+                target="_blank"
+                href="https://github.com/ivan2214/MemesDev"
+              />
+            }
+          >
+            <GithubIcon className="h-4 w-4" />
+          </Button>
 
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem className="w-full cursor-pointer hover:bg-accent">
-                    <Link className="w-full" href={`/profile/${user?.id}`}>
-                      Mi perfil
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="w-full cursor-pointer hover:bg-accent">
-                    <Link className="w-full" href={`/settings/profile`}>
-                      Configuración del perfil
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="w-full cursor-pointer hover:bg-accent"
-                    onClick={handleSignOut}
-                    variant="destructive"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Salir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </section>
-          ) : (
-            <AuthDialog>
-              <Button size="sm">
-                <LogInIcon className="mr-2 h-4 w-4" />
-                Iniciar sesión
-              </Button>
-            </AuthDialog>
-          )}
+          <Suspense
+            fallback={
+              <section className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                {/* notifications skeleton */}
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-4" />
+                  <Skeleton className="h-4 w-8" />
+                </div>
+              </section>
+            }
+          >
+            <HeaderUser />
+          </Suspense>
         </div>
       </div>
     </header>
   );
 }
+
+const HeaderUser = async () => {
+  const user = await getCurrentUser();
+  const notifications = await getNotifications();
+
+  const isAuthenticated = !!user;
+
+  return isAuthenticated ? (
+    <>
+      <Notifications notifications={notifications} />
+      <UserMenu user={user} />
+    </>
+  ) : (
+    <AuthDialog>
+      <Button size="sm">
+        <LogInIcon className="mr-2 h-4 w-4" />
+        Iniciar sesión
+      </Button>
+    </AuthDialog>
+  );
+};

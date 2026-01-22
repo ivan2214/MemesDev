@@ -39,6 +39,7 @@ export const CACHE_TAGS = {
   LIKES: "likes",
   COMMENTS: "comments",
   USERS_TREND: "users-trend",
+  NOTIFICATIONS: "notifications",
   // Helper for dynamic keys
   meme: (id: string) => `meme-${id}`,
   user: (id: string) => `user-${id}`,

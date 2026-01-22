@@ -258,17 +258,22 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
           </div>
           {/* category */}
           {meme.category && meme.category.slug && (
-            <Badge
-              variant="outline"
-              className={cn(
-                "shrink-0 gap-1 border font-medium text-xs uppercase tracking-wider transition-all hover:scale-105",
-                getCategoryStyles(meme.category.color),
-              )}
+            <Button
+              variant="ghost"
               onClick={() => set("category", meme.category?.slug || "")}
+              className="h-auto p-0"
             >
-              {CategoryIcon && <CategoryIcon className="h-3 w-3" />}
-              {meme.category.name}
-            </Badge>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "shrink-0 gap-1 border font-medium text-xs uppercase tracking-wider transition-all hover:scale-105",
+                  getCategoryStyles(meme.category.color),
+                )}
+              >
+                {CategoryIcon && <CategoryIcon className="h-3 w-3" />}
+                {meme.category.name}
+              </Badge>
+            </Button>
           )}
           <Link href={`/meme/${meme?.id}`} className="block">
             <p className="wrap-break-word line-clamp-2 text-foreground text-xs sm:text-sm">
@@ -277,14 +282,21 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
           </Link>
           <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
             {meme?.tags?.map((tag) => (
-              <Badge
+              <Button
                 key={tag.id}
-                variant={activeTags?.includes(tag.slug) ? "default" : "outline"}
-                className="text-xs"
+                variant="ghost"
                 onClick={() => toggleInArray("tags", tag.slug)}
+                className="h-auto p-0"
               >
-                #{tag.name}
-              </Badge>
+                <Badge
+                  variant={
+                    activeTags?.includes(tag.slug) ? "default" : "outline"
+                  }
+                  className="text-xs"
+                >
+                  #{tag.name}
+                </Badge>
+              </Button>
             ))}
           </div>
         </div>

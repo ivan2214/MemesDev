@@ -15,7 +15,7 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx db/seed.ts",
     "db:studio": "drizzle-kit studio",
-    "db:reset": "tsx db/reset.ts && pnpm db:generate ",
+    "db:reset": "tsx db/reset.ts",
     "email:dev": "email dev"
   },
   "dependencies": {
