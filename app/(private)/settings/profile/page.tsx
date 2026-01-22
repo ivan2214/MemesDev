@@ -1,10 +1,9 @@
 import { Suspense } from "react";
-import { getAllTags } from "@/server/dal/categories";
-import { getAllCategories } from "@/shared/actions/category-actions";
+import { getAllCategories, getAllTags } from "@/server/dal/categories";
+import { getUserSettingsDal } from "@/server/dal/users";
 import { Spinner } from "@/shared/components/ui/spinner";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
-import { getUserSettings } from "./_actions";
 import { ProfileForm } from "./_components/profile-form";
 
 async function SettingsFetcher({
@@ -14,9 +13,10 @@ async function SettingsFetcher({
   tags: Tag[];
   categories: Category[];
 }) {
-  const user = await getUserSettings();
+  const user = await getUserSettingsDal();
+
   return (
-    <ProfileForm initialData={user} tagsDB={tags} categoriesDB={categories} />
+    <ProfileForm currentUser={user} tagsDB={tags} categoriesDB={categories} />
   );
 }
 

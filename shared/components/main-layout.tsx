@@ -1,11 +1,10 @@
 import type React from "react";
 import { Suspense } from "react";
 import { cn } from "@/lib/utils";
-import { getAllTags } from "@/server/dal/categories";
+import { getAllCategories, getAllTags } from "@/server/dal/categories";
 import { getSystemStatus } from "@/server/dal/system";
 import { getTrendCreators } from "@/server/dal/users";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
-import { getAllCategories } from "../actions/category-actions";
 import { AppSidebar } from "./app-sidebar";
 import { Header } from "./header";
 import { MobileNav } from "./mobile-nav";

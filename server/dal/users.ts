@@ -2,7 +2,7 @@
 
 import { count, desc, eq } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
-
+import { getCurrentUser } from "@/data/user";
 import { db } from "@/db";
 import {
   likesTable,
@@ -106,33 +106,24 @@ export async function getUserMemesDal({
   });
 }
 
-export async function getUserSettingsDal(userId: string) {
+export async function getUserSettingsDal() {
   "use cache";
-  cacheTag(CACHE_TAGS.USERS, CACHE_TAGS.user(userId));
+  const currentUser = await getCurrentUser();
+  if (!currentUser || !currentUser.id) return undefined;
+
+  cacheTag(CACHE_TAGS.USERS, CACHE_TAGS.user(currentUser.id));
   cacheLife(CACHE_LIFE.DEFAULT);
 
-  const userData = await db.query.user.findFirst({
-    where: eq(userTable.id, userId),
-    with: {
-      category: true,
-    },
-  });
-
-  if (!userData) {
-    return null;
-  }
-
   const userTags = await db.query.userTagsTable.findMany({
-    where: eq(userTagsTable.userId, userId),
+    where: eq(userTagsTable.userId, currentUser.id),
     with: {
       tag: true,
     },
   });
 
   return {
-    ...userData,
     tags: userTags.map((tag) => tag.tag),
-    category: userData?.category,
+    category: currentUser?.category,
   };
 }
 

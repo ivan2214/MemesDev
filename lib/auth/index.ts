@@ -1,9 +1,11 @@
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth/minimal";
 import { nextCookies } from "better-auth/next-js";
-import { magicLink } from "better-auth/plugins";
+import { customSession, magicLink } from "better-auth/plugins";
+import { eq } from "drizzle-orm";
 import authConfig from "@/config/auth.config";
 import { db } from "@/db"; // your drizzle instance
+import { user as userTable } from "@/db/schemas";
 
 export const auth = betterAuth({
   ...authConfig,
@@ -25,8 +27,30 @@ export const auth = betterAuth({
 
       expiresIn: 15 * 60 * 1000, // 15 minutos en milisegundos
     }),
-
     nextCookies(),
+    customSession(async ({ user, session }) => {
+      const userDB = await db.query.user.findFirst({
+        where: eq(userTable.id, user.id),
+        with: {
+          tags: {
+            with: {
+              tag: true,
+            },
+          },
+          category: true,
+        },
+      });
+
+      const parsedUser = {
+        ...userDB,
+        tags: userDB?.tags?.map((tag) => tag.tag),
+      };
+
+      return {
+        session,
+        user: parsedUser,
+      };
+    }),
   ],
 });
 

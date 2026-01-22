@@ -159,7 +159,7 @@ export function RightSidebar({
                       src={creator.image || "/placeholder.svg"}
                       alt={creator.name}
                     />
-                    <AvatarFallback>{creator.name[0]}</AvatarFallback>
+                    <AvatarFallback>{creator.name?.[0]}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-foreground text-sm">
