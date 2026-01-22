@@ -101,12 +101,19 @@ export function UploadMemeForm({
         return;
       }
 
-      await uploadMeme({
+      const { success } = await uploadMeme({
         tags: value.tags,
         imageKey: imageKey,
         category: value.category,
         title: value.title,
       });
+
+      if (!success) {
+        return toast.error("Error al subir el meme");
+      } else {
+        toast.success("Meme subido correctamente");
+      }
+
       form.reset();
       onClose();
     },

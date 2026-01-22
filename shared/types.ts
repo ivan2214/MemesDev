@@ -1,9 +1,11 @@
-import type { notificationTable } from "@/db/schemas";
+import type { notificationTable, notificationTypeEnum } from "@/db/schemas";
 import type { User } from "@/lib/auth";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 
 export type Notification = typeof notificationTable.$inferSelect;
+
+export type NotificationType = (typeof notificationTypeEnum.enumValues)[number];
 
 export type TimeFilter =
   | "24h"

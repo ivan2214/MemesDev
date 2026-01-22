@@ -2,18 +2,16 @@ import "server-only";
 
 import { count, desc, eq, inArray, sql, sum } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
-import { getCurrentUser } from "@/data/user";
+
 import { db } from "@/db";
 import {
   commentsTable,
   likesTable,
   memesTable,
-  notificationTable,
   user as userTable,
 } from "@/db/schemas";
 import { CACHE_LIFE, CACHE_TAGS } from "@/shared/constants";
 import type { Creator } from "@/shared/types";
-import type { UserProfile } from "@/types/profile";
 
 export async function getUserProfile(userId: string): Promise<Creator | null> {
   "use cache";
@@ -189,21 +187,4 @@ export const getTrendCreators = async (): Promise<Creator[]> => {
     );
 
   return trendCreators;
-};
-
-export const getNotifications = async () => {
-  const user = await getCurrentUser();
-
-  if (!user || !user.id) {
-    return [];
-  }
-
-  const userId = user.id;
-
-  const notifications = await db.query.notificationTable.findMany({
-    where: eq(notificationTable.userId, userId),
-    orderBy: desc(notificationTable.createdAt),
-  });
-
-  return notifications;
 };

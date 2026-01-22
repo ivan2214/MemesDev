@@ -2,6 +2,7 @@
 import { deleteObject } from "@better-upload/server/helpers";
 import { and, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { updateTag } from "next/cache";
+import { getCurrentUser } from "@/data/user";
 import { db } from "@/db";
 import {
   categoriesTable,
@@ -15,7 +16,10 @@ import {
 import { env } from "@/env/server";
 import { s3 } from "@/lib/s3";
 import { CACHE_TAGS } from "@/shared/constants";
+import type { Category } from "@/types/category";
 import type { Comment } from "@/types/comment";
+import type { Tag } from "@/types/tag";
+import { createNotification } from "./notifications-actions";
 
 export async function toggleLike(memeId: string) {
   const currentUser = await getCurrentUser();
@@ -85,15 +89,24 @@ export async function toggleLike(memeId: string) {
     });
 
     if (memeOwner && memeOwner.userId !== userId && meme) {
-      const userLike = currentUser.username || currentUser.name || "un usuario";
-      await db.insert(notificationTable).values({
-        userId: memeOwner.userId,
-        type: "like",
-        message: `${userLike} le dio like a tu meme de ${meme.title}`,
-        link: `${env.APP_URL}/meme/${memeId}`,
-        read: false,
-        from: userId,
+      const userAlreadyNotified = await db.query.notificationTable.findFirst({
+        where: and(
+          eq(notificationTable.userId, memeOwner?.userId),
+          eq(notificationTable.from, userId),
+        ),
       });
+
+      if (!userAlreadyNotified) {
+        const userLike =
+          currentUser.username || currentUser.name || "un usuario";
+        await createNotification(
+          memeOwner.userId,
+          "like",
+          `${userLike} le dio like a tu meme de ${meme.title}`,
+          `${env.APP_URL}/meme/${memeId}`,
+          currentUser.id,
+        );
+      }
     }
 
     updateTag(CACHE_TAGS.meme(memeId));
@@ -158,7 +171,7 @@ export async function addComment(memeId: string, content: string) {
 
   const meme = await db.query.memesTable.findFirst({
     where: eq(memesTable.id, memeId),
-    columns: { commentsCount: true },
+    columns: { commentsCount: true, title: true },
   });
 
   if (meme) {
@@ -166,6 +179,23 @@ export async function addComment(memeId: string, content: string) {
       .update(memesTable)
       .set({ commentsCount: meme.commentsCount + 1 })
       .where(eq(memesTable.id, memeId));
+    // Enviar notificacion al usuario que recibio el comentario
+    const memeOwner = await db.query.memesTable.findFirst({
+      where: eq(memesTable.id, memeId),
+      columns: { userId: true },
+    });
+
+    if (memeOwner && memeOwner.userId !== currentUser.id && meme) {
+      const userComment =
+        currentUser.username || currentUser.name || "un usuario";
+      await createNotification(
+        memeOwner.userId,
+        "comment",
+        `${userComment} comento tu meme de ${meme.title}`,
+        `${env.APP_URL}/meme/${memeId}`,
+        currentUser.id,
+      );
+    }
   }
 
   updateTag(CACHE_TAGS.meme(memeId));
@@ -211,10 +241,6 @@ export async function deleteMeme(memeId: string) {
 
   return { success: true };
 }
-
-import { getCurrentUser } from "@/data/user";
-import type { Category } from "@/types/category";
-import type { Tag } from "@/types/tag";
 
 type TagForForm = Omit<Tag, "createdAt" | "updatedAt">;
 

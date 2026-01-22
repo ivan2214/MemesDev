@@ -48,11 +48,13 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
 
   const handleLike = useCallback(async () => {
     if (!isAuthenticated) {
+      console.log("No autenticado");
       return toast.error("Debes iniciar sesión para dar like", {
         duration: 2000,
       });
     }
     if (currentUserId === meme?.user.id) {
+      console.log("No puedes dar like a tus propios memes");
       return toast.error("No puedes dar like a tus propios memes", {
         duration: 2000,
       });
@@ -206,14 +208,14 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
               size="icon"
               className={cn(
                 "h-8 w-8 sm:h-9 sm:w-9",
-                meme?.isLiked && "text-primary",
+                likedState.isLiked && "text-primary",
               )}
               onClick={handleLike}
             >
               <Heart
                 className={cn(
                   "h-4 w-4 sm:h-5 sm:w-5",
-                  meme?.isLiked && "fill-current",
+                  likedState.isLiked && "fill-current",
                 )}
               />
             </Button>
@@ -224,13 +226,13 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
                 size="icon"
                 className={cn(
                   "h-8 w-8 sm:h-9 sm:w-9",
-                  meme?.isLiked && "text-primary",
+                  likedState.isLiked && "text-primary",
                 )}
               >
                 <Heart
                   className={cn(
                     "h-4 w-4 sm:h-5 sm:w-5",
-                    meme?.isLiked && "fill-current",
+                    likedState.isLiked && "fill-current",
                   )}
                 />
               </Button>
@@ -280,7 +282,7 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
               size="sm"
               className="h-auto p-0 font-semibold text-xs hover:bg-transparent disabled:cursor-pointer sm:text-sm"
             >
-              {meme?.likesCount} likes
+              {likedState.likesCount} likes
             </Button>
             <span className="text-muted-foreground text-xs">•</span>
             <Link href={`/meme/${meme?.id}`}>

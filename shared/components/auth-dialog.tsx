@@ -2,7 +2,8 @@
 
 import { Loader2 } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { signIn, useSession } from "@/lib/auth/auth-client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/components/ui/button";
@@ -50,7 +51,52 @@ export function AuthDialog({
     }
   };
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, startTransition] = useTransition();
+
+  const handleClick = ({
+    type,
+    provider,
+    callbackURL,
+  }: {
+    type: "magicLink" | "social";
+    provider?: "github" | "google";
+    callbackURL: string;
+  }) => {
+    if (type === "magicLink") {
+      startTransition(async () => {
+        await signIn.magicLink({
+          email,
+        });
+      });
+    } else if (type === "social" && provider) {
+      startTransition(async () => {
+        await signIn.social(
+          {
+            provider,
+            callbackURL,
+          },
+          {
+            onSuccess: (ctx) => {
+              const { data, response } = ctx;
+              console.log("data:", data);
+              console.log("response:", response);
+
+              setOpen(false);
+              toast.success("Bienvenido");
+            },
+            onError: (ctx) => {
+              const { response, error, request } = ctx;
+              console.log("response:", response);
+              console.log("error:", error);
+              console.log("request:", request);
+
+              toast.error("Hubo un error al iniciar sesión");
+            },
+          },
+        );
+      });
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -86,24 +132,17 @@ export function AuthDialog({
                     setEmail(e.target.value);
                   }}
                   value={email}
+                  disabled={loading}
                 />
                 <Button
-                  disabled={loading}
                   className="gap-2"
-                  onClick={async () => {
-                    await signIn.magicLink({
-                      email,
-
-                      fetchOptions: {
-                        onRequest: () => {
-                          setLoading(true);
-                        },
-                        onResponse: () => {
-                          setLoading(false);
-                        },
-                      },
-                    });
-                  }}
+                  onClick={() =>
+                    handleClick({
+                      type: "magicLink",
+                      callbackURL: "/",
+                    })
+                  }
+                  disabled={loading || !email}
                 >
                   {loading ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -123,18 +162,11 @@ export function AuthDialog({
                   variant="outline"
                   className="w-full gap-2"
                   disabled={loading}
-                  onClick={async () => {
-                    await signIn.social({
+                  onClick={() => {
+                    handleClick({
+                      type: "social",
                       provider: "google",
                       callbackURL: "/",
-                      fetchOptions: {
-                        onRequest: () => {
-                          setLoading(true);
-                        },
-                        onResponse: () => {
-                          setLoading(false);
-                        },
-                      },
                     });
                   }}
                 >
@@ -168,19 +200,11 @@ export function AuthDialog({
                   variant="outline"
                   className="w-full gap-2"
                   disabled={loading}
-                  onClick={async () => {
-                    await signIn.social({
+                  onClick={() => {
+                    handleClick({
+                      type: "social",
                       provider: "github",
                       callbackURL: "/",
-
-                      fetchOptions: {
-                        onRequest: () => {
-                          setLoading(true);
-                        },
-                        onResponse: () => {
-                          setLoading(false);
-                        },
-                      },
                     });
                   }}
                 >

@@ -2,6 +2,7 @@
 import { LogOut, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { User } from "@/lib/auth";
 import { signOut } from "@/lib/auth/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -20,7 +21,9 @@ export const UserMenu = ({ user }: { user: User }) => {
 
   const handleSignOut = async () => {
     await signOut();
+    router.push("/");
     router.refresh();
+    toast.info("Hasta luego");
   };
 
   return (

@@ -76,8 +76,6 @@ export function MemeShare({
         `width=${width},height=${height},left=${left},top=${top}`,
       );
     }
-
-    toast.success(`Compartiendo en ${platform}`);
   };
 
   return (
