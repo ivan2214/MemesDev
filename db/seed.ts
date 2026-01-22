@@ -10,6 +10,7 @@ import {
   likesTable,
   memesTable,
   memeTagsTable,
+  notificationTable,
   session,
   tagsTable,
   user,
@@ -97,6 +98,26 @@ const COMMENT_TEMPLATES = [
   "console.log('here')",
 ];
 
+const NOTIFICATION_MESSAGES = {
+  like: [
+    "liked your meme",
+    "appreciated your meme",
+    "gave a like to your meme",
+  ],
+  comment: [
+    "commented on your meme",
+    "left a comment on your meme",
+    "replied to your meme",
+  ],
+  follow: ["started following you", "is now following you", "followed you"],
+  system: [
+    "Welcome to MemesDev! Start sharing your programming memes 🚀",
+    "Your account has been verified successfully ✅",
+    "Check out the trending memes this week!",
+    "You've reached 10 likes on your memes! Keep it up! 🎉",
+  ],
+};
+
 function getRandomMemeUrl(): string {
   return faker.helpers.arrayElement(MEME_IMAGE_URLS);
 }
@@ -133,6 +154,7 @@ async function seed() {
     db.delete(likesTable),
     db.delete(memeTagsTable),
     db.delete(userTagsTable),
+    db.delete(notificationTable),
     db.delete(memesTable),
     db.delete(tagsTable),
     db.delete(categoriesTable),
@@ -199,13 +221,30 @@ async function seed() {
   const allTags = [...tags, ...additionalTags];
   const tagIds = allTags.map((t) => t.id);
 
-  // Crear usuarios en memoria
+  // Crear usuarios en memoria con usernames únicos
+  const usedUsernames = new Set<string>();
   const users = Array.from({ length: 15 }, () => {
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
+
+    // Generar username único
+    const baseUsername =
+      `${firstName.toLowerCase()}${lastName.toLowerCase()}`.replace(
+        /[^a-z0-9]/g,
+        "",
+      );
+    let username = baseUsername;
+    let counter = 1;
+    while (usedUsernames.has(username)) {
+      username = `${baseUsername}${counter}`;
+      counter++;
+    }
+    usedUsernames.add(username);
+
     return {
       id: faker.string.uuid(),
       name: `${firstName} ${lastName}`,
+      username,
       email: faker.internet.email({ firstName, lastName }).toLowerCase(),
       emailVerified: true,
       image: faker.image.avatar(),
@@ -214,11 +253,11 @@ async function seed() {
       socials: [
         {
           platform: "Twitter",
-          url: `https://twitter.com/${firstName}${lastName}`,
+          url: `https://twitter.com/${username}`,
         },
         {
           platform: "GitHub",
-          url: `https://github.com/${firstName}${lastName}`,
+          url: `https://github.com/${username}`,
         },
       ],
       categoryId: faker.helpers.arrayElement(categoryIds),
@@ -333,6 +372,97 @@ async function seed() {
     meme.commentsCount = commentCounts.get(meme.id) || 0;
   });
 
+  // Crear notificaciones en memoria
+  type NotificationType = "like" | "comment" | "follow" | "system";
+  const notifications: {
+    id: string;
+    userId: string;
+    type: NotificationType;
+    message: string;
+    read: boolean;
+    link: string | null;
+    from: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }[] = [];
+
+  // Notificaciones de sistema para todos los usuarios
+  for (const u of users) {
+    notifications.push({
+      id: faker.string.uuid(),
+      userId: u.id,
+      type: "system",
+      message: faker.helpers.arrayElement(NOTIFICATION_MESSAGES.system),
+      read: faker.datatype.boolean(),
+      link: null,
+      from: "system",
+      createdAt: u.createdAt,
+      updatedAt: new Date(),
+    });
+  }
+
+  // Notificaciones de likes (basadas en los likes creados)
+  for (const like of likes.slice(0, 50)) {
+    // Encontrar el dueño del meme
+    const meme = memes.find((m) => m.id === like.memeId);
+    if (meme && meme.userId !== like.userId) {
+      const liker = users.find((u) => u.id === like.userId);
+      notifications.push({
+        id: faker.string.uuid(),
+        userId: meme.userId,
+        type: "like",
+        message: `${liker?.name || "Someone"} ${faker.helpers.arrayElement(NOTIFICATION_MESSAGES.like)}`,
+        read: faker.datatype.boolean(),
+        link: `/meme/${meme.id}`,
+        from: like.userId,
+        createdAt: like.createdAt,
+        updatedAt: new Date(),
+      });
+    }
+  }
+
+  // Notificaciones de comentarios (basadas en los comentarios creados)
+  for (const comment of comments.slice(0, 40)) {
+    const meme = memes.find((m) => m.id === comment.memeId);
+    if (meme && meme.userId !== comment.userId) {
+      const commenter = users.find((u) => u.id === comment.userId);
+      notifications.push({
+        id: faker.string.uuid(),
+        userId: meme.userId,
+        type: "comment",
+        message: `${commenter?.name || "Someone"} ${faker.helpers.arrayElement(NOTIFICATION_MESSAGES.comment)}`,
+        read: faker.datatype.boolean(),
+        link: `/meme/${meme.id}`,
+        from: comment.userId,
+        createdAt: comment.createdAt,
+        updatedAt: new Date(),
+      });
+    }
+  }
+
+  // Notificaciones de follows aleatorias
+  const followPairs = new Set<string>();
+  for (let i = 0; i < 30; i++) {
+    const follower = faker.helpers.arrayElement(users);
+    const followed = faker.helpers.arrayElement(users);
+    const pairKey = `${follower.id}-${followed.id}`;
+
+    if (follower.id !== followed.id && !followPairs.has(pairKey)) {
+      followPairs.add(pairKey);
+      notifications.push({
+        id: faker.string.uuid(),
+        userId: followed.id,
+        type: "follow",
+        message: `${follower.name} ${faker.helpers.arrayElement(NOTIFICATION_MESSAGES.follow)}`,
+        read: faker.datatype.boolean(),
+        link: `/profile/${follower.username}`,
+        from: follower.id,
+        createdAt: faker.date.past({ years: 1 }),
+        updatedAt: new Date(),
+      });
+    }
+  }
+
   performance.mark("generate-end");
   performance.measure("generate-data", "generate-start", "generate-end");
   const generateDuration =
@@ -390,6 +520,7 @@ async function seed() {
     batchInsert(userTagsTable, userTags, 100),
     batchInsert(likesTable, likes, 100),
     batchInsert(commentsTable, comments, 100),
+    batchInsert(notificationTable, notifications, 100),
   ]);
   performance.mark("insert-relations-end");
   performance.measure(
@@ -400,7 +531,7 @@ async function seed() {
   const relationsDuration =
     performance.getEntriesByName("insert-relations")[0].duration;
   console.log(
-    `  ⏱️  MemeTags, Likes & Comments inserted in ${(relationsDuration / 1000).toFixed(2)}s`,
+    `  ⏱️  MemeTags, Likes, Comments & Notifications inserted in ${(relationsDuration / 1000).toFixed(2)}s`,
   );
 
   performance.mark("insert-end");
@@ -436,6 +567,7 @@ async function seed() {
    • MemeTags:   ${memeTags.length}
    • Likes:      ${likes.length}
    • Comments:   ${comments.length}
+   • Notifications: ${notifications.length}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   `);
 

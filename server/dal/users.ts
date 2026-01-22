@@ -114,9 +114,20 @@ export const getTrendCreators = async () => {
   const trendCreators = await db.query.user.findMany({
     orderBy: desc(userTable.createdAt),
     limit: 5,
+    with: {
+      category: true,
+      tags: {
+        with: {
+          tag: true,
+        },
+      },
+    },
   });
 
-  return trendCreators;
+  return trendCreators.map((user) => ({
+    ...user,
+    tags: user.tags.map((tag) => tag.tag),
+  }));
 };
 
 export const getNotifications = async () => {

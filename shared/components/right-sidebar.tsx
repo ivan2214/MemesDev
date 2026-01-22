@@ -2,6 +2,7 @@
 
 import { Terminal, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import type { User } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import {
@@ -16,7 +17,6 @@ import {
   getCategoryStyles,
   getIconByName,
 } from "@/shared/lib/tag-icons";
-import type { User } from "@/shared/types";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";

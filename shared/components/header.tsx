@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/data/user";
-import { getNotifications } from "@/server/dal/users";
 import { AuthDialog } from "@/shared/components/auth-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";
@@ -64,13 +63,12 @@ export function Header() {
 
 const HeaderUser = async () => {
   const user = await getCurrentUser();
-  const notifications = await getNotifications();
 
   const isAuthenticated = !!user;
 
   return isAuthenticated ? (
     <>
-      <Notifications notifications={notifications} />
+      <Notifications />
       <UserMenu user={user} />
     </>
   ) : (

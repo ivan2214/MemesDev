@@ -22,7 +22,7 @@ export async function MainLayout({
   const categories = await getAllCategories();
   const tags = await getAllTags();
   const creators = showRightSidebar ? await getTrendCreators() : undefined;
-  const systemStatus = await getSystemStatus();
+  const systemStatus = showRightSidebar ? await getSystemStatus() : undefined;
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-sidebar" />}>

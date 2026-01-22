@@ -1,19 +1,18 @@
 import { Bell } from "lucide-react";
 
+import { getNotifications } from "@/server/dal/users";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import type { Notification } from "../types";
 import { NotificationsContent } from "./notifications-content";
 import { Button } from "./ui/button";
 
-export function Notifications({
-  notifications,
-}: {
-  notifications: Notification[];
-}) {
+export async function Notifications() {
+  const notifications = await getNotifications();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
