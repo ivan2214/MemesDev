@@ -210,7 +210,7 @@ export async function searchMemesDal({
   // 1. Filtro por Query (Título o Tags)
   if (query?.trim()) {
     const searchFilter = or(
-      ilike(memesTable.title, `%${query.trim()}%`),
+      ilike(memesTable.title, `%${query}%`),
       exists(
         db
           .select({ id: memeTagsTable.id })
@@ -219,7 +219,7 @@ export async function searchMemesDal({
           .where(
             and(
               eq(memeTagsTable.memeId, memesTable.id),
-              ilike(tagsTable.name, `%${query.trim()}%`),
+              ilike(tagsTable.name, `%${query}%`),
             ),
           ),
       ),

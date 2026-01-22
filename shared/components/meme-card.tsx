@@ -35,7 +35,8 @@ interface MemeCardProps {
 }
 
 export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
-  const { toggleInArray, set } = useQueryParams();
+  const { toggleInArray, set, get } = useQueryParams();
+  const query = get("q") ?? "";
 
   const { user, isAuthenticated } = useAuth();
   const currentUserId = isAuthenticated ? user?.id : null;
@@ -98,6 +99,30 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
   const CategoryIcon = meme?.category?.icon
     ? getIconByName(meme?.category.icon)
     : null;
+
+  // Resaltar solo la palabra buscada en cada texto, lo demas no
+  const highlightQuery = (text: string) => {
+    if (!query) return text;
+
+    // Escapar caracteres especiales de regex en la query
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const queryRegex = new RegExp(`(${escapedQuery})`, "gi");
+
+    // split con grupo de captura mantiene los delimitadores (las coincidencias) en el resultado
+    const parts = text.split(queryRegex);
+
+    return parts.map((part, index) => {
+      // Verificar si esta parte coincide con la query (case-insensitive)
+      if (part.toLowerCase() === query.toLowerCase()) {
+        return (
+          <span key={index} className="font-semibold text-primary">
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
 
   return (
     <div className="w-full max-w-full overflow-hidden rounded-lg border border-border bg-card">
@@ -269,11 +294,13 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
               </Badge>
             </Button>
           )}
-          <Link href={`/meme/${meme?.id}`} className="block">
-            <p className="wrap-break-word line-clamp-2 text-foreground text-xs sm:text-sm">
-              {meme?.title}
-            </p>
-          </Link>
+          {meme.title && (
+            <Link href={`/meme/${meme?.id}`} className="block">
+              <p className="wrap-break-word line-clamp-2 text-foreground text-xs sm:text-sm">
+                {highlightQuery(meme?.title || "")}
+              </p>
+            </Link>
+          )}
           <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
             {meme?.tags?.map((tag) => (
               <Button
