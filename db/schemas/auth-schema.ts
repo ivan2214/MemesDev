@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   json,
+  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -27,6 +28,29 @@ export const user = pgTable("user", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+const notificationEnum = pgEnum("notification_type", [
+  "like",
+  "comment",
+  "follow",
+  "system",
+]);
+
+export const notificationTable = pgTable("notification", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id),
+  type: notificationEnum(),
+  message: text("message").notNull(),
+  read: boolean("read").default(false).notNull(),
+  link: text("link"),
+  from: text("from").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
@@ -101,7 +125,18 @@ export const userRelations = relations(user, ({ many, one }) => ({
     fields: [user.categoryId],
     references: [categoriesTable.id],
   }),
+  notifications: many(notificationTable),
 }));
+
+export const notificationRelations = relations(
+  notificationTable,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [notificationTable.userId],
+      references: [user.id],
+    }),
+  }),
+);
 
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {

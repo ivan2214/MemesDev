@@ -1,9 +1,15 @@
-"use server";
+import "server-only";
 
 import { count, desc, eq } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
+import { getCurrentUser } from "@/data/user";
 import { db } from "@/db";
-import { likesTable, memesTable, user as userTable } from "@/db/schemas";
+import {
+  likesTable,
+  memesTable,
+  notificationTable,
+  user as userTable,
+} from "@/db/schemas";
 import { CACHE_LIFE, CACHE_TAGS } from "@/shared/constants";
 import type { UserProfile } from "@/types/profile";
 
@@ -111,4 +117,21 @@ export const getTrendCreators = async () => {
   });
 
   return trendCreators;
+};
+
+export const getNotifications = async () => {
+  const user = await getCurrentUser();
+
+  if (!user || !user.id) {
+    return [];
+  }
+
+  const userId = user.id;
+
+  const notifications = await db.query.notificationTable.findMany({
+    where: eq(notificationTable.userId, userId),
+    orderBy: desc(notificationTable.createdAt),
+  });
+
+  return notifications;
 };

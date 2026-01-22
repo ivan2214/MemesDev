@@ -41,6 +41,13 @@ export const auth = betterAuth({
         },
       });
 
+      if (!userDB) {
+        return {
+          session,
+          user,
+        };
+      }
+
       const parsedUser = {
         ...userDB,
         tags: userDB?.tags?.map((tag) => tag.tag),

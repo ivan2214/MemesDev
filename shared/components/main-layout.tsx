@@ -29,17 +29,15 @@ export async function MainLayout({
       <SidebarProvider>
         <AppSidebar categories={categories} browseTags={tags} />
         <SidebarInset>
-          <Header categoriesDB={categories} tagsDB={tags} />
+          <Header />
           <div
             className={cn(
               showRightSidebar && "flex justify-center gap-8",
               "px-4 py-6 pb-20 md:pb-6",
             )}
           >
-            {/* Main Content Column */}
             <main className="flex w-full max-w-2xl flex-col">{children}</main>
 
-            {/* Right Sidebar - Solo visible en PC */}
             {showRightSidebar && (
               <RightSidebar creators={creators} systemStatus={systemStatus} />
             )}

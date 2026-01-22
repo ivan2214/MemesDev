@@ -1,6 +1,9 @@
+import type { notificationTable } from "@/db/schemas";
 import type { User as UserBA } from "@/lib/auth";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
+
+export type Notification = typeof notificationTable.$inferSelect;
 
 export interface User extends UserBA {
   username: string;
@@ -27,17 +30,6 @@ export type TimeFilter =
   | "6months"
   | "1year"
   | "all";
-
-export interface Notification {
-  id: string;
-  type: "like" | "comment" | "follow" | "system";
-  from: string;
-  avatar?: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-  link?: string;
-}
 
 export interface Community {
   id: string;
