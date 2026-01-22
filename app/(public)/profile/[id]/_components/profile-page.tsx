@@ -111,7 +111,7 @@ export function ProfilePage({
 
           <div className="flex-1 text-center sm:text-left">
             <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-              <h1 className="text-balance font-bold text-3xl">
+              <h1 className="text-balance font-bold text-2xl">
                 {profile.name}
               </h1>
               {profile.category && (

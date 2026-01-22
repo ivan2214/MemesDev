@@ -35,3 +35,9 @@ export type CategoryForm = Omit<
   Category,
   "createdAt" | "updatedAt" | "icon" | "color"
 >;
+
+export interface TrendCreator extends User {
+  totalMemes: number;
+  totalLikes: number;
+  totalComments: number;
+}

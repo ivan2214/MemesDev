@@ -9,7 +9,7 @@ export default function Loading() {
         <div className="flex items-center gap-3">
           <Shuffle className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-balance font-bold text-3xl">Random Memes</h1>
+            <h1 className="text-balance font-bold text-2xl">Random Memes</h1>
             <p className="text-pretty text-muted-foreground text-sm">
               Descubre algo inesperado
             </p>
