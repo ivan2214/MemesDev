@@ -15,6 +15,15 @@ import { likesTable } from "./likes-table";
 import { memesTable } from "./memes-table";
 import { userTagsTable } from "./tags-table";
 
+// IMPORTANTE: Los enums DEBEN estar exportados y definidos ANTES de las tablas
+// para que Drizzle Kit los incluya correctamente en las migraciones generadas
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "like",
+  "comment",
+  "follow",
+  "system",
+]);
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -33,19 +42,12 @@ export const user = pgTable("user", {
     .notNull(),
 });
 
-const notificationEnum = pgEnum("notification_type", [
-  "like",
-  "comment",
-  "follow",
-  "system",
-]);
-
 export const notificationTable = pgTable("notification", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
     .references(() => user.id),
-  type: notificationEnum(),
+  type: notificationTypeEnum(),
   message: text("message").notNull(),
   read: boolean("read").default(false).notNull(),
   link: text("link"),

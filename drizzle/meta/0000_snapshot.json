@@ -1,5 +1,5 @@
 {
-  "id": "36cdd5b6-f303-44fb-8288-54c93ea69f63",
+  "id": "3758481f-bcce-4700-9681-305e21dc596e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -132,9 +132,10 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "user_id": {
           "name": "user_id",
@@ -978,7 +979,18 @@
       "isRLSEnabled": false
     }
   },
-  "enums": {},
+  "enums": {
+    "public.notification_type": {
+      "name": "notification_type",
+      "schema": "public",
+      "values": [
+        "like",
+        "comment",
+        "follow",
+        "system"
+      ]
+    }
+  },
   "schemas": {},
   "sequences": {},
   "roles": {},
