@@ -1,13 +1,10 @@
-"use server";
+import "server-only";
 
-import { desc } from "drizzle-orm";
-// import { cacheTag, cacheLife } from "next/cache";
-// Note: next/cache imports might need to be verified if they work as expected or need unstable_.
-// Based on skill, it is standard import.
+import { count, desc, eq } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
 
 import { db } from "@/db";
-import { tagsTable } from "@/db/schemas";
+import { memeTagsTable, tagsTable } from "@/db/schemas";
 import { CACHE_LIFE, CACHE_TAGS } from "@/shared/constants";
 
 export async function getAllCategories() {
@@ -18,13 +15,25 @@ export async function getAllCategories() {
   return await db.query.categoriesTable.findMany();
 }
 
-export async function getAllTags() {
+export async function getPopularTags() {
   "use cache";
-  cacheTag(CACHE_TAGS.TAGS);
+  cacheTag(CACHE_TAGS.TAGS_POPULAR);
   cacheLife(CACHE_LIFE.LONG);
 
-  return await db.query.tagsTable.findMany({
-    orderBy: [desc(tagsTable.name)],
-    limit: 50,
-  });
+  // Obtener los tags ordenados por cantidad de memes con toda la info
+  const popularTagsQuery = await db
+    .select({
+      id: tagsTable.id,
+      name: tagsTable.name,
+      slug: tagsTable.slug,
+      createdAt: tagsTable.createdAt,
+      memeCount: count(memeTagsTable.memeId),
+    })
+    .from(tagsTable)
+    .innerJoin(memeTagsTable, eq(memeTagsTable.tagId, tagsTable.id))
+    .groupBy(tagsTable.id, tagsTable.name, tagsTable.slug, tagsTable.createdAt)
+    .orderBy(desc(count(memeTagsTable.memeId)))
+    .limit(10);
+
+  return popularTagsQuery;
 }

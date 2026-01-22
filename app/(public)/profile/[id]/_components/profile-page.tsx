@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { User as CurrentUser } from "@/lib/auth";
 import { EditProfileDialog } from "@/shared/components/edit-profile-dialog";
 import { MemeCard } from "@/shared/components/meme-card";
+import { TagItem } from "@/shared/components/tag-item";
 import {
   Avatar,
   AvatarFallback,
@@ -139,9 +140,7 @@ export function ProfilePage({
             {profile.tags && profile.tags.length > 0 && (
               <div className="mb-4 flex flex-wrap justify-center gap-2 sm:justify-start">
                 {profile.tags.map((tag) => (
-                  <Badge key={tag.id} variant="outline">
-                    {tag.name}
-                  </Badge>
+                  <TagItem key={tag.id} tag={tag} variant="outline" />
                 ))}
               </div>
             )}

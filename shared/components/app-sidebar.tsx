@@ -51,12 +51,7 @@ export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
       ...c,
     }));
 
-  const displayTags =
-    browseTags ||
-    DEFAULT_TAGS.map((t, i) => ({
-      id: `default-${i}`,
-      ...t,
-    }));
+  const displayTags = browseTags || DEFAULT_TAGS;
 
   return (
     <Sidebar>

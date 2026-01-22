@@ -35,6 +35,7 @@ export const CACHE_TAGS = {
   MEMES: "memes",
   CATEGORIES: "categories",
   TAGS: "tags",
+  TAGS_POPULAR: "tags-popular",
   USERS: "users",
   LIKES: "likes",
   COMMENTS: "comments",

@@ -30,6 +30,7 @@ import {
   Timer,
   Zap,
 } from "lucide-react";
+import type { Tag } from "@/types/tag";
 
 // Mapeo de nombres de iconos a componentes de Lucide
 export const iconMap: Record<string, LucideIcon> = {
@@ -235,15 +236,57 @@ export const DEFAULT_CATEGORIES = [
 ] as const;
 
 // Tags por defecto para seed inicial
-export const DEFAULT_TAGS = [
-  { name: "JavaScript", slug: "javascript" },
-  { name: "Python", slug: "python" },
-  { name: "React", slug: "react" },
-  { name: "TypeScript", slug: "typescript" },
-  { name: "Git", slug: "git" },
-  { name: "Debugging", slug: "debugging" },
-  { name: "Docker", slug: "docker" },
-  { name: "CSS", slug: "css" },
-  { name: "Node.js", slug: "nodejs" },
-  { name: "API", slug: "api" },
+export const DEFAULT_TAGS: Tag[] = [
+  {
+    name: "JavaScript",
+    slug: "javascript",
+    createdAt: new Date(),
+    id: "javascript",
+    memeCount: 0,
+  },
+  {
+    name: "Python",
+    slug: "python",
+    createdAt: new Date(),
+    id: "python",
+    memeCount: 0,
+  },
+  {
+    name: "React",
+    slug: "react",
+    createdAt: new Date(),
+    id: "react",
+    memeCount: 0,
+  },
+  {
+    name: "TypeScript",
+    slug: "typescript",
+    createdAt: new Date(),
+    id: "typescript",
+    memeCount: 0,
+  },
+  { name: "Git", slug: "git", createdAt: new Date(), id: "git", memeCount: 0 },
+  {
+    name: "Debugging",
+    slug: "debugging",
+    createdAt: new Date(),
+    id: "debugging",
+    memeCount: 0,
+  },
+  {
+    name: "Docker",
+    slug: "docker",
+    createdAt: new Date(),
+    id: "docker",
+    memeCount: 0,
+  },
+  { name: "CSS", slug: "css", createdAt: new Date(), id: "css", memeCount: 0 },
+  {
+    name: "Node.js",
+    slug: "nodejs",
+    createdAt: new Date(),
+    id: "nodejs",
+    memeCount: 0,
+  },
+  { name: "API", slug: "api", createdAt: new Date(), id: "api", memeCount: 0 },
 ] as const;

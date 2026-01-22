@@ -23,11 +23,9 @@ import {
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 import type { TrendCreator } from "../types";
+import { ToTitleCase } from "../utils";
+import { TagItem } from "./tag-item";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-
-const ToTitleCase = (str: string) => {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-};
 
 interface RightSidebarProps {
   categories?: Category[];
@@ -54,12 +52,7 @@ export function RightSidebar({
       ...c,
     }));
 
-  const displayTags =
-    popularTags ||
-    DEFAULT_TAGS.map((t, i) => ({
-      id: `default-${i}`,
-      ...t,
-    }));
+  const displayTags: Tag[] = popularTags || DEFAULT_TAGS;
 
   return (
     <aside className="sticky top-20 hidden w-80 shrink-0 space-y-6 lg:block">
@@ -130,14 +123,7 @@ export function RightSidebar({
         </CardHeader>
         <CardContent className="flex flex-wrap gap-1.5">
           {displayTags.map((tag) => (
-            <Link key={tag.id} href={`/?tags=${tag.slug}`}>
-              <Badge
-                variant="secondary"
-                className="cursor-pointer bg-secondary/50 text-xs transition-colors hover:bg-primary/20 hover:text-primary"
-              >
-                #{tag.name}
-              </Badge>
-            </Link>
+            <TagItem key={tag.id} tag={tag} variant="outline" />
           ))}
         </CardContent>
       </Card>

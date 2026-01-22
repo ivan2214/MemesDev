@@ -19,7 +19,7 @@ export function SearchPage({
   tags: Tag[];
   userId?: string;
 }) {
-  const { toggleInArray, clear, get, getArray, set } = useQueryParams();
+  const { clear, get, getArray, set } = useQueryParams();
 
   const query = get("q") ?? "";
   const sort = (get("sort") as SortType) ?? "recent";
@@ -46,11 +46,7 @@ export function SearchPage({
 
       <SortOptions value={sort} onChange={(v) => set("sort", v)} />
 
-      <TagsFilter
-        tags={tags}
-        selected={selectedTags}
-        onSelect={(tag) => toggleInArray("tags", tag)}
-      />
+      <TagsFilter tags={tags} />
 
       <MemeResults
         memes={search.memes}
