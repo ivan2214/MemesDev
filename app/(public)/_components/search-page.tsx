@@ -19,7 +19,7 @@ export function SearchPage({
   tags: Tag[];
   userId?: string;
 }) {
-  const { clear, get, getArray, set } = useQueryParams();
+  const { get, getArray, set } = useQueryParams();
 
   const query = get("q") ?? "";
   const sort = (get("sort") as SortType) ?? "recent";
@@ -37,12 +37,7 @@ export function SearchPage({
 
   return (
     <div className="space-y-6">
-      <SearchBar
-        value={query}
-        onChange={(v) => set("q", v)}
-        onSubmit={() => {}}
-        onClear={() => clear()}
-      />
+      <SearchBar value={query} />
 
       <SortOptions value={sort} onChange={(v) => set("sort", v)} />
 
