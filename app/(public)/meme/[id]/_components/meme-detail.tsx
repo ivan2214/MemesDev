@@ -46,6 +46,7 @@ export function MemeDetail({ memeId, meme, comments }: MemeDetailProps) {
       toast.error("Failed to post comment");
     } finally {
       setSubmittingComment(false);
+      setCommentText("");
     }
   };
 
