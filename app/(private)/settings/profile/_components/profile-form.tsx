@@ -13,6 +13,7 @@ import {
   type ProfileSchema,
   profileSchema,
 } from "@/app/(private)/settings/profile/_validators";
+import type { User as CurrentUser } from "@/lib/auth";
 import { uploadOptimizedImage } from "@/shared/actions/upload-actions";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -35,18 +36,10 @@ import {
 } from "@/shared/components/ui/shadcn-io/tags";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { UploadDropzone } from "@/shared/components/ui/upload-dropzone";
-import type { Category } from "@/types/category";
-import type { Tag } from "@/types/tag";
-import type { UserSettings } from "../_types";
-
-type TagForForm = Omit<Tag, "createdAt" | "updatedAt">;
-type CategoryForm = Omit<
-  Category,
-  "createdAt" | "updatedAt" | "icon" | "color"
->;
+import type { CategoryForm, TagForForm } from "@/shared/types";
 
 interface ProfileFormProps {
-  initialData: UserSettings | null;
+  currentUser?: CurrentUser;
   tagsDB: TagForForm[];
   categoriesDB: CategoryForm[];
 }
@@ -57,7 +50,7 @@ const profileFormSchema = profileSchema.extend({
 });
 
 export function ProfileForm({
-  initialData,
+  currentUser,
   tagsDB,
   categoriesDB,
 }: ProfileFormProps) {
@@ -67,14 +60,14 @@ export function ProfileForm({
 
   const form = useForm({
     defaultValues: {
-      name: initialData?.name || "",
-      bio: initialData?.bio || "",
-      tags: initialData?.tags || (null as TagForForm[] | null),
-      category: initialData?.category || (null as CategoryForm | null),
-      socials: initialData?.socials || [],
-      imageKey: initialData?.imageKey || "",
+      name: currentUser?.name || "",
+      bio: currentUser?.bio || "",
+      tags: currentUser?.tags || (null as TagForForm[] | null),
+      category: currentUser?.category || (null as CategoryForm | null),
+      socials: currentUser?.socials || [],
+      imageKey: currentUser?.imageKey || "",
       imageFile: undefined as never as File,
-      imagePreview: initialData?.image || "",
+      imagePreview: currentUser?.image || "",
     },
 
     validators: {

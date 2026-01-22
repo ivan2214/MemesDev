@@ -1,6 +1,8 @@
-import type { User as UserBa } from "@/lib/auth";
+import type { User as UserBA } from "@/lib/auth";
+import type { Category } from "@/types/category";
+import type { Tag } from "@/types/tag";
 
-export interface User extends UserBa {
+export interface User extends UserBA {
   username: string;
   bio: string;
   rank?: "JUNIOR" | "MID" | "SENIOR" | "LEAD" | "ARCHITECT";
@@ -15,44 +17,6 @@ export interface User extends UserBa {
     twitter?: string;
     portfolio?: string;
   };
-}
-
-export interface Meme {
-  id: string;
-  title: string;
-  imageUrl: string;
-  author: User;
-  category: string;
-  tags: string[];
-  likes: number;
-  comments: number;
-  shares: number;
-  saves: number;
-  createdAt: string;
-  isLiked?: boolean;
-  isSaved?: boolean;
-}
-
-export interface Comment {
-  id: string;
-  memeId: string;
-  author: User;
-  content: string;
-  likes: number;
-  isLiked?: boolean;
-  createdAt: string;
-  replies?: Comment[];
-}
-
-export interface Tag {
-  name: string;
-  count: number;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  icon: string;
 }
 
 export type TimeFilter =
@@ -90,3 +54,9 @@ export interface Community {
 }
 
 export type SortType = "recent" | "likes" | "comments";
+
+export type TagForForm = Omit<Tag, "createdAt" | "updatedAt">;
+export type CategoryForm = Omit<
+  Category,
+  "createdAt" | "updatedAt" | "icon" | "color"
+>;

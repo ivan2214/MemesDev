@@ -1,36 +1,7 @@
 "use server";
 import { deleteObject } from "@better-upload/server/helpers";
-
 import { and, desc, eq, ilike, inArray, or } from "drizzle-orm";
-// import { unstable_expireTag as expireTag, revalidateTag } from "next/cache"; // Removed unused
-// Note: updateTag is effectively expireTag in some contexts or revalidateTag.
-// Skill said updateTag. I'll check if updateTag is exported.
-// If not found in types, I will use revalidateTag or expireTag.
-// Next.js 16 docs usually refer to revalidateTag for server actions.
-// 'updateTag' might be a specific API I should check.
-// Skill says: import { updateTag } from 'next/cache'.
-// I will try to use revalidateTag as it is safer if updateTag is not found.
-// Wait, skill explicitly said "Where haya revalidatePath hay que cambiarlo a updateTag".
-// I will attempt `unstable_updateTag` or `updateTag`.
-// Let's safe bet on revalidateTag if updateTag is elusive, but I will try to follow user instruction.
-// Actually, revalidateTag is the standard for "invalidate this tag".
-// updateTag is sometimes used for client-side optimistics or specific new APIs.
-// User requirement: "Where haya revalidatePath hay que cambiarlo a updateTag".
-// I will use `revalidateTag` but alias it or just use `expireTag` if that is what they meant by "updateTag" (invalidate).
-// Let's look at `shared/constants.ts` to verify inputs.
-
-// Re-reading user request: "Where haya revalidatePath hay que cambiarlo a updateTag"
-// If `updateTag` is not a standard export, maybe they meant `revalidateTag`?
-// Or maybe `unstable_cacheTag` update?
-// I will assume `revalidateTag` is what executes the invalidation on server.
-// BUT, if I look at the skill provided:
-// ### 4. `updateTag()` - Immediate Invalidation
-// import { updateTag } from 'next/cache'
-// So it MUST be there. I will use it.
-
 import { updateTag } from "next/cache";
-
-import { headers } from "next/headers";
 import { db } from "@/db";
 import {
   categoriesTable,
@@ -41,19 +12,18 @@ import {
   tagsTable,
 } from "@/db/schemas";
 import { env } from "@/env/server";
-import { auth } from "@/lib/auth";
 import { s3 } from "@/lib/s3";
 import { CACHE_TAGS } from "@/shared/constants";
 import type { Comment } from "@/types/comment";
 
 export async function toggleLike(memeId: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const currentUser = await getCurrentUser();
 
-  if (!session?.user) {
+  if (!currentUser || !currentUser.id) {
     throw new Error("Unauthorized");
   }
 
-  const userId = session.user.id;
+  const userId = currentUser.id;
 
   // Check if already liked
   const existingLike = await db.query.likesTable.findFirst({
@@ -148,9 +118,9 @@ export async function getComments(
 }
 
 export async function addComment(memeId: string, content: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const currentUser = await getCurrentUser();
 
-  if (!session?.user) {
+  if (!currentUser || !currentUser.id) {
     throw new Error("Unauthorized");
   }
 
@@ -158,7 +128,7 @@ export async function addComment(memeId: string, content: string) {
     .insert(commentsTable)
     .values({
       memeId,
-      userId: session.user.id,
+      userId: currentUser.id,
       content,
     })
     .returning();
@@ -182,9 +152,9 @@ export async function addComment(memeId: string, content: string) {
 }
 
 export async function deleteMeme(memeId: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const currentUser = await getCurrentUser();
 
-  if (!session?.user) {
+  if (!currentUser) {
     throw new Error("Unauthorized");
   }
 
@@ -202,7 +172,7 @@ export async function deleteMeme(memeId: string) {
     throw new Error("Meme not found");
   }
 
-  if (meme.userId !== session.user.id) {
+  if (meme.userId !== currentUser.id) {
     throw new Error("Unauthorized");
   }
 
@@ -219,6 +189,7 @@ export async function deleteMeme(memeId: string) {
   return { success: true };
 }
 
+import { getCurrentUser } from "@/data/user";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 
@@ -240,9 +211,9 @@ export async function uploadMeme({
   title?: string;
   category: CategoryForm | null;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const currentUser = await getCurrentUser();
 
-  if (!session?.user) {
+  if (!currentUser || !currentUser.id) {
     throw new Error("Unauthorized");
   }
 
@@ -255,7 +226,7 @@ export async function uploadMeme({
   const [meme] = await db
     .insert(memesTable)
     .values({
-      userId: session.user.id,
+      userId: currentUser.id,
       imageUrl: imageUrl,
       imageKey,
       title,

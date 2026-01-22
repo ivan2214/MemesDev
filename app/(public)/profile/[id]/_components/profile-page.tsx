@@ -3,6 +3,8 @@
 import { Calendar, Heart, ImageIcon, User } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { User as CurrentUser } from "@/lib/auth";
+import { EditProfileDialog } from "@/shared/components/edit-profile-dialog";
 import { MemeCard } from "@/shared/components/meme-card";
 import {
   Avatar,
@@ -18,6 +20,7 @@ import {
 } from "@/shared/components/ui/card";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { PAGE_SIZE } from "@/shared/constants";
+import type { CategoryForm, TagForForm } from "@/shared/types";
 import type { Meme } from "@/types/meme";
 import type { UserProfile } from "@/types/profile";
 import { getUserMemes } from "../_actions";
@@ -25,13 +28,17 @@ import { getUserMemes } from "../_actions";
 export function ProfilePage({
   profile,
   initialUserMemes,
-
+  categoriesDB,
+  tagsDB,
   userId,
+  currentUser,
 }: {
   profile: UserProfile;
   initialUserMemes: Meme[];
-
+  tagsDB: TagForForm[];
+  categoriesDB: CategoryForm[];
   userId: string;
+  currentUser?: CurrentUser;
 }) {
   const [userMemes, setUserMemes] = useState<Meme[]>(initialUserMemes);
   const [loadingUploads, setLoadingUploads] = useState(false);
@@ -111,6 +118,13 @@ export function ProfilePage({
                 <Badge variant="secondary" className="text-sm">
                   {profile.category.name}
                 </Badge>
+              )}
+              {profile.id === userId && (
+                <EditProfileDialog
+                  categoriesDB={categoriesDB}
+                  currentUser={currentUser}
+                  tagsDB={tagsDB}
+                />
               )}
             </div>
 

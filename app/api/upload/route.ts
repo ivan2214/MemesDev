@@ -1,9 +1,7 @@
 import { RejectUpload, type Router, route } from "@better-upload/server";
 import { toRouteHandler } from "@better-upload/server/adapters/next";
-
-import { headers } from "next/headers";
+import { getCurrentUser } from "@/data/user";
 import { env } from "@/env/server";
-import { auth } from "@/lib/auth";
 import { s3 } from "@/lib/s3";
 
 const router: Router = {
@@ -14,18 +12,16 @@ const router: Router = {
       multipleFiles: false,
       fileTypes: ["image/*"],
       onBeforeUpload: async () => {
-        const user = await auth.api.getSession({
-          headers: await headers(),
-        });
+        const currentUser = await getCurrentUser();
 
-        if (!user) {
+        if (!currentUser || !currentUser.id) {
           throw new RejectUpload("Not logged in!");
         }
         return {
           objectInfo: {
-            key: `memes/${user.user.id}/${Date.now()}-meme`,
+            key: `memes/${currentUser.id}/${Date.now()}-meme`,
             metadata: {
-              author: user.user.id,
+              author: currentUser.id,
             },
           },
         };
@@ -36,20 +32,18 @@ const router: Router = {
       fileTypes: ["image/*"],
       maxFileSize: 5 * 1024 * 1024, // 5MB
       onBeforeUpload: async () => {
-        const user = await auth.api.getSession({
-          headers: await headers(),
-        });
+        const currentUser = await getCurrentUser();
 
-        if (!user) {
+        if (!currentUser || !currentUser.id) {
           throw new RejectUpload(
             "Debes iniciar sesión para subir una imagen de perfil",
           );
         }
         return {
           objectInfo: {
-            key: `avatars/${user.user.id}/${Date.now()}-avatar`,
+            key: `avatars/${currentUser.id}/${Date.now()}-avatar`,
             metadata: {
-              userId: user.user.id,
+              userId: currentUser.id,
             },
           },
         };
