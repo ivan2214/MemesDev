@@ -1,26 +1,9 @@
 import type { notificationTable } from "@/db/schemas";
-import type { User as UserBA } from "@/lib/auth";
+import type { User } from "@/lib/auth";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
 
 export type Notification = typeof notificationTable.$inferSelect;
-
-export interface User extends UserBA {
-  username: string;
-  bio: string;
-  rank?: "JUNIOR" | "MID" | "SENIOR" | "LEAD" | "ARCHITECT";
-  memesPublished: number;
-  upvotes: number;
-  followers: number;
-  following: number;
-  skills?: string[];
-  socialLinks?: {
-    github?: string;
-    linkedin?: string;
-    twitter?: string;
-    portfolio?: string;
-  };
-}
 
 export type TimeFilter =
   | "24h"

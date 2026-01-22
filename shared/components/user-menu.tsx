@@ -30,7 +30,7 @@ export const UserMenu = ({ user }: { user: User }) => {
           <Avatar>
             <AvatarImage src={user.image} />
             <AvatarFallback>
-              {user.name.split(" ")[0].slice(0, 2)}
+              {user.name?.split(" ")[0].slice(0, 2) || "US"}
             </AvatarFallback>
           </Avatar>
         ) : (
