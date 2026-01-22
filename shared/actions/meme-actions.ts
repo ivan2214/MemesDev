@@ -9,6 +9,7 @@ import {
   likesTable,
   memesTable,
   memeTagsTable,
+  notificationTable,
   tagsTable,
 } from "@/db/schemas";
 import { env } from "@/env/server";
@@ -63,14 +64,36 @@ export async function toggleLike(memeId: string) {
 
     const meme = await db.query.memesTable.findFirst({
       where: eq(memesTable.id, memeId),
-      columns: { likesCount: true },
+      columns: { likesCount: true, title: true },
     });
+
+    if (!meme) {
+      throw new Error("Meme not found");
+    }
 
     if (meme) {
       await db
         .update(memesTable)
         .set({ likesCount: meme.likesCount + 1 })
         .where(eq(memesTable.id, memeId));
+    }
+
+    // Enviar notificacion al usuario que recibio el like
+    const memeOwner = await db.query.memesTable.findFirst({
+      where: eq(memesTable.id, memeId),
+      columns: { userId: true },
+    });
+
+    if (memeOwner && memeOwner.userId !== userId && meme) {
+      const userLike = currentUser.username || currentUser.name || "un usuario";
+      await db.insert(notificationTable).values({
+        userId: memeOwner.userId,
+        type: "like",
+        message: `${userLike} le dio like a tu meme de ${meme.title}`,
+        link: `${env.APP_URL}/meme/${memeId}`,
+        read: false,
+        from: userId,
+      });
     }
 
     updateTag(CACHE_TAGS.meme(memeId));

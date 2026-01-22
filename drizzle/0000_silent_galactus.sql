@@ -1,5 +1,4 @@
-CREATE TYPE "notification_type" AS ENUM ('like', 'comment', 'follow', 'system');
---> statement-breakpoint
+CREATE TYPE "public"."notification_type" AS ENUM('like', 'comment', 'follow', 'system');--> statement-breakpoint
 CREATE TABLE "account" (
 	"id" text PRIMARY KEY NOT NULL,
 	"account_id" text NOT NULL,
@@ -17,7 +16,7 @@ CREATE TABLE "account" (
 );
 --> statement-breakpoint
 CREATE TABLE "notification" (
-	"id" text PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" text NOT NULL,
 	"type" "notification_type",
 	"message" text NOT NULL,
