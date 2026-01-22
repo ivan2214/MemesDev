@@ -120,7 +120,7 @@ async function SearchContent({
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <SearchPage initialMemes={memes} tags={tags} />
+      <SearchPage userId={user?.id} initialMemes={memes} tags={tags} />
     </>
   );
 }

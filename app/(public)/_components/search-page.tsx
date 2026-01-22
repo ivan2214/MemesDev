@@ -13,9 +13,11 @@ import { TagsFilter } from "./tags-filter";
 export function SearchPage({
   initialMemes,
   tags,
+  userId,
 }: {
   initialMemes: Meme[];
   tags: Tag[];
+  userId?: string;
 }) {
   const { toggleInArray, clear, get, getArray, set } = useQueryParams();
 
@@ -30,6 +32,7 @@ export function SearchPage({
     tags: selectedTags,
     category,
     initialMemes,
+    userId,
   });
 
   return (

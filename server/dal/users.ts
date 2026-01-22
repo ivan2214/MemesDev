@@ -2,14 +2,8 @@
 
 import { count, desc, eq } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
-import { getCurrentUser } from "@/data/user";
 import { db } from "@/db";
-import {
-  likesTable,
-  memesTable,
-  user as userTable,
-  userTagsTable,
-} from "@/db/schemas";
+import { likesTable, memesTable, user as userTable } from "@/db/schemas";
 import { CACHE_LIFE, CACHE_TAGS } from "@/shared/constants";
 import type { UserProfile } from "@/types/profile";
 
@@ -104,27 +98,6 @@ export async function getUserMemesDal({
       },
     },
   });
-}
-
-export async function getUserSettingsDal() {
-  "use cache";
-  const currentUser = await getCurrentUser();
-  if (!currentUser || !currentUser.id) return undefined;
-
-  cacheTag(CACHE_TAGS.USERS, CACHE_TAGS.user(currentUser.id));
-  cacheLife(CACHE_LIFE.DEFAULT);
-
-  const userTags = await db.query.userTagsTable.findMany({
-    where: eq(userTagsTable.userId, currentUser.id),
-    with: {
-      tag: true,
-    },
-  });
-
-  return {
-    tags: userTags.map((tag) => tag.tag),
-    category: currentUser?.category,
-  };
 }
 
 export const getTrendCreators = async () => {

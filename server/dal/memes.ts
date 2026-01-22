@@ -204,14 +204,6 @@ export async function searchMemesDal({
   );
   cacheLife(CACHE_LIFE.SHORT);
 
-  console.log("📊 Parámetros recibidos:", {
-    query,
-    tags,
-    category,
-    sort,
-    userId,
-  });
-
   // Array principal de filtros (se combinan con AND)
   const filters: SQL[] = [];
 
@@ -260,22 +252,14 @@ export async function searchMemesDal({
 
   // 3. Filtro por Categoría
   if (category?.trim()) {
-    console.log("🔍 Buscando categoría:", category);
     const categoryData = await db.query.categoriesTable.findFirst({
       where: eq(categoriesTable.slug, category.trim()),
       columns: { id: true, name: true, slug: true },
     });
 
-    console.log("📁 Categoría encontrada:", categoryData);
-
     if (categoryData) {
       filters.push(eq(memesTable.categoryId, categoryData.id));
-      console.log("✅ Filtro de categoría agregado");
-    } else {
-      console.log("❌ Categoría no encontrada en la BD");
     }
-  } else {
-    console.log("⚠️ No se recibió parámetro de categoría");
   }
 
   // 4. Excluir memes del usuario actual
@@ -302,12 +286,6 @@ export async function searchMemesDal({
 
   // Construir la condición WHERE final
   const whereCondition = filters.length > 0 ? and(...filters) : undefined;
-
-  console.log("🎯 Total de filtros aplicados:", filters.length);
-  console.log(
-    "🔎 Condición WHERE:",
-    whereCondition ? "Presente" : "Sin filtros",
-  );
 
   // Paso 1: Obtener IDs de memes que cumplen TODOS los filtros
   const matchedMemes = await db
