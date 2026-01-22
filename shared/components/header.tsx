@@ -17,20 +17,26 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-border/40 border-b bg-background/45 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <SidebarTrigger className="hidden md:flex" />
+          <SidebarTrigger />
           <Link
             href="/"
-            className="flex items-center gap-2 font-bold font-mono text-2xl md:hidden"
+            className="flex items-center gap-2 font-bold font-mono md:hidden md:text-2xl"
           >
-            <Image src="/logo.png" alt="Logo" width={24} height={24} />
-            <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
+            <Image
+              src="/logo-rb.webp"
+              alt="Logo"
+              className="h-16 w-16"
+              width={24}
+              height={24}
+            />
+            <span className="hidden bg-linear-to-r from-primary to-accent bg-clip-text text-transparent md:block">
               MemesDev
             </span>
           </Link>
         </div>
 
         <div className="flex items-center gap-3">
-          <Button size="icon" variant="ghost">
+          <Button className="hidden md:flex" size="icon" variant="ghost">
             <Link target="_blank" href="https://github.com/ivan2214/MemesDev">
               <GithubIcon className="h-4 w-4" />
             </Link>
