@@ -1,7 +1,7 @@
 import type React from "react";
 import { Suspense } from "react";
 import { cn } from "@/lib/utils";
-import { getAllCategories, getAllTags } from "@/server/dal/categories";
+import { getAllCategories, getPopularTags } from "@/server/dal/categories";
 import { getSystemStatus } from "@/server/dal/system";
 import { getTrendCreators } from "@/server/dal/users";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
@@ -20,7 +20,7 @@ export async function MainLayout({
   showRightSidebar,
 }: MainLayoutProps) {
   const categories = await getAllCategories();
-  const tags = await getAllTags();
+  const tags = await getPopularTags();
   const creators = showRightSidebar ? await getTrendCreators() : undefined;
   const systemStatus = showRightSidebar ? await getSystemStatus() : undefined;
 

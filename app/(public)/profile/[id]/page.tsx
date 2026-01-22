@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ProfilePage as SchemaProfilePage, WithContext } from "schema-dts";
 import { getCurrentUser } from "@/data/user";
 import { env } from "@/env/server";
-import { getAllCategories, getAllTags } from "@/server/dal/categories";
+import { getAllCategories, getPopularTags } from "@/server/dal/categories";
 import { getUserMemes, getUserProfile } from "./_actions";
 import { ProfilePage } from "./_components/profile-page";
 
@@ -93,7 +93,7 @@ export default async function Page({
 
   const [categoriesDB, tagsDB] = await Promise.all([
     getAllCategories(),
-    getAllTags(),
+    getPopularTags(),
   ]);
 
   return (

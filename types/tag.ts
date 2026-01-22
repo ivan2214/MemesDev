@@ -3,4 +3,5 @@ export type Tag = {
   id: string;
   slug: string;
   createdAt: Date;
+  memeCount?: number;
 };

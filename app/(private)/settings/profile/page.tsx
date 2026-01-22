@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { getCurrentUser } from "@/data/user";
 import type { User } from "@/lib/auth";
-import { getAllCategories, getAllTags } from "@/server/dal/categories";
+import { getAllCategories, getPopularTags } from "@/server/dal/categories";
 import { Spinner } from "@/shared/components/ui/spinner";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
@@ -26,7 +26,7 @@ async function SettingsFetcher({
 }
 
 export default async function SettingsProfilePage() {
-  const tags = await getAllTags();
+  const tags = await getPopularTags();
   const categories = await getAllCategories();
   const currentUser = await getCurrentUser();
 

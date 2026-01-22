@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { CollectionPage, WithContext } from "schema-dts";
 import { getCurrentUser } from "@/data/user";
 import { env } from "@/env/server";
-import { getAllTags } from "@/server/dal/categories";
+import { getPopularTags } from "@/server/dal/categories";
 import { searchMemesDal } from "@/server/dal/memes";
 import type { SortType } from "@/shared/types";
 import { SearchPage } from "./_components/search-page";
@@ -80,7 +80,7 @@ async function SearchContent({
 }) {
   const user = await getCurrentUser();
   const [tags, { memes }] = await Promise.all([
-    getAllTags(),
+    getPopularTags(),
     searchMemesDal({
       query,
       offset: 0,

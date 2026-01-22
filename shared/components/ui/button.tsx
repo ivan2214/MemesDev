@@ -40,6 +40,9 @@ const buttonVariants = cva(
   },
 );
 
+// solo las variantes no el size
+export type ButtonVariants = VariantProps<typeof buttonVariants>["variant"];
+
 function Button({
   className,
   variant = "default",

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { count, desc, eq } from "drizzle-orm";
+import { count, desc, eq, inArray, sql, sum } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
 import { getCurrentUser } from "@/data/user";
 import { db } from "@/db";
@@ -112,15 +112,34 @@ export const getTrendCreators = async (): Promise<TrendCreator[]> => {
   cacheTag(CACHE_TAGS.USERS_TREND);
   cacheLife(CACHE_LIFE.DEFAULT);
 
-  // Obtener usuarios con sus memes, tags y categoría usando métodos de Drizzle
-  const usersWithMemes = await db.query.user.findMany({
+  // Paso 1: Obtener los IDs de los top creadores ordenados por engagement en la BD
+  const topCreatorsQuery = await db
+    .select({
+      id: userTable.id,
+      totalMemes: count(memesTable.id),
+      totalLikes: sum(memesTable.likesCount).mapWith(Number),
+      totalComments: sum(memesTable.commentsCount).mapWith(Number),
+    })
+    .from(userTable)
+    .leftJoin(memesTable, eq(memesTable.userId, userTable.id))
+    .groupBy(userTable.id)
+    .orderBy(
+      desc(
+        sql`${sum(memesTable.likesCount)} + ${sum(memesTable.commentsCount)}`,
+      ),
+    )
+    .limit(5);
+
+  if (topCreatorsQuery.length === 0) {
+    return [];
+  }
+
+  const topCreatorIds = topCreatorsQuery.map((c) => c.id);
+
+  // Paso 2: Obtener los usuarios con sus relaciones (tags y category)
+  const usersWithRelations = await db.query.user.findMany({
+    where: inArray(userTable.id, topCreatorIds),
     with: {
-      memes: {
-        columns: {
-          likesCount: true,
-          commentsCount: true,
-        },
-      },
       tags: {
         with: {
           tag: true,
@@ -128,36 +147,40 @@ export const getTrendCreators = async (): Promise<TrendCreator[]> => {
       },
       category: true,
     },
-    limit: 50, // Limitar para después filtrar los mejores
   });
 
-  // Calcular totales y ordenar por engagement
-  const creatorsWithStats = usersWithMemes.map((user) => {
-    const totalMemes = user.memes.length;
-    const totalLikes = user.memes.reduce(
-      (acc, meme) => acc + (meme.likesCount ?? 0),
-      0,
-    );
-    const totalComments = user.memes.reduce(
-      (acc, meme) => acc + (meme.commentsCount ?? 0),
-      0,
-    );
-    const engagement = totalLikes + totalComments;
+  // Paso 3: Usar Map para lookup O(1) en lugar de find() O(n)
+  const usersMap = new Map(usersWithRelations.map((u) => [u.id, u]));
+  const statsMap = new Map(
+    topCreatorsQuery.map((c) => [
+      c.id,
+      {
+        totalMemes: c.totalMemes,
+        totalLikes: c.totalLikes ?? 0,
+        totalComments: c.totalComments ?? 0,
+      },
+    ]),
+  );
 
-    return {
-      ...user,
-      tags: user.tags.map((t) => t.tag),
-      totalMemes,
-      totalLikes,
-      totalComments,
-      engagement,
-    };
-  });
+  // Ordenar usuarios según el orden de topCreatorIds y añadir stats - O(n)
+  const trendCreators = topCreatorIds
+    .map((id) => {
+      const user = usersMap.get(id);
+      const stats = statsMap.get(id);
 
-  // Ordenar por engagement y tomar los top 10
-  return creatorsWithStats
-    .sort((a, b) => b.engagement - a.engagement)
-    .map(({ memes: _memes, engagement: _engagement, ...rest }) => rest);
+      if (!user || !stats) return null;
+
+      return {
+        ...user,
+        tags: user.tags.map((t) => t.tag),
+        ...stats,
+      };
+    })
+    .filter(
+      (creator): creator is NonNullable<typeof creator> => creator !== null,
+    );
+
+  return trendCreators;
 };
 
 export const getNotifications = async () => {
