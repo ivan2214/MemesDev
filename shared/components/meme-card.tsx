@@ -5,7 +5,7 @@ import { es } from "date-fns/locale";
 import { Heart, MessageCircle, MoreHorizontal, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { toggleLike } from "@/shared/actions/meme-actions";
@@ -101,8 +101,10 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
     : null;
 
   // Resaltar cada palabra del query individualmente en el texto
-  const highlightQuery = (text: string) => {
-    if (!query) return text;
+  // Memorizar para evitar recálculos en cada render
+  const highlightQuery = useMemo(() => {
+    // Si no hay query, retornar función identidad
+    if (!query) return (text: string) => text;
 
     // Dividir el query en palabras individuales (mínimo 2 caracteres)
     const words = query
@@ -110,33 +112,35 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
       .split(/\s+/)
       .filter((word) => word.length >= 2);
 
-    if (words.length === 0) return text;
+    if (words.length === 0) return (text: string) => text;
 
-    // Escapar caracteres especiales de regex en cada palabra y crear un patrón unificado
+    // Escapar caracteres especiales de regex en cada palabra
     const escapedWords = words.map((word) =>
       word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
     );
     // Crear regex que coincida con cualquiera de las palabras
     const queryRegex = new RegExp(`(${escapedWords.join("|")})`, "gi");
-
-    // split con grupo de captura mantiene los delimitadores (las coincidencias) en el resultado
-    const parts = text.split(queryRegex);
-
-    // Crear un Set de palabras en minúsculas para comparación rápida
+    // Set de palabras en minúsculas para comparación rápida
     const wordsLower = new Set(words.map((w) => w.toLowerCase()));
 
-    return parts.map((part, index) => {
-      // Verificar si esta parte coincide con alguna palabra del query (case-insensitive)
-      if (wordsLower.has(part.toLowerCase())) {
-        return (
-          <span key={index} className="font-semibold text-primary">
-            {part}
-          </span>
-        );
-      }
-      return part;
-    });
-  };
+    // Retornar la función de highlight
+    return (text: string) => {
+      // split con grupo de captura mantiene los delimitadores (las coincidencias) en el resultado
+      const parts = text.split(queryRegex);
+
+      return parts.map((part, index) => {
+        // Verificar si esta parte coincide con alguna palabra del query (case-insensitive)
+        if (wordsLower.has(part.toLowerCase())) {
+          return (
+            <span key={index} className="font-semibold text-primary">
+              {part}
+            </span>
+          );
+        }
+        return part;
+      });
+    };
+  }, [query]);
 
   return (
     <div className="w-full max-w-full overflow-hidden rounded-lg border border-border bg-card">

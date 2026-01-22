@@ -209,11 +209,12 @@ export async function searchMemesDal({
 
   // 1. Filtro por Query (Título o Tags) - Búsqueda por palabras individuales
   if (query?.trim()) {
-    // Dividir el query en palabras individuales (mínimo 2 caracteres para evitar ruido)
+    // Dividir el query en palabras individuales (mínimo 2 caracteres, máximo 5 palabras)
     const words = query
       .trim()
       .split(/\s+/)
-      .filter((word) => word.length >= 2);
+      .filter((word) => word.length >= 2)
+      .slice(0, 5); // Limitar a 5 palabras para evitar queries muy pesadas
 
     if (words.length > 0) {
       // Cada palabra debe coincidir en el título O en algún tag
