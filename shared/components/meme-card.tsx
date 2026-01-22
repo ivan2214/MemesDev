@@ -118,11 +118,6 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
               <span className="truncate font-semibold text-foreground text-sm sm:text-base">
                 {meme?.user.name}
               </span>
-              {/* {meme?.user.rank === "SENIOR" && (
-                <span className="flex-shrink-0 rounded bg-primary/20 px-1.5 py-0.5 font-medium text-primary text-xs sm:px-2">
-                  {meme?.user.rank}
-                </span>
-              )} */}
             </div>
             <span className="text-muted-foreground text-xs sm:text-sm">
               {formattedDate}
@@ -150,13 +145,12 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
       </div>
 
       <Link href={`/meme/${meme?.id}`}>
-        <div className="relative aspect-square w-full bg-muted">
+        <div className="relative aspect-square h-full w-full bg-card">
           <Image
             src={meme?.imageUrl || "/placeholder.svg"}
             alt={meme?.title || ""}
             fill
             className="object-contain"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 600px, 700px"
           />
         </div>
       </Link>

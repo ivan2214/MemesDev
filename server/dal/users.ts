@@ -11,6 +11,7 @@ import {
   user as userTable,
 } from "@/db/schemas";
 import { CACHE_LIFE, CACHE_TAGS } from "@/shared/constants";
+import type { TrendCreator } from "@/shared/types";
 import type { UserProfile } from "@/types/profile";
 
 export async function getUserProfile(userId: string) {
@@ -106,28 +107,57 @@ export async function getUserMemesDal({
   });
 }
 
-export const getTrendCreators = async () => {
+export const getTrendCreators = async (): Promise<TrendCreator[]> => {
   "use cache";
   cacheTag(CACHE_TAGS.USERS_TREND);
   cacheLife(CACHE_LIFE.DEFAULT);
 
-  const trendCreators = await db.query.user.findMany({
-    orderBy: desc(userTable.createdAt),
-    limit: 5,
+  // Obtener usuarios con sus memes, tags y categoría usando métodos de Drizzle
+  const usersWithMemes = await db.query.user.findMany({
     with: {
-      category: true,
+      memes: {
+        columns: {
+          likesCount: true,
+          commentsCount: true,
+        },
+      },
       tags: {
         with: {
           tag: true,
         },
       },
+      category: true,
     },
+    limit: 50, // Limitar para después filtrar los mejores
   });
 
-  return trendCreators.map((user) => ({
-    ...user,
-    tags: user.tags.map((tag) => tag.tag),
-  }));
+  // Calcular totales y ordenar por engagement
+  const creatorsWithStats = usersWithMemes.map((user) => {
+    const totalMemes = user.memes.length;
+    const totalLikes = user.memes.reduce(
+      (acc, meme) => acc + (meme.likesCount ?? 0),
+      0,
+    );
+    const totalComments = user.memes.reduce(
+      (acc, meme) => acc + (meme.commentsCount ?? 0),
+      0,
+    );
+    const engagement = totalLikes + totalComments;
+
+    return {
+      ...user,
+      tags: user.tags.map((t) => t.tag),
+      totalMemes,
+      totalLikes,
+      totalComments,
+      engagement,
+    };
+  });
+
+  // Ordenar por engagement y tomar los top 10
+  return creatorsWithStats
+    .sort((a, b) => b.engagement - a.engagement)
+    .map(({ memes: _memes, engagement: _engagement, ...rest }) => rest);
 };
 
 export const getNotifications = async () => {

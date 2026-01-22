@@ -33,7 +33,7 @@ export default async function SettingsProfilePage() {
   return (
     <div className="container mx-auto max-w-2xl px-4 py-10">
       <div className="mb-8">
-        <h1 className="font-bold text-3xl">Editar Perfil</h1>
+        <h1 className="font-bold text-2xl">Editar Perfil</h1>
         <p className="text-muted-foreground">
           Actualiza tu información personal, avatar y redes sociales.
         </p>

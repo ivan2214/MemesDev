@@ -8,7 +8,7 @@ export default function Loading() {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h1 className="text-balance font-bold text-3xl">Buscar Memes</h1>
+        <h1 className="text-balance font-bold text-2xl">Buscar Memes</h1>
         <form className="flex gap-2">
           <div className="relative flex-1">
             <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

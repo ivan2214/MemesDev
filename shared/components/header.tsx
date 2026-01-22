@@ -18,7 +18,7 @@ export function Header() {
           <SidebarTrigger className="hidden md:flex" />
           <Link
             href="/"
-            className="flex items-center gap-2 font-bold font-mono text-xl md:hidden"
+            className="flex items-center gap-2 font-bold font-mono text-2xl md:hidden"
           >
             <Image src="/logo.png" alt="Logo" width={24} height={24} />
             <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -28,17 +28,10 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button
-            size="icon"
-            variant="ghost"
-            render={
-              <Link
-                target="_blank"
-                href="https://github.com/ivan2214/MemesDev"
-              />
-            }
-          >
-            <GithubIcon className="h-4 w-4" />
+          <Button size="icon" variant="ghost">
+            <Link target="_blank" href="https://github.com/ivan2214/MemesDev">
+              <GithubIcon className="h-4 w-4" />
+            </Link>
           </Button>
 
           <Suspense

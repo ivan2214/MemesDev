@@ -118,7 +118,7 @@ export function HotPage({
         <div className="flex items-center gap-3">
           <Flame className="h-8 w-8 text-orange-500" />
           <div>
-            <h1 className="text-balance font-bold text-3xl">Hot Memes</h1>
+            <h1 className="text-balance font-bold text-2xl">Hot Memes</h1>
             <p className="text-pretty text-muted-foreground text-sm">
               Los memes más populares
             </p>

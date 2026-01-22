@@ -52,6 +52,15 @@ export const auth = betterAuth({
       };
     }),
   ],
+  user: {
+    additionalFields: {
+      username: {
+        type: "string",
+        required: true,
+        unique: true,
+      },
+    },
+  },
 });
 
 export type Session = typeof auth.$Infer.Session;

@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/shared/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,7 +30,7 @@ import {
 } from "@/shared/lib/tag-icons";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
-import { communities, navItems } from "../constants";
+import { navItems } from "../constants";
 import { useQueryParams } from "../hooks/use-query-params";
 import { Button } from "./ui/button";
 
@@ -177,14 +176,15 @@ export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
                   {displayCategories.map((category) => {
                     const CategoryIcon = getIconByName(category.icon);
                     const isActive = get("category") === category.slug;
+                    const styles = getCategoryStyles(category.color);
                     return (
                       <Button
                         key={category.id}
                         onClick={() => set("category", category.slug)}
                         variant="ghost"
                         className={cn(
-                          "cursor-pointer gap-1 border font-medium text-[10px] transition-all hover:scale-105",
-                          isActive && getCategoryStyles(category.color),
+                          `cursor-pointer gap-1 border font-medium text-[10px] transition-all hover:scale-105`,
+                          isActive && styles,
                         )}
                         size="xs"
                       >
@@ -198,8 +198,8 @@ export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
             </CollapsibleContent>
           </SidebarGroup>
         </Collapsible>
-        {/* communities */}
-        <Collapsible defaultOpen className="group/collapsible">
+        {/* communities in the future */}
+        {/*   <Collapsible defaultOpen className="group/collapsible">
           <SidebarGroup>
             <SidebarGroupLabel>
               <CollapsibleTrigger className="flex w-full items-center justify-between">
@@ -232,7 +232,7 @@ export function AppSidebar({ categories, browseTags }: AppSidebarProps) {
               </SidebarGroupContent>
             </CollapsibleContent>
           </SidebarGroup>
-        </Collapsible>
+        </Collapsible> */}
       </SidebarContent>
     </Sidebar>
   );
