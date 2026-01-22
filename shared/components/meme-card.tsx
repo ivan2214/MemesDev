@@ -100,20 +100,34 @@ export function MemeCard({ meme, isLiked, activeTags }: MemeCardProps) {
     ? getIconByName(meme?.category.icon)
     : null;
 
-  // Resaltar solo la palabra buscada en cada texto, lo demas no
+  // Resaltar cada palabra del query individualmente en el texto
   const highlightQuery = (text: string) => {
     if (!query) return text;
 
-    // Escapar caracteres especiales de regex en la query
-    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const queryRegex = new RegExp(`(${escapedQuery})`, "gi");
+    // Dividir el query en palabras individuales (mínimo 2 caracteres)
+    const words = query
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length >= 2);
+
+    if (words.length === 0) return text;
+
+    // Escapar caracteres especiales de regex en cada palabra y crear un patrón unificado
+    const escapedWords = words.map((word) =>
+      word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+    );
+    // Crear regex que coincida con cualquiera de las palabras
+    const queryRegex = new RegExp(`(${escapedWords.join("|")})`, "gi");
 
     // split con grupo de captura mantiene los delimitadores (las coincidencias) en el resultado
     const parts = text.split(queryRegex);
 
+    // Crear un Set de palabras en minúsculas para comparación rápida
+    const wordsLower = new Set(words.map((w) => w.toLowerCase()));
+
     return parts.map((part, index) => {
-      // Verificar si esta parte coincide con la query (case-insensitive)
-      if (part.toLowerCase() === query.toLowerCase()) {
+      // Verificar si esta parte coincide con alguna palabra del query (case-insensitive)
+      if (wordsLower.has(part.toLowerCase())) {
         return (
           <span key={index} className="font-semibold text-primary">
             {part}

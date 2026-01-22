@@ -207,26 +207,39 @@ export async function searchMemesDal({
   // Array principal de filtros (se combinan con AND)
   const filters: SQL[] = [];
 
-  // 1. Filtro por Query (Título o Tags)
+  // 1. Filtro por Query (Título o Tags) - Búsqueda por palabras individuales
   if (query?.trim()) {
-    const searchFilter = or(
-      ilike(memesTable.title, `%${query}%`),
-      exists(
-        db
-          .select({ id: memeTagsTable.id })
-          .from(memeTagsTable)
-          .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
-          .where(
-            and(
-              eq(memeTagsTable.memeId, memesTable.id),
-              ilike(tagsTable.name, `%${query}%`),
-            ),
-          ),
-      ),
-    );
+    // Dividir el query en palabras individuales (mínimo 2 caracteres para evitar ruido)
+    const words = query
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length >= 2);
 
-    if (searchFilter) {
-      filters.push(searchFilter);
+    if (words.length > 0) {
+      // Cada palabra debe coincidir en el título O en algún tag
+      const wordFilters = words.map((word) =>
+        or(
+          ilike(memesTable.title, `%${word}%`),
+          exists(
+            db
+              .select({ id: memeTagsTable.id })
+              .from(memeTagsTable)
+              .innerJoin(tagsTable, eq(memeTagsTable.tagId, tagsTable.id))
+              .where(
+                and(
+                  eq(memeTagsTable.memeId, memesTable.id),
+                  ilike(tagsTable.name, `%${word}%`),
+                ),
+              ),
+          ),
+        ),
+      );
+
+      // Combinar con AND: todas las palabras deben coincidir
+      const searchFilter = and(...wordFilters);
+      if (searchFilter) {
+        filters.push(searchFilter);
+      }
     }
   }
 
