@@ -34,7 +34,6 @@ function getS3KeyFromUrl(imageUrl: string): string | null {
 // Helper function to fetch from external URL and convert to PNG base64
 async function fetchExternalImage(imageUrl: string): Promise<Buffer | null> {
   try {
-    console.log("[OG API] Fetching external image:", imageUrl);
     const response = await fetch(imageUrl);
     if (!response.ok) {
       console.error(
@@ -59,8 +58,6 @@ async function getImageAsBase64(imageUrl: string): Promise<string | null> {
 
     // Check if it's an S3 image (has memes/ prefix)
     if (key && key.startsWith("memes/")) {
-      console.log("[OG API] Fetching from S3 with key:", key);
-
       const { blob } = await getObject(s3, {
         bucket: env.S3_BUCKET_NAME,
         key,
@@ -92,7 +89,7 @@ async function getImageAsBase64(imageUrl: string): Promise<string | null> {
       .toBuffer();
 
     const base64 = pngBuffer.toString("base64");
-    console.log("[OG API] Image converted to PNG successfully");
+
     return `data:image/png;base64,${base64}`;
   } catch (error) {
     console.error("[OG API] Error fetching/converting image:", error);
@@ -106,7 +103,6 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    console.log("[OG API] Generating image for id:", id);
 
     const meme = await db.query.memesTable.findFirst({
       where: eq(memesTable.id, id),
@@ -119,8 +115,6 @@ export async function GET(
         },
       },
     });
-
-    console.log("[OG API] Meme found:", !!meme);
 
     if (!meme) {
       return new ImageResponse(
@@ -145,7 +139,6 @@ export async function GET(
 
     // Fetch the meme image from S3 and convert to PNG base64
     const imageBase64 = await getImageAsBase64(meme.imageUrl);
-    console.log("[OG API] Image ready:", !!imageBase64);
 
     // If image couldn't be fetched, show a fallback
     if (!imageBase64) {

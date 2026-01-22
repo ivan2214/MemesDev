@@ -22,7 +22,6 @@ export default async function Image({
 }) {
   try {
     const { id } = await params;
-    console.log("[OG] Generating image for id:", id);
 
     // Query directly without "use cache" to avoid Route Handler issues
     const meme = await db.query.memesTable.findFirst({
@@ -36,8 +35,6 @@ export default async function Image({
         },
       },
     });
-
-    console.log("[OG] Meme found:", !!meme);
 
     if (!meme) {
       return new ImageResponse(

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
+import { getCurrentUser } from "@/data/user";
+import type { User } from "@/lib/auth";
 import { getAllCategories, getAllTags } from "@/server/dal/categories";
-import { getUserSettingsDal } from "@/server/dal/users";
 import { Spinner } from "@/shared/components/ui/spinner";
 import type { Category } from "@/types/category";
 import type { Tag } from "@/types/tag";
@@ -9,20 +10,25 @@ import { ProfileForm } from "./_components/profile-form";
 async function SettingsFetcher({
   tags,
   categories,
+  currentUser,
 }: {
   tags: Tag[];
   categories: Category[];
+  currentUser?: User;
 }) {
-  const user = await getUserSettingsDal();
-
   return (
-    <ProfileForm currentUser={user} tagsDB={tags} categoriesDB={categories} />
+    <ProfileForm
+      currentUser={currentUser}
+      tagsDB={tags}
+      categoriesDB={categories}
+    />
   );
 }
 
 export default async function SettingsProfilePage() {
   const tags = await getAllTags();
   const categories = await getAllCategories();
+  const currentUser = await getCurrentUser();
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-10">
@@ -39,7 +45,11 @@ export default async function SettingsProfilePage() {
           </div>
         }
       >
-        <SettingsFetcher tags={tags} categories={categories} />
+        <SettingsFetcher
+          tags={tags}
+          categories={categories}
+          currentUser={currentUser}
+        />
       </Suspense>
     </div>
   );

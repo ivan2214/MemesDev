@@ -12,12 +12,14 @@ export function useMemeSearch({
   tags,
   category,
   initialMemes,
+  userId,
 }: {
   query: string;
   sort: SortType;
   tags: string[];
   category?: string;
   initialMemes: Meme[];
+  userId?: string;
 }) {
   const [memes, setMemes] = useState(initialMemes);
   const [loading, setLoading] = useState(false);
@@ -38,6 +40,7 @@ export function useMemeSearch({
         category,
         offset: currentOffset,
         limit: PAGE_SIZE,
+        userId,
       });
 
       setHasMore(data.memes.length === PAGE_SIZE);
